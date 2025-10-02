@@ -56,10 +56,21 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
       borderRadius: '10px',
       margin: '20px 0'
     }}>
-      <h2 style={{ marginTop: 0 }}>Results Preview (5 Key Cards)</h2>
+      <h2 style={{ marginTop: 0, textAlign: 'center' }}>Conflict Patterns</h2>
+      <div style={{ 
+        textAlign: 'center', 
+        margin: '8px 0 20px 0',
+        padding: '8px', 
+        background: '#2c1810', 
+        borderRadius: '4px',
+        fontSize: '12px',
+        color: '#f39c12'
+      }}>
+        This tension creates interesting dynamics in your behavior patterns.
+      </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
-        {selectedCards.map((card, i) => {
+        {selectedCards.filter(card => card.type === 'conflict').map((card, i) => {
           const stars = card.raw ? Math.round(card.raw) : (card.bucket === 'High' ? 5 : card.bucket === 'Medium' ? 3 : 2);
           const full = Array.from({length: Math.max(0, Math.min(5, stars))});
           const empty = Array.from({length: Math.max(0, 5 - stars)});
@@ -158,18 +169,6 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
                 </p>
               )}
               
-              {card.type === 'conflict' && isOpen && (
-                <div style={{ 
-                  marginTop: '8px', 
-                  padding: '8px', 
-                  background: '#2c1810', 
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  color: '#f39c12'
-                }}>
-                  This tension creates interesting dynamics in your behavior patterns.
-                </div>
-              )}
             </div>
           );
         })}

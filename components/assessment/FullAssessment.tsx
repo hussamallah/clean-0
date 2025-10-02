@@ -19,7 +19,6 @@ export default function FullAssessment(){
   const router = useRouter();
   const [nudge, setNudge] = useState<{domain:DomainKey; mean:number}|null>(null);
   const [pending, setPending] = useState<any|null>(null);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(()=>{
     // Save full answers to localStorage and redirect to results
@@ -42,7 +41,6 @@ export default function FullAssessment(){
           
           setSuiteHash(hash);
           setVerifyStatus('ok');
-          setIsRedirecting(true);
           
           // Redirect to who page (personality insights first)
           router.push('/who');
@@ -88,17 +86,11 @@ export default function FullAssessment(){
             }} />
           ) : null}
         </>
-      ) : isRedirecting ? (
+      ) : (
         <div style={{textAlign: 'center', padding: '40px'}}>
           <div style={{fontSize: 16, color: '#d6e5ff', marginBottom: '12px'}}>Processing your results...</div>
           <div style={{fontSize: 14, color: '#9aa3ad'}}>Redirecting to your personality insights...</div>
         </div>
-      ) : (
-        <AllResults results={results} suiteHash={suiteHash} verifyStatus={verifyStatus} onVerify={async ()=>{
-          const normalized = results.map(r=>({domain:r.domain, payload:r.payload}));
-          const hash = await sha256(stableStringify(normalized));
-          setVerifyStatus(hash === suiteHash ? 'ok' : 'fail');
-        }} />
       )}
     </div>
   );

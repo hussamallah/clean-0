@@ -6,6 +6,7 @@ import IdentityMirror from "@components/who/IdentityMirror";
 import AuthorityBar from "@components/who/AuthorityBar";
 import FiveCardResults from "@components/who/FiveCardResults";
 import ExistentialCircuits from "@components/who/ExistentialCircuits";
+import AllLifeSignals from "@components/who/AllLifeSignals";
 import { useTelemetry } from "@components/who/useTelemetry";
 import { canonicalFacets } from "@/lib/bigfive/constants";
 import { buildIdentityMirror } from "@/lib/bigfive/identityMirror";
@@ -123,6 +124,7 @@ export default function WhoPage(){
             onSeen={() => telemetry.send('mirror_seen')}
           />
           <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
+          <AllLifeSignals domainMeans={who.derived.domainMeans} />
           <FiveCardResults 
             data={fullResults}
             onCardOpen={(cardType) => telemetry.send('preview_card_open', { card_type: cardType })}

@@ -188,7 +188,7 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
       <div className="card">
         <div className="question-row">
           <div className="q-left"><span className="domain-pill">{DOMAINS[domain].label.split(' (')[0]}</span></div>
-          <div className="q-center"><p>Select the 3 traits that best describe you.</p></div>
+          <div className="q-center"><p>{domain === 'N' ? 'Choose the 3 that show up for you most often.' : 'Select the 3 traits that best describe you.'}</p></div>
           <div className="q-right"><div className="count-pill"><span className="count">{`${selectedCount}/3`}</span></div></div>
         </div>
         <FacetPickGrid key="phase1" domain={domain} facets={facets} required={3} onSubmit={(arr)=>{
@@ -207,13 +207,13 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
         <div className="question-row">
           <div className="q-left"><span className="domain-pill">{DOMAINS[domain].label.split(' (')[0]}</span></div>
           <div className="q-center"><p>{P1_PROMPTS[domain].q2}</p></div>
-          <div className="q-right"><div className="count-pill"><span className="count">{`${selectedCount}/2`}</span></div></div>
+          <div className="q-right"><div className="count-pill"><span className="count">{`0/2`}</span></div></div>
         </div>
         <FacetPickGrid key="phase2" domain={domain} facets={q1Selected} required={2} onSubmit={(arr)=>{
           const m = Object.fromEntries(facets.map(f=>[f,0]));
           for (const f of arr) (m as any)[f]=1;
           setPicksM(m as Record<string,number>);
-        }} onBack={()=>{ setPicksP(null); }} selectedCount={selectedCount} onSelectedCountChange={setSelectedCount}/>
+        }} onBack={()=>{ setPicksP(null); }} selectedCount={0} onSelectedCountChange={setSelectedCount}/>
       </div>
     );
   }

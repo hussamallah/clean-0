@@ -67,8 +67,8 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
   const domainMeans = useMemo(()=>{
     try{
       const raw = localStorage.getItem('gz_full_results');
-      if (!raw) return null;
-      const results = JSON.parse(raw) || [];
+      const results = raw ? JSON.parse(raw) || [] : [];
+      
       
       // Build domain means from completed results
       const means: DomainMeans = { O: 3, C: 3, E: 3, A: 3, N: 3 }; // defaults
@@ -85,7 +85,7 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
       means[domain] = domainMeanRaw;
       
       return means;
-    } catch { 
+    } catch (error) { 
       // Fallback: use current domain with defaults
       const means: DomainMeans = { O: 3, C: 3, E: 3, A: 3, N: 3 };
       means[domain] = domainMeanRaw;
@@ -99,11 +99,11 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
     const signals = computeSignals(domainMeans);
     
     // Show signals based on new domain order: E, C, A, O, N
-    if (domain === 'E') return { key: 'P', value: signals.P };  // Extraversion → Pursuit (P = 0.4*O + 0.35*E + 0.25*C - E has weight 0.35, O and C not available yet)
-    if (domain === 'C') return { key: 'D', value: signals.D };  // Conscientiousness → Dominance/Drive (D = 0.55*E + 0.45*C - both E and C now available)
-    if (domain === 'A') return { key: 'S', value: signals.S };  // Agreeableness → Social Buffer (S = z(A) - direct relationship)
-    if (domain === 'O') return { key: 'P', value: signals.P };  // Openness → Pursuit (P = 0.4*O + 0.35*E + 0.25*C - O, E, C all available)
-    if (domain === 'N') return { key: 'T', value: signals.T };  // Neuroticism → Threat (T = z(N) - direct relationship)
+    if (domain === 'E') return { key: 'P', value: signals.P };  // Extraversion → Pursuit
+    if (domain === 'C') return { key: 'D', value: signals.D };  // Conscientiousness → Dominance/Drive
+    if (domain === 'A') return { key: 'S', value: signals.S };  // Agreeableness → Social Buffer
+    if (domain === 'O') return { key: 'T', value: signals.T };  // Openness → Threat
+    if (domain === 'N') return { key: 'T', value: signals.T };  // Neuroticism → Threat
     
     // Default to T if no match
     return { key: 'T', value: signals.T };
@@ -135,9 +135,6 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
       </div>
       <div style={{height:6, background:'#182236', borderRadius:4, overflow:'hidden', marginTop:10}}>
         <div style={{width:`${Math.round(value*100)}%`, height:'100%', background:'#4cafef'}} />
-      </div>
-      <div style={{fontSize:10, color:'#666', marginTop:6, fontStyle:'italic'}}>
-        *Based on partial data - final results may vary
       </div>
     </div>
   );

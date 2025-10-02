@@ -99,10 +99,10 @@ function passThreshold(val:number, pol:Pol, thr:Thr): number {
   return score >= t ? score : -1;
 }
 
-// pick best conflict (H tier, then M)
-function selectConflictPairDetailed(facets: FacetData[], zMap: Map<string, number>){
+// pick multiple conflicts (H tier, then M) - up to 4 conflicts
+function selectConflictPairsDetailed(facets: FacetData[], zMap: Map<string, number>, maxConflicts: number = 4){
   function evalTier(minThr: Thr){
-    let localBest: any = null;
+    const conflicts: any[] = [];
     for (let i=0;i<CATALOG.length;i++){
       const entry = CATALOG[i];
       const aVal = traitZ(entry.a.trait, facets, zMap);
@@ -114,46 +114,53 @@ function selectConflictPairDetailed(facets: FacetData[], zMap: Map<string, numbe
       const bScore = passThreshold(bVal, entry.b.pol, bThr);
       if (aScore<0 || bScore<0) continue;
       const score = Math.min(aScore, bScore);
-      if (!localBest || score > localBest.score){
-        localBest = { entry, score, aVal, bVal, idx:i };
-      }
+      conflicts.push({ entry, score, aVal, bVal, idx:i });
     }
-    return localBest;
+    // Sort by score (highest first) and return top conflicts
+    return conflicts.sort((a,b) => b.score - a.score).slice(0, maxConflicts);
   }
-  return evalTier('H') || evalTier('M') || null;
+  const hConflicts = evalTier('H');
+  const mConflicts = evalTier('M');
+  return [...hConflicts, ...mConflicts].slice(0, maxConflicts);
 }
 
-// build a full conflict SelectedCard
-function buildConflictCard(facets:FacetData[], zMap:Map<string,number>): SelectedCard {
-  const sel = selectConflictPairDetailed(facets, zMap);
-  if (sel){
+// build multiple conflict SelectedCards
+function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConflicts: number = 4): SelectedCard[] {
+  const conflicts = selectConflictPairsDetailed(facets, zMap, maxConflicts);
+  const cards: SelectedCard[] = [];
+  
+  for (const sel of conflicts) {
     const { entry, aVal, bVal, idx } = sel;
     const aPct = Math.round(aVal*100);
     const bPct = Math.round(bVal*100);
     const copy = entry.copy || { how:'Gas pedal meets brake.', helps:'quick crisis moves.', hurts:'long uncertainty.', tip:'pause for 2 beats, then pick one next step.' };
-    return {
+    cards.push({
       type: 'conflict',
       facet: `Conflict Pair — ${entry.a.trait} × ${entry.b.trait}`,
       description: `${copy.how}\n\nThis tension helps you ${copy.helps.toLowerCase()} but can hurt you when ${copy.hurts.toLowerCase()}.\n\nTip: ${copy.tip}`,
       conflict: { left: entry.a.trait, right: entry.b.trait, id: idx },
       leftPct: aPct,
       rightPct: bPct
-    };
+    });
   }
 
-  // Fallback: Pursuit vs Threat from domain means
-  const means = domainMeans(facets);
-  const O = means.O, C = means.C, E = means.E, N = means.N;
-  const T = z(N);
-  const P = z(0.40*O + 0.35*E + 0.25*C);
-  return {
-    type: 'conflict',
-    facet: 'Conflict Pair — Pursuit × Threat',
-    description: 'Gas pedal meets brake.\n\nThis tension helps you with fast probes and crisis work but can hurt you during long periods of ambiguity.\n\nTip: pause 2 counts; set a binary next step.',
-    conflict: { left: 'Pursuit', right: 'Threat', id: -1 },
-    leftPct: Math.round(P*100),
-    rightPct: Math.round(T*100)
-  };
+  // If no conflicts found, add fallback: Pursuit vs Threat from domain means
+  if (cards.length === 0) {
+    const means = domainMeans(facets);
+    const O = means.O, C = means.C, E = means.E, N = means.N;
+    const T = z(N);
+    const P = z(0.40*O + 0.35*E + 0.25*C);
+    cards.push({
+      type: 'conflict',
+      facet: 'Conflict Pair — Pursuit × Threat',
+      description: 'Gas pedal meets brake.\n\nThis tension helps you with fast probes and crisis work but can hurt you during long periods of ambiguity.\n\nTip: pause 2 counts; set a binary next step.',
+      conflict: { left: 'Pursuit', right: 'Threat', id: -1 },
+      leftPct: Math.round(P*100),
+      rightPct: Math.round(T*100)
+    });
+  }
+  
+  return cards;
 }
 
 export function selectFiveCards(facets: FacetData[]): SelectedCard[] {
@@ -201,9 +208,9 @@ export function selectFiveCards(facets: FacetData[]): SelectedCard[] {
     });
   }
 
-  // 3. Conflict Pair (hook) — full card
-  const conflictCard = buildConflictCard(facets, zMap);
-  cards.push(conflictCard);
+  // 3-6. Conflict Pairs (up to 4 conflicts) — full cards
+  const conflictCards = buildConflictCards(facets, zMap, 4);
+  cards.push(...conflictCards);
 
   // 4. Social trait (prime social upsells)
   const socialFacets = ['Trust','Cooperation','Friendliness','Morality'];
@@ -242,5 +249,5 @@ export function selectFiveCards(facets: FacetData[]): SelectedCard[] {
     });
   }
 
-  return cards.slice(0, 5);
+  return cards.slice(0, 8); // Allow up to 8 cards (1 high + 1 low + 4 conflicts + 1 social + 1 values)
 }
