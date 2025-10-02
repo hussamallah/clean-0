@@ -54,8 +54,8 @@ export function triggersForConfirmers(A_raw: Record<string, number>, P: Record<s
   return facets.filter(f => {
     const a = A_raw[f];
     const p = P[f];
-    if (a > 3.50 && a < 4.00 && p <= 0) return true;
-    if (a > 2.00 && a < 2.50 && p >= 0) return true;
+    if (a >= 4.00 && p <= 0) return true;
+    if (a <= 2.00 && p >= 1) return true;
     return false;
   });
 }
