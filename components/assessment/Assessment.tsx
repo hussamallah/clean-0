@@ -138,9 +138,9 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
   const emittedRef = useRef(false);
   useEffect(()=>{
     // Only emit when Phase 3 is completely finished
-    if (silentOnComplete && onComplete && resultPayload && (resultPayload as any).audit?.nonce && !emittedRef.current){
+    if (silentOnComplete && onComplete && resultPayload && (resultPayload as any).audit?.nonce && !emittedRef.current && A_raw && priorP && domain){
       // Calculate triggers here to avoid dependency issues
-      const P = priorP!;
+      const P = priorP;
       const triggers = triggersForConfirmers(A_raw, P, domain);
       if (phase3Asked.length >= triggers.length) {
         emittedRef.current = true;
