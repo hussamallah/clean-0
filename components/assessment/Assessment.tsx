@@ -24,6 +24,11 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
   const [nonce, setNonce] = useState<string | null>(null);
   const [domain, setDomain] = useState<DomainKey | null>(initialDomain ?? null);
   const [verifyStatus, setVerifyStatus] = useState<'idle'|'ok'|'fail'>('idle');
+  
+  // Debug render counter
+  const renderCount = useRef(0);
+  renderCount.current++;
+  console.log(`Assessment render #${renderCount.current} for domain ${domain}`);
 
   const [picksP, setPicksP] = useState<Record<string, number> | null>(null);
   const [picksM, setPicksM] = useState<Record<string, number> | null>(null);
@@ -132,11 +137,17 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
 
   const emittedRef = useRef(false);
   useEffect(()=>{
+    // Only emit when Phase 3 is completely finished
     if (silentOnComplete && onComplete && resultPayload && (resultPayload as any).audit?.nonce && !emittedRef.current){
-      emittedRef.current = true;
-      onComplete(resultPayload);
+      // Calculate triggers here to avoid dependency issues
+      const P = priorP!;
+      const triggers = triggersForConfirmers(A_raw, P, domain);
+      if (phase3Asked.length >= triggers.length) {
+        emittedRef.current = true;
+        onComplete(resultPayload);
+      }
     }
-  }, [silentOnComplete, onComplete, resultPayload, domain]);
+  }, [silentOnComplete, onComplete, resultPayload, domain, phase3Asked.length, priorP, A_raw]);
 
   // Persist per-domain payload by hash for later retrieval
   useEffect(()=>{
@@ -269,12 +280,21 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
 
   const P = priorP!;
   const triggers = triggersForConfirmers(A_raw, P, domain);
+  
+  // Debug: Log triggers for Phase 3
+  console.log(`Phase 3 triggers for ${domain}:`, triggers);
+  console.log(`A_raw:`, A_raw);
+  console.log(`P (prior):`, P);
+  
   if (phase3Asked.length < triggers.length){
     const idx = phase3Asked.length;
     const f = triggers[idx];
     const q = CONFIRM[domain][f];
+    console.log(`Phase 3 question ${idx + 1}/${triggers.length} for ${f}:`, q);
+    console.log(`Rendering ConfirmFlow for ${f}, phase3Asked.length:`, phase3Asked.length);
     return (
       <ConfirmFlow facet={f} domainLabel={DOMAINS[domain].label} question={q} onAnswer={(ans)=>{
+        console.log(`Phase 3 answer for ${f}:`, ans);
         setPhase3Asked(prev=> prev.concat({facet:f, answer: ans}));
       }} onBack={()=>{ setAraw(null); setPhase2Answers([]); }} />
     );
@@ -294,9 +314,10 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
   const domain_mean_raw = Math.round((facets.reduce((s,f)=>s+(A_raw as any)[f],0)/6)*100)/100;
   const domain_mean_pct = Math.round((toPercentFromRaw(domain_mean_raw))*10)/10;
 
-
   // If running in silent mode (full test), short-circuit results UI (emission handled by effect above)
-  if (silentOnComplete && resultPayload){
+  // Only return null if Phase 3 is completely finished (no more triggers to ask)
+  if (silentOnComplete && phase3Asked.length >= triggers.length){
+    console.log(`Silent mode: returning null, Phase 3 complete`);
     return null;
   }
 
@@ -559,7 +580,6 @@ function AnchorsFlow({ domain, queue, onDone, onBack }:{ domain: DomainKey; queu
 }
 
 function ConfirmFlow({ facet, domainLabel, question, onAnswer, onBack }:{ facet:string; domainLabel:string; question:string; onAnswer:(ans:'Yes'|'No'|'Maybe')=>void; onBack:()=>void }){
-  const [chosen, setChosen] = useState<'Yes'|'No'|'Maybe'|null>(null);
   return (
     <div className="card">
       <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
@@ -567,7 +587,7 @@ function ConfirmFlow({ facet, domainLabel, question, onAnswer, onBack }:{ facet:
           <h2>Phase 3 — Confirm</h2>
           <p><b>{facet}</b> • Quick behavioral check.</p>
         </div>
-        <div className="pill">Answers: Yes / No / Maybe</div>
+        <div className="pill">Click to answer</div>
       </div>
       <div className="mt16">
         <div className="card" style={{background:'#0f141a',borderStyle:'dashed' as any}}>
@@ -576,12 +596,11 @@ function ConfirmFlow({ facet, domainLabel, question, onAnswer, onBack }:{ facet:
       </div>
       <div className="row mt16">
         {['Yes','No','Maybe'].map(x=> (
-          <button key={x} className={`rate btn${chosen===x?' selected':''}`} onClick={()=> setChosen(x as any)}>{x}</button>
+          <button key={x} className="rate btn" onClick={()=> onAnswer(x as any)}>{x}</button>
         ))}
       </div>
-      <div className="row mt16" style={{justifyContent:'space-between'}}>
+      <div className="row mt16" style={{justifyContent:'flex-start'}}>
         <button className="ghost" onClick={onBack}>Back</button>
-        <button className="primary" disabled={!chosen} onClick={()=> chosen && onAnswer(chosen)}>Next</button>
       </div>
     </div>
   );
