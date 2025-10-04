@@ -53,11 +53,24 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
     }, [onNext]);
 
     return (
-      <div className="card" style={{background:'#0f1420', border:'1px solid #25324a', borderRadius:10, padding:16, marginBottom:12}}>
+      <div className="card" style={{
+        background: 'linear-gradient(135deg, #2d1b69 0%, #1e3c72 50%, #2a5298 100%)',
+        border: '1px solid #4a6fa5',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '16px',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)'
+      }}>
         <div style={{textAlign: 'center'}}>
-          <div style={{fontSize:12, color:'#9aa3ad'}}>Assessment Complete</div>
-          <div style={{fontSize:14, color:'#d6e5ff'}}>All domains finished. Processing your results...</div>
-          <div style={{fontSize:12, color:'#9aa3ad', marginTop:4}}>You've done it.</div>
+          <div style={{fontSize: '12px', color: '#a8c8e8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px'}}>
+            Assessment Complete
+          </div>
+          <div style={{fontSize: '16px', color: '#f0f8ff', fontWeight: '500', marginTop: '8px'}}>
+            All domains finished. Processing your results...
+          </div>
+          <div style={{fontSize: '12px', color: '#a8c8e8', marginTop: '8px', fontStyle: 'italic'}}>
+            You've done it.
+          </div>
         </div>
       </div>
     );
@@ -124,17 +137,78 @@ export default function LifeSignalNudge({ domain, domainMeanRaw, onNext, progres
   }, [progressIndex, total]);
 
   return (
-    <div className="card" style={{background:'#0f1420', border:'1px solid #25324a', borderRadius:10, padding:16, marginBottom:12}}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+    <div className="card" style={{
+      background: 'linear-gradient(135deg, #1e1e3f 0%, #2a2a5a 50%, #3a3a7a 100%)',
+      border: '1px solid #4a4a8a',
+      borderRadius: '16px',
+      padding: '24px',
+      marginBottom: '16px',
+      boxShadow: '0 12px 32px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05)',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '16px'}}>
         <div>
-          <div style={{fontSize:12, color:'#9aa3ad'}}>Life Signal Preview</div>
-          <div style={{fontSize:14, color:'#d6e5ff'}}>{line}</div>
-          <div style={{fontSize:12, color:'#9aa3ad', marginTop:4}}>{encouragement}</div>
+          <div style={{
+            fontSize: '12px', 
+            color: '#a8c8e8', 
+            fontWeight: '600', 
+            textTransform: 'uppercase', 
+            letterSpacing: '0.5px',
+            marginBottom: '8px'
+          }}>
+            Life Signal Preview
+          </div>
+          <div style={{
+            fontSize: '16px', 
+            color: '#f0f8ff', 
+            fontWeight: '500',
+            lineHeight: '1.4',
+            marginBottom: '8px'
+          }}>
+            {line}
+          </div>
+          <div style={{
+            fontSize: '12px', 
+            color: '#a8c8e8', 
+            fontStyle: 'italic'
+          }}>
+            {encouragement}
+          </div>
         </div>
-        <button className="btn" onClick={onNext} style={{marginLeft:12}}>Keep going</button>
+        <button 
+          className="btn" 
+          onClick={onNext} 
+          style={{
+            marginLeft: '16px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none',
+            color: '#ffffff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            fontWeight: '600',
+            boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)'
+          }}
+        >
+          Keep going
+        </button>
       </div>
-      <div style={{height:6, background:'#182236', borderRadius:4, overflow:'hidden', marginTop:10}}>
-        <div style={{width:`${Math.round(value*100)}%`, height:'100%', background:'#4cafef'}} />
+      <div style={{
+        height: '8px', 
+        background: 'rgba(255,255,255,0.1)', 
+        borderRadius: '4px', 
+        overflow: 'hidden',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+      }}>
+        <div style={{
+          width: `${Math.round(value*100)}%`, 
+          height: '100%', 
+          background: 'linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)',
+          borderRadius: '4px',
+          boxShadow: '0 0 8px rgba(79, 172, 254, 0.5)',
+          transition: 'width 0.3s ease'
+        }} />
       </div>
     </div>
   );
