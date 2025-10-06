@@ -428,7 +428,7 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
             const desc = (FACET_DESCRIPTIONS as any)[domain][f] || "";
             const interp = (FACET_INTERPRETATIONS as any)[domain][f][facetScoreLevel] || "";
           const isOpen = !!open[f];
-          const stars = Math.round(facetRaw);
+          const stars = b === 'High' ? 4 : b === 'Medium' ? 3 : 2;
           const full = Array.from({length: Math.max(0, Math.min(5, stars))});
           const empty = Array.from({length: Math.max(0, 5 - Math.max(0, Math.min(5, stars)))});
           const isHovered = !!hover[f];

@@ -47,22 +47,22 @@ interface CatalogEntry {
 const H=0.60, M=0.50, L=0.40;
 
 const CATALOG: CatalogEntry[] = [
-  { id:'oc_ideas_vs_routine', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Orderliness', pol:'down', thr:'H'}, copy:{ how:'You dream up more ideas than you can neatly store.', helps:'sparking new concepts.', hurts:'keeping things organized.', tip:'keep one steady container for repeats.' }},
-  { id:'oc_explore_check', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Cautiousness', pol:'up', thr:'H'}, copy:{ how:'You generate, then slam the brakes.', helps:'catching risks.', hurts:'momentum.', tip:'set a short time box, then review.' }},
-  { id:'cn_capability_dread', a:{trait:'Self-Efficacy', pol:'up', thr:'H'}, b:{trait:'Depression', pol:'up', thr:'H'}, copy:{ how:'You know you can, but your mood slows the push.', helps:'quick, small wins.', hurts:'long, fuzzy goals.', tip:'give yourself a daily finish line.' }},
-  { id:'cn_ambition_overwhelm', a:{trait:'Achievement-Striving', pol:'up', thr:'H'}, b:{trait:'Vulnerability', pol:'up', thr:'H'}, copy:{ how:'Ambition meets overwhelm.', helps:'clear sub-goals.', hurts:'big undefined pushes.', tip:'split the goal into two sub-wins and schedule recovery.' }},
-  { id:'en_drive_strain', a:{trait:'Assertiveness', pol:'up', thr:'H'}, b:{trait:'Anxiety', pol:'up', thr:'H'}, copy:{ how:'Gas pedal meets brake.', helps:'quick crisis moves.', hurts:'long uncertainty.', tip:'pause for 2 beats, then pick one next step.' }},
-  { id:'en_go_fragile', a:{trait:'Activity Level', pol:'up', thr:'H'}, b:{trait:'Vulnerability', pol:'up', thr:'H'}, copy:{ how:'Go-now meets fragile state.', helps:'short sprints.', hurts:'sustained load.', tip:'alternate 25-minute sprints with safety checks.' }},
-  { id:'ae_lead_sync', a:{trait:'Cooperation', pol:'down', thr:'H'}, b:{trait:'Assertiveness', pol:'up', thr:'H'}, copy:{ how:'You lean toward leading, not syncing.', helps:'clear ownership.', hurts:'team consensus.', tip:'add one shared win to every ask.' }},
-  { id:'ae_warm_guarded', a:{trait:'Trust', pol:'down', thr:'H'}, b:{trait:'Gregariousness', pol:'up', thr:'H'}, copy:{ how:'You’re warm but guarded.', helps:'boundary setting.', hurts:'fast trust.', tip:'ask constraints before conclusions.' }},
-  { id:'an_guarded_reactive', a:{trait:'Trust', pol:'down', thr:'H'}, b:{trait:'Anger', pol:'up', thr:'H'}, copy:{ how:'You’re guarded and quick to flare.', helps:'setting hard rules.', hurts:'heated threads.', tip:'name the trigger and wait 90 seconds.' }},
-  { id:'an_understate_push', a:{trait:'Modesty', pol:'up', thr:'H'}, b:{trait:'Assertiveness', pol:'up', thr:'H'}, copy:{ how:'You understate then push.', helps:'humble asks.', hurts:'high-stakes meetings.', tip:'make an explicit ask after your summary.' }},
-  { id:'e_solo_driver', a:{trait:'Assertiveness', pol:'up', thr:'H'}, b:{trait:'Gregariousness', pol:'down', thr:'H'}, copy:{ how:'You push alone more than with groups.', helps:'direct action.', hurts:'team buy-in.', tip:'recruit 1:1 before the group push.' }},
-  { id:'c_neat_inconsistent', a:{trait:'Orderliness', pol:'up', thr:'H'}, b:{trait:'Self-Discipline', pol:'down', thr:'H'}, copy:{ how:'Neat but inconsistent.', helps:'prep phases.', hurts:'follow-through.', tip:'protect a fixed daily slot.' }},
-  { id:'a_truth_vs_care', a:{trait:'Morality', pol:'down', thr:'H'}, b:{trait:'Sympathy', pol:'up', thr:'H'}, copy:{ how:'Blunt truth meets care.', helps:'hard calls.', hurts:'soft landings.', tip:'rule → reason → option.' }},
-  { id:'on_curiosity_risk', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Anxiety', pol:'up', thr:'H'}, copy:{ how:'Curiosity meets risk.', helps:'small probes.', hurts:'big unknowns.', tip:'pre-commit to a small probe and log risk notes.' }},
-  { id:'oe_depth_vs_novelty', a:{trait:'Intellect', pol:'up', thr:'H'}, b:{trait:'Excitement-Seeking', pol:'up', thr:'H'}, copy:{ how:'Deep dive vs novelty chase.', helps:'dual-track work.', hurts:'single-rail focus.', tip:'use the two-tab rule — one explore, one finish.' }},
-  { id:'ce_checklists_thrills', a:{trait:'Cautiousness', pol:'up', thr:'H'}, b:{trait:'Excitement-Seeking', pol:'up', thr:'H'}, copy:{ how:'Checklists vs thrills.', helps:'earned reward.', hurts:'impulse switches.', tip:'earn thrills after the checklist.' }},
+  { id:'oc_ideas_vs_routine', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Orderliness', pol:'down', thr:'H'}, copy:{ how:'You dream up more ideas than you can neatly store.', helps:'spark new concepts', hurts:'you need to keep things organized', tip:'keep one steady container for repeats.' }},
+  { id:'oc_explore_check', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Cautiousness', pol:'up', thr:'H'}, copy:{ how:'You generate, then slam the brakes.', helps:'catch risks', hurts:'you need momentum', tip:'set a short time box, then review.' }},
+  { id:'cn_capability_dread', a:{trait:'Self-Efficacy', pol:'up', thr:'H'}, b:{trait:'Depression', pol:'up', thr:'H'}, copy:{ how:'You know you can, but your mood slows the push.', helps:'get quick, small wins', hurts:'you face long, fuzzy goals', tip:'give yourself a daily finish line.' }},
+  { id:'cn_ambition_overwhelm', a:{trait:'Achievement-Striving', pol:'up', thr:'H'}, b:{trait:'Vulnerability', pol:'up', thr:'H'}, copy:{ how:'Ambition meets overwhelm.', helps:'set clear sub-goals', hurts:'you push on big, undefined work', tip:'split the goal into two sub-wins and schedule recovery.' }},
+  { id:'en_drive_strain', a:{trait:'Assertiveness', pol:'up', thr:'H'}, b:{trait:'Anxiety', pol:'up', thr:'H'}, copy:{ how:'Gas pedal meets brake.', helps:'make quick crisis moves', hurts:'uncertainty drags on', tip:'pause for 2 beats, then pick one next step.' }},
+  { id:'en_go_fragile', a:{trait:'Activity Level', pol:'up', thr:'H'}, b:{trait:'Vulnerability', pol:'up', thr:'H'}, copy:{ how:'Go-now meets fragile state.', helps:'excel in short sprints', hurts:'the load must be sustained', tip:'alternate 25-minute sprints with safety checks.' }},
+  { id:'ae_lead_sync', a:{trait:'Cooperation', pol:'down', thr:'H'}, b:{trait:'Assertiveness', pol:'up', thr:'H'}, copy:{ how:'You lean toward leading, not syncing.', helps:'establish clear ownership', hurts:'you need team consensus', tip:'add one shared win to every ask.' }},
+  { id:'ae_warm_guarded', a:{trait:'Trust', pol:'down', thr:'H'}, b:{trait:'Gregariousness', pol:'up', thr:'H'}, copy:{ how:'You’re warm but guarded.', helps:'set boundaries', hurts:'trust must form quickly', tip:'ask constraints before conclusions.' }},
+  { id:'an_guarded_reactive', a:{trait:'Trust', pol:'down', thr:'H'}, b:{trait:'Anger', pol:'up', thr:'H'}, copy:{ how:'You’re guarded and quick to flare.', helps:'set hard rules', hurts:'threads get heated', tip:'name the trigger and wait 90 seconds.' }},
+  { id:'an_understate_push', a:{trait:'Modesty', pol:'up', thr:'H'}, b:{trait:'Assertiveness', pol:'up', thr:'H'}, copy:{ how:'You understate then push.', helps:'make humble asks', hurts:'stakes are high in meetings', tip:'make an explicit ask after your summary.' }},
+  { id:'e_solo_driver', a:{trait:'Assertiveness', pol:'up', thr:'H'}, b:{trait:'Gregariousness', pol:'down', thr:'H'}, copy:{ how:'You push alone more than with groups.', helps:'take direct action', hurts:'you need team buy-in', tip:'recruit 1:1 before the group push.' }},
+  { id:'c_neat_inconsistent', a:{trait:'Orderliness', pol:'up', thr:'H'}, b:{trait:'Self-Discipline', pol:'down', thr:'H'}, copy:{ how:'Neat but inconsistent.', helps:'shine in prep phases', hurts:'follow-through is required', tip:'protect a fixed daily slot.' }},
+  { id:'a_truth_vs_care', a:{trait:'Morality', pol:'down', thr:'H'}, b:{trait:'Sympathy', pol:'up', thr:'H'}, copy:{ how:'Blunt truth meets care.', helps:'make hard calls', hurts:'soft landings are needed', tip:'rule → reason → option.' }},
+  { id:'on_curiosity_risk', a:{trait:'Openness', pol:'up', thr:'H'}, b:{trait:'Anxiety', pol:'up', thr:'H'}, copy:{ how:'Curiosity meets risk.', helps:'run small probes', hurts:'unknowns are big', tip:'pre-commit to a small probe and log risk notes.' }},
+  { id:'oe_depth_vs_novelty', a:{trait:'Intellect', pol:'up', thr:'H'}, b:{trait:'Excitement-Seeking', pol:'up', thr:'H'}, copy:{ how:'Deep dive vs novelty chase.', helps:'run dual-track work', hurts:'single-rail focus is needed', tip:'use the two-tab rule — one explore, one finish.' }},
+  { id:'ce_checklists_thrills', a:{trait:'Cautiousness', pol:'up', thr:'H'}, b:{trait:'Excitement-Seeking', pol:'up', thr:'H'}, copy:{ how:'Checklists vs thrills.', helps:'earn reward', hurts:'impulse switches tempt you', tip:'earn thrills after the checklist.' }},
 ];
 
 // --- helpers ---
@@ -134,9 +134,11 @@ function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConf
     const aPct = Math.round(aVal*100);
     const bPct = Math.round(bVal*100);
     const copy = entry.copy || { how:'Gas pedal meets brake.', helps:'quick crisis moves.', hurts:'long uncertainty.', tip:'pause for 2 beats, then pick one next step.' };
+    const aLabel = entry.a.pol==='up' ? 'High' : 'Low';
+    const bLabel = entry.b.pol==='up' ? 'High' : 'Low';
     cards.push({
       type: 'conflict',
-      facet: `Conflict Pair — ${entry.a.trait} × ${entry.b.trait}`,
+      facet: `Conflict Pair — ${entry.a.trait} ${aLabel} × ${entry.b.trait} ${bLabel}`,
       description: `${copy.how}\n\nThis tension helps you ${copy.helps.toLowerCase()} but can hurt you when ${copy.hurts.toLowerCase()}.\n\nTip: ${copy.tip}`,
       conflict: { left: entry.a.trait, right: entry.b.trait, id: idx },
       leftPct: aPct,
@@ -150,9 +152,14 @@ function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConf
     const O = means.O, C = means.C, E = means.E, N = means.N;
     const T = z(N);
     const P = z(0.40*O + 0.35*E + 0.25*C);
+    const pLabel = P >= 0.5 ? 'High' : 'Low';
+    const tLabel = T >= 0.5 ? 'High' : 'Low';
+    const strengthLabel = (v:number)=> v>=0.7 ? 'Strong' : v>=0.4 ? 'Moderate' : 'Slight';
+    const pStrength = strengthLabel(pLabel==='High' ? P : (1 - P));
+    const tStrength = strengthLabel(tLabel==='High' ? T : (1 - T));
     cards.push({
       type: 'conflict',
-      facet: 'Conflict Pair — Pursuit × Threat',
+      facet: `Conflict Pair — Pursuit ${pLabel} (${pStrength}) × Threat ${tLabel} (${tStrength})`,
       description: 'Gas pedal meets brake.\n\nThis tension helps you with fast probes and crisis work but can hurt you during long periods of ambiguity.\n\nTip: pause 2 counts; set a binary next step.',
       conflict: { left: 'Pursuit', right: 'Threat', id: -1 },
       leftPct: Math.round(P*100),

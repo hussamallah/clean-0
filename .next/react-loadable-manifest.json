@@ -6,6 +6,12 @@
       "static/chunks/345.88612954dfc9fe4b.js"
     ]
   },
+  "app\\who\\page.tsx -> @/lib/data/who_panels.json": {
+    "id": 5703,
+    "files": [
+      "static/chunks/703.bf8a2f1e132740c2.js"
+    ]
+  },
   "components\\who\\ExistentialCircuits.tsx -> ../../ground_zero_243_profiles.json": {
     "id": 2620,
     "files": [

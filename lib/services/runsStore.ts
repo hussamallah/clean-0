@@ -5,7 +5,11 @@ const UPSTASH_URL = (process.env.UPSTASH_REDIS_REST_URL || "").trim();
 const UPSTASH_TOKEN = (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim();
 
 // Fallback in-memory store (non-persistent, per server instance)
-const memoryStore = new Map<string, RunRecord>();
+const g = globalThis as any;
+if (!g.__gz_runs_store) {
+  g.__gz_runs_store = new Map<string, RunRecord>();
+}
+const memoryStore: Map<string, RunRecord> = g.__gz_runs_store;
 
 async function upstashSet(key: string, value: string): Promise<boolean> {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;

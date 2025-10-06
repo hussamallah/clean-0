@@ -2,9 +2,11 @@ import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS, DomainKey } from "./co
 import { getFacetScoreLevel, stableStringify } from "./format";
 import { buildDeterministicWhoView, DeterministicWhoView } from "./who_bank_renderer";
 import { sha256 } from "@/lib/crypto/sha256";
+import narrativeVariants from "@/lib/data/narrative_variants.json";
 
 export type CardChoice = 'Compatibility' | 'Versus';
 export type FacetState = 'High' | 'Medium' | 'Low';
+export type Tone = 'neutral'|'alpha'|'warm'|'calm'|'technical';
 
 export type WhoDerived = {
   polarity: number;
@@ -18,6 +20,9 @@ export type WhoDerived = {
 export type WhoAudit = {
   checksum: string;                 // sha256 of canonical payload and rule version
   ruleVersion: string;
+  // Added: attest run → who binding
+  runHash?: string;                 // 24-char RID-style hash of normalized run payload
+  attestation?: string;             // sha256 of { whoChecksum, runHash, versions }
 };
 
 export type WhoExport = {
@@ -28,6 +33,7 @@ export type WhoExport = {
   derived: WhoDerived;
   chosen: { card: CardChoice; reasons: string[] };
   narrative: string[];              // 6-10 sentences
+  tone: Tone;                       // unified tone for narrative and panels
   lists?: { strengths: string[]; risks: string[]; mediums: string[] };
   listSentences?: { strengths: string[]; risks: string[]; mediums: string[] };
   deterministic?: DeterministicWhoView;
@@ -141,7 +147,8 @@ function pickCard(
 
 function buildNarrative(
   states: Record<DomainKey, Record<string, FacetState>>,
-  rawByDomain: Record<DomainKey, Record<string, number>>
+  rawByDomain: Record<DomainKey, Record<string, number>>,
+  tone: Tone
 ): string[] {
   const ranked       = rankAllFacets(rawByDomain);
   const domainMeans  = computeDomainMeans(rawByDomain);
@@ -152,84 +159,126 @@ function buildNarrative(
 
   const sentences: string[] = [];
 
-  // Opening synthesis
-  if (polarity >= 1.0) {
-    sentences.push('You move through life with sharp contrasts. At your best, you bring strong fuel where it counts; at your weak points, you under-invest where structure and patience are needed.');
-  } else {
-    sentences.push('You move through life with measured balance. You can bring strengths forward without overplaying them, and your softer spots rarely dominate.');
-  }
+  // Opening synthesis (tone variants when available)
+  const V: any = narrativeVariants as any;
+  const openingId = polarity >= 1.0 ? 'polarity_high' : 'polarity_balanced';
+  const defaultOpening = polarity >= 1.0
+    ? 'You move through life with sharp contrasts. At your best, you bring strong fuel where it counts; at your weak points, you under-invest where structure and patience are needed.'
+    : 'You move through life with measured balance. You can bring strengths forward without overplaying them, and your softer spots rarely dominate.';
+  const openingVar = V?.opening?.[openingId]?.[tone];
+  sentences.push(openingVar || defaultOpening);
+
   if (stabilityMean >= 3.5) {
-    sentences.push('Under stress you stay composed and steady; pressure rarely knocks you off course.');
+    const defaultStab = 'Under stress you stay composed and steady; pressure rarely knocks you off course.';
+    const stabVar = V?.stability?.high?.[tone];
+    sentences.push(stabVar || defaultStab);
   } else if (stabilityMean <= 2.5) {
-    sentences.push('Under stress you can feel destabilized; spikes can pull you off your usual rhythm.');
+    const defaultStab = 'Under stress you can feel destabilized; spikes can pull you off your usual rhythm.';
+    const stabVar = V?.stability?.low?.[tone];
+    sentences.push(stabVar || defaultStab);
   }
   // No user-facing "Polarity X − Y = Z" sentence (kept in export only)
 
   // Domain snapshots — brief, behavior-first summaries
   const tag = (d: DomainKey) => DOMAINS[d].label.split(' ')[0];
-  const describeDomain = (d: DomainKey, mean: number): string | null => {
-    const name = tag(d);
-    if (d === 'O') {
-      if (mean >= 4.0) return `Your ${name} is pronounced; you actively seek novelty, ideas, and change.`;
-      if (mean <= 2.0) return `Your ${name} is modest; you prefer proven methods and concrete, workable plans.`;
-      return `Your ${name} is balanced; you mix fresh thinking with practical judgment.`;
-    }
-    if (d === 'C') {
-      if (mean >= 4.0) return `Your ${name} is strong; structure, follow-through, and reliability are central to how you operate.`;
-      if (mean <= 2.0) return `Your ${name} is light; you move flexibly, dislike tight constraints, and work best with autonomy.`;
-      return `Your ${name} is steady; you organize when it matters and keep room for flow.`;
-    }
-    if (d === 'E') {
-      if (mean >= 4.0) return `Your ${name} is high; you draw energy from people, pace, and visible momentum.`;
-      if (mean <= 2.0) return `Your ${name} is low; you conserve energy, prefer depth over crowds, and choose focused settings.`;
-      return `Your ${name} is moderate; you can engage widely or work quietly as needed.`;
-    }
-    if (d === 'A') {
-      if (mean >= 4.0) return `Your ${name} is high; you lean toward harmony, good faith, and collaborative moves.`;
-      if (mean <= 2.0) return `Your ${name} is low; you prioritize candor and self-direction over smoothing edges.`;
-      return `Your ${name} is balanced; you can cooperate without losing your stance.`;
-    }
-    // Neuroticism
-    if (mean >= 4.0) return `Your ${name} runs high; feelings arrive fast and strong, and stress can bite quickly.`;
-    if (mean <= 2.0) return `Your ${name} runs low; you keep an even keel and recover quickly under pressure.`;
-    return `Your ${name} is mid-range; emotions register, but rarely take the wheel.`;
-  };
   for (const d of ['O','C','E','A','N'] as DomainKey[]) {
-    const line = describeDomain(d, domainMeans[d]);
-    if (line) sentences.push(line);
+    const name = tag(d);
+    const mean = domainMeans[d];
+    const highCut = d === 'C' ? 3.8 : 4.0;
+    const lowCut  = d === 'C' ? 2.2 : 2.0;
+    const lvl = mean >= highCut ? 'high' : mean <= lowCut ? 'low' : 'medium';
+    let defaultLine: string;
+    if (d === 'O') {
+      if (lvl === 'high') defaultLine = `Your ${name} is pronounced; you actively seek novelty, ideas, and change.`;
+      else if (lvl === 'low') defaultLine = `Your ${name} is modest; you prefer proven methods and concrete, workable plans.`;
+      else defaultLine = `Your ${name} is balanced; you mix fresh thinking with practical judgment.`;
+    } else if (d === 'C') {
+      if (lvl === 'high') defaultLine = `Your ${name} is strong; structure, follow-through, and reliability are central to how you operate.`;
+      else if (lvl === 'low') defaultLine = `Your ${name} is light; you move flexibly, dislike tight constraints, and work best with autonomy.`;
+      else defaultLine = `Your ${name} is steady; you organize when it matters and keep room for flow.`;
+    } else if (d === 'E') {
+      if (lvl === 'high') defaultLine = `Your ${name} is high; you draw energy from people, pace, and visible momentum.`;
+      else if (lvl === 'low') defaultLine = `Your ${name} is low; you conserve energy, prefer depth over crowds, and choose focused settings.`;
+      else defaultLine = `Your ${name} is moderate; you can engage widely or work quietly as needed.`;
+    } else if (d === 'A') {
+      if (lvl === 'high') defaultLine = `Your ${name} is high; you lean toward harmony, good faith, and collaborative moves.`;
+      else if (lvl === 'low') defaultLine = `Your ${name} is low; you prioritize candor and self-direction over smoothing edges.`;
+      else defaultLine = `Your ${name} is balanced; you can cooperate without losing your stance.`;
+    } else { // N
+      if (lvl === 'high') defaultLine = `Your ${name} runs high; feelings arrive fast and strong, and stress can bite quickly.`;
+      else if (lvl === 'low') defaultLine = `Your ${name} runs low; you keep an even keel and recover quickly under pressure.`;
+      else {
+        const highFacets = canonicalFacets('N').filter(f => states.N[f] === 'High');
+        if (highFacets.length > 0) {
+          defaultLine = `Your ${name} is mid-range, with highs in ${highFacets.join('/')}, so signals register without always taking the wheel.`;
+        } else {
+          defaultLine = `Your ${name} is mid-range; emotions register, but rarely take the wheel.`;
+        }
+      }
+    }
+    const varLine = V?.domain?.[d]?.[lvl]?.[tone];
+    sentences.push(varLine || defaultLine);
   }
 
   // Interpersonal style (E × A)
   const Ehigh = domainMeans.E >= 4.0, Elow = domainMeans.E <= 2.0;
   const Ahigh = domainMeans.A >= 4.0, Alow = domainMeans.A <= 2.0;
-  if (Ehigh && Ahigh) sentences.push('Interpersonally you come across as warm and energizing—quick to include, quick to encourage.');
-  else if (Ehigh && Alow) sentences.push('Interpersonally you read as forceful and independent—comfortable taking the mic and stating hard truths.');
-  else if (Elow && Ahigh) sentences.push('Interpersonally you are calm and considerate—selective with attention, easy to be around.');
-  else if (Elow && Alow) sentences.push('Interpersonally you favor autonomy and directness—reserved, self-contained, and succinct.');
-  else sentences.push('Interpersonally you adapt—able to be visible when needed and quieter when depth matters.');
+  let interpersonalKey: string;
+  if (Ehigh && Ahigh) interpersonalKey = 'warm_energizing';
+  else if (Ehigh && Alow) interpersonalKey = 'forceful_independent';
+  else if (Elow && Ahigh) interpersonalKey = 'calm_considerate';
+  else if (Elow && Alow) interpersonalKey = 'autonomous_direct';
+  else interpersonalKey = 'adaptive_balanced';
+  const interpersonalDefault = (
+    interpersonalKey === 'warm_energizing' ? 'Interpersonally you come across as warm and energizing—quick to include, quick to encourage.' :
+    interpersonalKey === 'forceful_independent' ? 'Interpersonally you read as forceful and independent—comfortable taking the mic and stating hard truths.' :
+    interpersonalKey === 'calm_considerate' ? 'Interpersonally you are calm and considerate—selective with attention, easy to be around.' :
+    interpersonalKey === 'autonomous_direct' ? 'Interpersonally you favor autonomy and directness—reserved, self-contained, and succinct.' :
+    'Interpersonally you adapt—able to be visible when needed and quieter when depth matters.'
+  );
+  const interpersonalVar = V?.interpersonal?.[interpersonalKey]?.[tone];
+  sentences.push(interpersonalVar || interpersonalDefault);
 
   // Work style (C facets)
   const cHigh = (f: string) => states.C[f] === 'High';
   const cLow  = (f: string) => states.C[f] === 'Low';
-  if (cHigh('Self-Discipline') || cHigh('Orderliness') || domainMeans.C >= 3.8) {
-    const risk = cHigh('Cautiousness') ? 'and you weigh risks carefully' : 'and you move once essentials are set';
-    sentences.push(`At work you build dependable systems, maintain pace through friction, ${risk}.`);
-  } else if (cLow('Orderliness') || domainMeans.C <= 2.2) {
-    const plus = cHigh('Achievement-Striving') ? 'You still push when goals excite you' : 'You protect room for spontaneity';
-    sentences.push(`At work you avoid rigid structure, preferring flexible lanes and just-in-time organization. ${plus}.`);
-  } else {
-    sentences.push('At work you balance plans with motion—enough structure to finish, enough flexibility to iterate.');
-  }
+  let workKey: string;
+  if (cHigh('Self-Discipline') || cHigh('Orderliness') || domainMeans.C >= 3.8) workKey = 'dependable_systems';
+  else if (cLow('Orderliness') || domainMeans.C <= 2.2) workKey = 'flexible_lanes';
+  else workKey = 'balanced';
+  const workDefault = (
+    workKey === 'dependable_systems' ? (
+      cHigh('Cautiousness') ? 'At work you build dependable systems, maintain pace through friction, and you weigh risks carefully.'
+                             : 'At work you build dependable systems, maintain pace through friction, and you move once essentials are set.'
+    ) : workKey === 'flexible_lanes' ? (
+      (cHigh('Achievement-Striving') ? 'At work you avoid rigid structure, preferring flexible lanes and just-in-time organization. You still push when goals excite you.'
+                                     : 'At work you avoid rigid structure, preferring flexible lanes and just-in-time organization. You protect room for spontaneity.')
+    ) : 'At work you balance plans with motion—enough structure to finish, enough flexibility to iterate.'
+  );
+  const workVar = V?.work_style?.[workKey]?.[tone];
+  sentences.push(workVar || workDefault);
 
   // Decision-making (O:Intellect/Liberalism × C:Cautiousness)
   const oIntHigh = states.O['Intellect'] === 'High';
   const oLibHigh = states.O['Liberalism'] === 'High';
   const cCautHigh= states.C['Cautiousness'] === 'High';
-  if (oIntHigh && cCautHigh) sentences.push('In decisions you analyze models and downside, then commit with clear boundaries.');
-  else if (oIntHigh && !cCautHigh) sentences.push('In decisions you reason quickly from principles and run fast experiments.');
-  else if (oLibHigh && cCautHigh) sentences.push('In decisions you challenge defaults, but proceed deliberately with safeguards.');
-  else if (oLibHigh) sentences.push('In decisions you question conventions and open new options others miss.');
-  else if (cCautHigh) sentences.push('In decisions you prefer measured steps, factoring risk and second-order effects.');
+  let decisionKey: string | null = null;
+  if (oIntHigh && cCautHigh) decisionKey = 'models_and_boundaries';
+  else if (oIntHigh && !cCautHigh) decisionKey = 'principles_and_experiments';
+  else if (oLibHigh && cCautHigh) decisionKey = 'challenge_with_safeguards';
+  else if (oLibHigh) decisionKey = 'challenge_defaults';
+  else if (cCautHigh) decisionKey = 'measured_steps';
+  if (decisionKey) {
+    const decisionDefault = (
+      decisionKey === 'models_and_boundaries' ? 'In decisions you analyze models and downside, then commit with clear boundaries.' :
+      decisionKey === 'principles_and_experiments' ? 'In decisions you reason quickly from principles and run fast experiments.' :
+      decisionKey === 'challenge_with_safeguards' ? 'In decisions you challenge defaults, but proceed deliberately with safeguards.' :
+      decisionKey === 'challenge_defaults' ? 'In decisions you question conventions and open new options others miss.' :
+      'In decisions you prefer measured steps, factoring risk and second-order effects.'
+    );
+    const decisionVar = V?.decision_style?.[decisionKey]?.[tone];
+    sentences.push(decisionVar || decisionDefault);
+  }
 
   // Stress pattern (N facets)
   const nHigh = (f: string) => states.N[f] === 'High';
@@ -325,7 +374,29 @@ export async function buildWhoFromFullResults(
 
   const derived: WhoDerived = { polarity, stabilityMean, stabilityFlag, lowestDomainMean, lowsCount, domainMeans };
   const chosen   = pickCard(derived, states);
-  const narrative = buildNarrative(states, rawByDomain);
+
+  // Infer tone using same logic as page.tsx
+  const inferTone = (): Tone => {
+    // Interpersonal key (E×A)
+    const Ehigh = domainMeans.E >= 4.0, Elow = domainMeans.E <= 2.0;
+    const Ahigh = domainMeans.A >= 4.0, Alow = domainMeans.A <= 2.0;
+    let interpersonalKey: string;
+    if (Ehigh && Ahigh) interpersonalKey = 'warm_energizing';
+    else if (Ehigh && Alow) interpersonalKey = 'forceful_independent';
+    else if (Elow && Ahigh) interpersonalKey = 'calm_considerate';
+    else if (Elow && Alow) interpersonalKey = 'autonomous_direct';
+    else interpersonalKey = 'adaptive_balanced';
+
+    // Tone inference
+    if (interpersonalKey === 'forceful_independent' || states.E?.['Assertiveness'] === 'High') return 'alpha';
+    if (interpersonalKey === 'warm_energizing') return 'warm';
+    if (interpersonalKey === 'calm_considerate') return 'calm';
+    if (states.O?.['Intellect'] === 'High' || states.C?.['Cautiousness'] === 'High') return 'technical';
+    return 'neutral';
+  };
+  const tone = inferTone();
+
+  const narrative = buildNarrative(states, rawByDomain, tone);
 
   // Build lists for UI rendering (headline + bullet list)
   const rankedAll = rankAllFacets(rawByDomain);
@@ -534,6 +605,7 @@ export async function buildWhoFromFullResults(
     derived,
     chosen,
     narrative,
+    tone,
     lists: { strengths: listStrengths, risks: listRisks, mediums: listMediums },
     listSentences: { strengths: sentenceStrengths, risks: sentenceRisks, mediums: sentenceMediums },
     deterministic,
@@ -550,9 +622,19 @@ export async function buildWhoFromFullResults(
     derived: base.derived,
     chosen:  base.chosen,
     narrative: base.narrative,
+    tone:    base.tone,
     ruleVersion: WHO_RULE_VERSION
   }));
   base.audit.checksum = checksum;
+
+  // Compute a RID-style run hash and a combined attestation tying run→who
+  const runHash = (await sha256(stableStringify(fullResults.map(r => ({ domain: r.domain, payload: r.payload }))))).slice(0,24);
+  base.audit.runHash = runHash;
+  base.audit.attestation = await sha256(stableStringify({
+    whoChecksum: base.audit.checksum,
+    runHash,
+    versions: { who: WHO_ENGINE_VERSION, rule: WHO_RULE_VERSION }
+  }));
 
   return base;
 }

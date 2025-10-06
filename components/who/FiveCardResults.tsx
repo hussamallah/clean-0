@@ -16,22 +16,33 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
   const [viewedCards, setViewedCards] = useState<Set<string>>(new Set());
   const [ctaEnabled, setCTAEnabled] = useState(false);
   
-  // Convert data to FacetData format for selector
+  // Convert data to FacetData format for selector using server-provided facet keys
   const facetData: FacetData[] = [];
   for (const result of data) {
     const domain = result.domain;
     const payload = result.payload;
-    const facets = canonicalFacets(domain);
-    
-    for (const facet of facets) {
-      const raw = payload?.phase2?.A_raw?.[facet] || 3;
-      const bucket = payload?.final?.bucket?.[facet] || 'Medium';
+    const aRaw = payload?.phase2?.A_raw || {};
+    // Use exact keys from payload to avoid mismatches
+    const facetKeys: string[] = Object.keys(aRaw).length
+      ? Object.keys(aRaw)
+      : canonicalFacets(domain);
+    for (const facet of facetKeys) {
+      const raw = payload?.phase2?.A_raw?.[facet] ?? 3;
+      const bucket = payload?.final?.bucket?.[facet] ?? 'Medium';
       facetData.push({ domain, facet, raw, bucket });
     }
   }
   
   // Get the deterministic 5 cards
-  const selectedCards = selectFiveCards(facetData);
+  const selectedCardsRaw = selectFiveCards(facetData);
+  // Deduplicate any repeated conflict items conservatively by (type + facet + description)
+  const seen = new Set<string>();
+  const selectedCards = selectedCardsRaw.filter(c => {
+    const key = `${c.type}|${c.facet||''}|${(c as any).description||''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   
   // CTA micro-delay per spec (M)
   useEffect(() => {
@@ -71,14 +82,14 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
         {selectedCards.filter(card => card.type === 'conflict').map((card, i) => {
-          const stars = card.raw ? Math.round(card.raw) : (card.bucket === 'High' ? 5 : card.bucket === 'Medium' ? 3 : 2);
+          const stars = card.bucket === 'High' ? 4 : card.bucket === 'Medium' ? 3 : 2;
           const full = Array.from({length: Math.max(0, Math.min(5, stars))});
           const empty = Array.from({length: Math.max(0, 5 - stars)});
           const cls = card.bucket?.toLowerCase() || 'medium';
           const [isOpen, setIsOpen] = useState(card.type === 'conflict'); // Auto-expand only conflict cards, no collapse for them
           
           // Find the domain and payload for this facet to get interpretation
-          let interpretation = card.description;
+          let interpretation = (card as any).description;
           if (card.domain && card.facet && card.type !== 'conflict') {
             const domainResult = data.find(d => d.domain === card.domain);
             if (domainResult) {

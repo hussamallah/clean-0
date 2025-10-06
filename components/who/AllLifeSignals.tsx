@@ -1,8 +1,11 @@
 "use client";
 import { computeSignals, type DomainMeans } from "@/lib/bigfive/signals";
+import variants from "@/lib/data/narrative_variants.json";
 
 interface AllLifeSignalsProps {
   domainMeans: DomainMeans;
+  tone?: 'neutral'|'alpha'|'warm'|'calm'|'technical';
+  hideKeys?: ReadonlyArray<string>;
 }
 
 type Level = 'Very High'|'High'|'Medium'|'Low'|'Very Low';
@@ -195,10 +198,11 @@ const signalDescriptions: Record<string, { name: string; description: string; le
   }
 };
 
-export default function AllLifeSignals({ domainMeans }: AllLifeSignalsProps) {
+export default function AllLifeSignals({ domainMeans, tone = 'neutral', hideKeys = [] }: AllLifeSignalsProps) {
   const signals = computeSignals(domainMeans);
   
   const signalKeys = ['T', 'P', 'S', 'B', 'D', 'G', 'R', 'V', 'Y', 'L', 'F', 'U', 'M', 'I', 'K', 'Q'] as const;
+  const visibleKeys = signalKeys.filter(k => !hideKeys.includes(k));
   
   return (
     <div style={{
@@ -222,11 +226,19 @@ export default function AllLifeSignals({ domainMeans }: AllLifeSignalsProps) {
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
         gap: '12px' 
       }}>
-        {signalKeys.map(signalKey => {
+        {visibleKeys.map(signalKey => {
           const value = signals[signalKey];
           const level = levelOf(value);
           const percentage = Math.round(value * 100);
           const signalInfo = signalDescriptions[signalKey];
+          // Variant copy lookup with fallback chain
+          const base: any = (variants as any).life_signals_snapshot;
+          const node = base?.[signalKey] && base?.[signalKey].tones && Object.keys(base[signalKey].tones).length
+            ? base[signalKey]
+            : base?._default;
+          const t = (node?.tones?.[tone]?.levels?.[level])
+            || (node?.tones?.['neutral']?.levels?.[level])
+            || '';
           
           return (
             <div key={signalKey} style={{
@@ -240,7 +252,7 @@ export default function AllLifeSignals({ domainMeans }: AllLifeSignalsProps) {
                 <span style={{ fontSize: '11px', color: '#ccc' }}>{percentage}%</span>
               </div>
               <div style={{ fontSize: '12px', color: '#d6e5ff', lineHeight: 1.4 }}>
-                {signalInfo.levels[level]}
+                {t || signalInfo.levels[level]}
               </div>
             </div>
           );

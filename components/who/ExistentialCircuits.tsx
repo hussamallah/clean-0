@@ -2,9 +2,11 @@
 import { useEffect, useState } from "react";
 import { compute, type Circuits, type Result } from "../../Existential Circuits";
 
+type DomainLetter = 'E'|'N'|'C'|'O'|'A';
+
 interface ExistentialCircuitsProps {
-  domainMeans: { E: number; N: number; C: number; O: number; A: number };
-  fullResults: Array<{ domain: string; payload: any }>;
+  domainMeans: { E: number; N: number; C: number; O: number; A: number } | undefined;
+  fullResults: Array<{ domain: string; payload: any }> | undefined;
 }
 
 interface ProfileData {
@@ -27,14 +29,18 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
   useEffect(() => {
     async function calculateCircuits() {
       try {
-        // Convert Big Five scores to circuits
-        // This is a simplified mapping - you might want to refine this
+        const E = Number.isFinite((domainMeans as any)?.E) ? (domainMeans as any).E : 3;
+        const O = Number.isFinite((domainMeans as any)?.O) ? (domainMeans as any).O : 3;
+        const C = Number.isFinite((domainMeans as any)?.C) ? (domainMeans as any).C : 3;
+        const A = Number.isFinite((domainMeans as any)?.A) ? (domainMeans as any).A : 3;
+        const N = Number.isFinite((domainMeans as any)?.N) ? (domainMeans as any).N : 3;
+
         const circuits: Circuits = {
-          vitality: Math.max(-1, Math.min(1, (domainMeans.E - 3) / 2)), // E drives vitality
-          signal: Math.max(-1, Math.min(1, (domainMeans.O - 3) / 2)), // O drives signal/creativity
-          time: Math.max(-1, Math.min(1, (domainMeans.C - 3) / 2)), // C drives time/structure
-          attachment: Math.max(-1, Math.min(1, (domainMeans.A - 3) / 2)), // A drives attachment
-          seeking: Math.max(-1, Math.min(1, (3 - domainMeans.N) / 2)) // Low N drives seeking
+          vitality: Math.max(-1, Math.min(1, (E - 3) / 2)),
+          signal: Math.max(-1, Math.min(1, (O - 3) / 2)),
+          time: Math.max(-1, Math.min(1, (C - 3) / 2)),
+          attachment: Math.max(-1, Math.min(1, (A - 3) / 2)),
+          seeking: Math.max(-1, Math.min(1, (3 - N) / 2))
         };
 
         const computed = await compute(circuits);
@@ -43,17 +49,18 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
         // Compute domain buckets from fullResults (fallback to domainMeans thresholds)
         const buckets: { E: string; N: string; C: string; O: string; A: string } = { E: 'Medium', N: 'Medium', C: 'Medium', O: 'Medium', A: 'Medium' };
         try {
-          for (const r of fullResults || []) {
-            const d = (r?.domain || '').toUpperCase();
+          const list = Array.isArray(fullResults) ? fullResults : [];
+          for (const r of list) {
+            const d = (r?.domain || '').toUpperCase() as DomainLetter;
             const mean = r?.payload?.final?.domain_mean_raw;
-            if (typeof mean === 'number') {
-              buckets[d as 'E'|'N'|'C'|'O'|'A'] = mean >= 4.0 ? 'High' : (mean <= 2.0 ? 'Low' : 'Medium');
+            if (typeof mean === 'number' && (['E','N','C','O','A'] as DomainLetter[]).includes(d)) {
+              buckets[d] = mean >= 4.0 ? 'High' : (mean <= 2.0 ? 'Low' : 'Medium');
             }
           }
           // If any domain missing, infer via domainMeans
           (['E','N','C','O','A'] as const).forEach(d => {
             if (!['High','Medium','Low'].includes(buckets[d] as any)){
-              const m = (domainMeans as any)[d];
+              const m = ({E,N,C,O,A} as any)[d];
               buckets[d] = m >= 4.0 ? 'High' : (m <= 2.0 ? 'Low' : 'Medium');
             }
           });
@@ -103,11 +110,11 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
   }
 
   const circuitLabels = {
-    vitality: 'Energy',
-    signal: 'Clarity', 
-    time: 'Structure',
-    attachment: 'Bond',
-    seeking: 'Drive'
+    vitality: 'Energy (Circuit)',
+    signal: 'Clarity (Circuit)',
+    time: 'Structure (Circuit)',
+    attachment: 'Bond (Circuit)',
+    seeking: 'Drive (Circuit)'
   };
 
   const circuitDescriptions = {
@@ -126,10 +133,10 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
     const buckets = result.buckets;
     
     // Find highest scoring domain
-    let maxScore = 0;
-    let primaryDomain: 'E'|'N'|'C'|'O'|'A' = 'E';
+    let maxScore = -Infinity;
+    let primaryDomain: DomainLetter = 'E';
     (['E','N','C','O','A'] as const).forEach(d => {
-      if (scores[d] > maxScore) {
+      if (typeof scores[d] === 'number' && scores[d] > maxScore) {
         maxScore = scores[d];
         primaryDomain = d;
       }
@@ -172,7 +179,7 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
             const color = value >= 0 ? '#4caf50' : '#f44336';
             
             // Map circuits to domains for finding data
-            const domainMap: Record<string, 'E'|'N'|'C'|'O'|'A'> = {
+            const domainMap: Record<string, DomainLetter> = {
               vitality: 'E',    // Energy maps to Extraversion
               signal: 'O',      // Clarity maps to Openness  
               time: 'C',        // Structure maps to Conscientiousness
