@@ -17,7 +17,11 @@ export function domainLabel(domain: DomainKey){ return DOMAINS[domain].label; }
 export function p1Prompts(domain: DomainKey){ return P1_PROMPTS[domain]; }
 export function anchorPrompt(domain: DomainKey, facet: string, idx: number){
   const arr = (ANCHORS as any)[domain]?.[facet] as string[] | undefined;
-  return arr && arr[idx] ? arr[idx] : `Rate ${facet} (item ${idx+1})`;
+  if (!arr || !arr[idx]) {
+    console.warn(`Missing anchor statement for ${domain}.${facet}[${idx}]`);
+    return `Rate ${facet} (item ${idx+1}) - Statement not available`;
+  }
+  return arr[idx];
 }
 export function confirmQuestion(domain: DomainKey, facet: string){
   return (CONFIRM as any)[domain]?.[facet] || `Quick check on ${facet}`;

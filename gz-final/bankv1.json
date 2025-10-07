@@ -1,0 +1,165 @@
+{
+  "version": "gz_item_bank_v1.3_full",
+  "phase1_prompt": "When it's real and you must act, which 2 or 3 domains do you lean on?",
+  "domain_order": ["O","C","E","A","N"],
+  "domain_labels": {
+    "O": "Openness", "C": "Conscientiousness", "E": "Extraversion", "A": "Agreeableness", "N": "Neuroticism"
+  },
+  "facet_order": {
+    "O": ["Imagination","Artistic Interests","Emotionality","Adventurousness","Intellect","Values Openness"],
+    "C": ["Self-Efficacy","Orderliness","Dutifulness","Achievement-Striving","Self-Discipline","Cautiousness"],
+    "E": ["Friendliness","Gregariousness","Assertiveness","Activity Level","Excitement-Seeking","Cheerfulness"],
+    "A": ["Trust","Morality","Altruism","Cooperation","Modesty","Sympathy"],
+    "N": ["Anxiety","Anger","Depression","Self-Consciousness","Immoderation","Vulnerability"]
+  },
+  "policy": {
+    "allowVeryHighUnpicked": false
+  },
+  "lang": "en",
+  "scales": {
+    "binary": ["Yes", "No"],
+    "likert": "1..5 (Strongly disagree → Strongly agree)"
+  },
+  "domains": {
+    "O": {
+      "picked_binary": [
+        {"id":"O.Imagination.bin","facet":"Imagination","q":"When facing a pivotal choice in the past year, did you visualize multiple outcomes before acting?"},
+        {"id":"O.ArtisticInterests.bin","facet":"Artistic Interests","q":"When a creative solution was needed for a tough problem in the past year, did you use your sense of design or pattern to find one?"},
+        {"id":"O.Emotionality.bin","facet":"Emotionality","q":"At a critical juncture in the past year, did you use your feelings as information to choose a course?"},
+        {"id":"O.Adventurousness.bin","facet":"Adventurousness","q":"When the usual fix wasn't enough in the past year, did you choose an untested route?"},
+        {"id":"O.Intellect.bin","facet":"Intellect","q":"To unlock a move on a key challenge in the past year, did you reframe the problem conceptually?"},
+        {"id":"O.Values.bin","facet":"Values Openness","q":"To reach a better solution for a serious issue in the past year, did you question a norm or rule?"}
+      ],
+      "picked_likert": [
+        {"id":"O.Imagination.lik","facet":"Imagination","q":"I visualize alternative outcomes before acting."},
+        {"id":"O.ArtisticInterests.lik","facet":"Artistic Interests","q":"I notice design and aesthetics and use them in choices."},
+        {"id":"O.Emotionality.lik","facet":"Emotionality","q":"I use feelings as information when deciding."},
+        {"id":"O.Adventurousness.lik","facet":"Adventurousness","q":"I choose novel approaches."},
+        {"id":"O.Intellect.lik","facet":"Intellect","q":"I analyze ideas to get the model right."},
+        {"id":"O.Values.lik","facet":"Values Openness","q":"I challenge default rules when they block better options."}
+      ],
+      "unpicked_stage1_binary": [
+        {"id":"O.Adventurousness.u_bin","facet":"Adventurousness","q":"When it mattered most in the past year, did you choose a novel path instead of the usual fix?"},
+        {"id":"O.Intellect.u_bin","facet":"Intellect","q":"Confronted with a major problem in the past year, did you reframe it to reach a better move?"},
+        {"id":"O.Imagination.u_bin","facet":"Imagination","q":"Before a key decision in the past year, did you sketch out multiple possible outcomes before acting?"}
+      ],
+      "unpicked_stage2_likert": [
+        {"id":"O.Adventurousness.u_lik","facet":"Adventurousness","q":"I try untested approaches."},
+        {"id":"O.Intellect.u_lik","facet":"Intellect","q":"I think through the model before I act."},
+        {"id":"O.Imagination.u_lik","facet":"Imagination","q":"I picture several possible outcomes."}
+      ]
+    },
+    "C": {
+      "picked_binary": [
+        {"id":"C.SelfEfficacy.bin","facet":"Self-Efficacy","q":"When success was on the line in the past year, did you take ownership because you trusted your ability to deliver?"},
+        {"id":"C.Orderliness.bin","facet":"Orderliness","q":"When facing a complex challenge in the past year, did you follow a pre-set routine or checklist?"},
+        {"id":"C.Dutifulness.bin","facet":"Dutifulness","q":"At a critical moment in the past year, did you keep a rule or promise even when it was costly?"},
+        {"id":"C.AchievementStriving.bin","facet":"Achievement-Striving","q":"When the outcome was crucial in the past year, did you set a clear performance target on the spot?"},
+        {"id":"C.SelfDiscipline.bin","facet":"Self-Discipline","q":"Faced with a demanding task in the past year, did you work through fatigue until it was complete?"},
+        {"id":"C.Cautiousness.bin","facet":"Cautiousness","q":"Before making a move with serious consequences in the past year, did you pause to check the risks?"}
+      ],
+      "picked_likert": [
+        {"id":"C.SelfEfficacy.lik","facet":"Self-Efficacy","q":"I feel able to organize complex tasks and deliver."},
+        {"id":"C.Orderliness.lik","facet":"Orderliness","q":"I rely on routines and structure."},
+        {"id":"C.Dutifulness.lik","facet":"Dutifulness","q":"I keep promises and obligations."},
+        {"id":"C.AchievementStriving.lik","facet":"Achievement-Striving","q":"I hold high performance standards."},
+        {"id":"C.SelfDiscipline.lik","facet":"Self-Discipline","q":"I finish tasks I start."},
+        {"id":"C.Cautiousness.lik","facet":"Cautiousness","q":"I check risks before acting."}
+      ],
+      "unpicked_stage1_binary": [
+        {"id":"C.Orderliness.u_bin","facet":"Orderliness","q":"To manage a difficult situation in the past year, did you follow a checklist or routine?"},
+        {"id":"C.SelfDiscipline.u_bin","facet":"Self-Discipline","q":"To get a vital task done in the past year, did you keep working until it was complete?"},
+        {"id":"C.Cautiousness.u_bin","facet":"Cautiousness","q":"When the risks were significant in the past year, did you stop to check them before acting?"}
+      ],
+      "unpicked_stage2_likert": [
+        {"id":"C.Orderliness.u_lik","facet":"Orderliness","q":"I use checklists and structure."},
+        {"id":"C.SelfDiscipline.u_lik","facet":"Self-Discipline","q":"I persist until done."},
+        {"id":"C.Cautiousness.u_lik","facet":"Cautiousness","q":"I check risks before moving."}
+      ]
+    },
+    "E": {
+      "picked_binary": [
+        {"id":"E.Friendliness.bin","facet":"Friendliness","q":"When you needed immediate cooperation on something important in the past year, did you use rapport to gain it?"},
+        {"id":"E.Gregariousness.bin","facet":"Gregariousness","q":"When tackling a major issue in the past year, did you move toward the group rather than go solo?"},
+        {"id":"E.Assertiveness.bin","facet":"Assertiveness","q":"When the situation required leadership in the past year, did you take charge and give clear directions?"},
+        {"id":"E.ActivityLevel.bin","facet":"Activity Level","q":"When things were moving too slowly on a key project in the past year, did you increase the tempo and keep the action moving?"},
+        {"id":"E.ExcitementSeeking.bin","facet":"Excitement-Seeking","q":"When momentum was needed for a critical task in the past year, did you step into the action to create it?"},
+        {"id":"E.Cheerfulness.bin","facet":"Cheerfulness","q":"When people were losing their cool in a tense situation in the past year, did you use a positive tone to steady them?"}
+      ],
+      "picked_likert": [
+        {"id":"E.Friendliness.lik","facet":"Friendliness","q":"I build rapport quickly."},
+        {"id":"E.Gregariousness.lik","facet":"Gregariousness","q":"I prefer working with others."},
+        {"id":"E.Assertiveness.lik","facet":"Assertiveness","q":"I speak up and take the lead."},
+        {"id":"E.ActivityLevel.lik","facet":"Activity Level","q":"I keep a fast pace."},
+        {"id":"E.ExcitementSeeking.lik","facet":"Excitement-Seeking","q":"I enjoy intensity and stimulation."},
+        {"id":"E.Cheerfulness.lik","facet":"Cheerfulness","q":"I project an upbeat tone."}
+      ],
+      "unpicked_stage1_binary": [
+        {"id":"E.Assertiveness.u_bin","facet":"Assertiveness","q":"When leadership was needed in the past year, did you take charge and direct others?"},
+        {"id":"E.ActivityLevel.u_bin","facet":"Activity Level","q":"Under pressure in the past year, did you raise the pace and keep momentum?"},
+        {"id":"E.Gregariousness.u_bin","facet":"Gregariousness","q":"When facing a challenge in the past year, did you move toward the group rather than act alone?"}
+      ],
+      "unpicked_stage2_likert": [
+        {"id":"E.Assertiveness.u_lik","facet":"Assertiveness","q":"I step forward to lead."},
+        {"id":"E.ActivityLevel.u_lik","facet":"Activity Level","q":"I increase the pace when needed."},
+        {"id":"E.Gregariousness.u_lik","facet":"Gregariousness","q":"I prefer to act with others."}
+      ]
+    },
+    "A": {
+      "picked_binary": [
+        {"id":"A.Trust.bin","facet":"Trust","q":"When the outcome depended on teamwork in the past year, did you assume good intent and delegate critical pieces?"},
+        {"id":"A.Morality.bin","facet":"Morality","q":"When it would have been easier to mislead in the past year, did you choose a direct, honest approach despite the risk?"},
+        {"id":"A.Altruism.bin","facet":"Altruism","q":"In a tough spot in the past year, did you give up an advantage to help someone in need?"},
+        {"id":"A.Cooperation.bin","facet":"Cooperation","q":"To keep a crucial project on track in the past year, did you compromise to maintain alignment?"},
+        {"id":"A.Modesty.bin","facet":"Modesty","q":"To defuse tension at a key moment in the past year, did you let others take the credit?"},
+        {"id":"A.Sympathy.bin","facet":"Sympathy","q":"When an important plan was underway in the past year, did you adjust it after noticing someone in distress?"}
+      ],
+      "picked_likert": [
+        {"id":"A.Trust.lik","facet":"Trust","q":"I assume good intent from others."},
+        {"id":"A.Morality.lik","facet":"Morality","q":"I deal directly and honestly."},
+        {"id":"A.Altruism.lik","facet":"Altruism","q":"I help even at personal cost."},
+        {"id":"A.Cooperation.lik","facet":"Cooperation","q":"I seek workable compromise."},
+        {"id":"A.Modesty.lik","facet":"Modesty","q":"I prefer a low profile."},
+        {"id":"A.Sympathy.lik","facet":"Sympathy","q":"I tune into others' feelings."}
+      ],
+      "unpicked_stage1_binary": [
+        {"id":"A.Cooperation.u_bin","facet":"Cooperation","q":"Amid a disagreement on a major issue in the past year, did you compromise to keep the team aligned?"},
+        {"id":"A.Trust.u_bin","facet":"Trust","q":"When it mattered in the past year, did you delegate important work, assuming good intent?"},
+        {"id":"A.Altruism.u_bin","facet":"Altruism","q":"Faced with a choice in the past year, did you give up an advantage to help another person?"}
+      ],
+      "unpicked_stage2_likert": [
+        {"id":"A.Cooperation.u_lik","facet":"Cooperation","q":"I seek common ground."},
+        {"id":"A.Trust.u_lik","facet":"Trust","q":"I assume good intent."},
+        {"id":"A.Altruism.u_lik","facet":"Altruism","q":"I will help at a cost to myself."}
+      ]
+    },
+    "N": {
+      "picked_binary": [
+        {"id":"N.Anxiety.bin","facet":"Anxiety","q":"Under serious pressure in the past year, did anxiety cause you to change your plan?"},
+        {"id":"N.Anger.bin","facet":"Anger","q":"When confronted with a major obstacle in the past year, did anger push you to act or confront?"},
+        {"id":"N.Depression.bin","facet":"Depression","q":"During a challenging period in the past year, did a low outlook make you slow down or withdraw?"},
+        {"id":"N.SelfConsciousness.bin","facet":"Self-Consciousness","q":"When you were in the spotlight for something important in the past year, did you avoid attention due to fear of judgment?"},
+        {"id":"N.Immoderation.bin","facet":"Immoderation","q":"At a critical moment in the past year, did you act on a strong urge without thinking it through?"},
+        {"id":"N.Vulnerability.bin","facet":"Vulnerability","q":"When feeling overwhelmed by a major challenge in the past year, did you seek protection or help?"}
+      ],
+      "picked_likert": [
+        {"id":"N.Anxiety.lik","facet":"Anxiety","q":"I often feel anxious."},
+        {"id":"N.Anger.lik","facet":"Anger","q":"I get irritated easily."},
+        {"id":"N.Depression.lik","facet":"Depression","q":"My outlook often turns low."},
+        {"id":"N.SelfConsciousness.lik","facet":"Self-Consciousness","q":"I worry about being judged."},
+        {"id":"N.Immoderation.lik","facet":"Immoderation","q":"I act on strong urges."},
+        {"id":"N.Vulnerability.lik","facet":"Vulnerability","q":"I feel overwhelmed under stress."}
+      ],
+      "unpicked_stage1_binary": [
+        {"id":"N.Anxiety.u_bin","facet":"Anxiety","q":"When the pressure was on in the past year, did anxiety alter your actions?"},
+        {"id":"N.Vulnerability.u_bin","facet":"Vulnerability","q":"Overwhelmed by a difficult situation in the past year, did you seek protection or help?"},
+        {"id":"N.SelfConsciousness.u_bin","facet":"Self-Consciousness","q":"To reduce the risk of judgment in a key situation in the past year, did you avoid attention?"}
+      ],
+      "unpicked_stage2_likert": [
+        {"id":"N.Anxiety.u_lik","facet":"Anxiety","q":"I feel anxiety that affects choices."},
+        {"id":"N.Vulnerability.u_lik","facet":"Vulnerability","q":"I am easily overwhelmed by stress."},
+        {"id":"N.SelfConsciousness.u_lik","facet":"Self-Consciousness","q":"I worry about how I am seen."}
+      ]
+    }
+  }
+}

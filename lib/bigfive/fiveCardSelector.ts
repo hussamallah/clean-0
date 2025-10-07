@@ -134,8 +134,11 @@ function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConf
     const aPct = Math.round(aVal*100);
     const bPct = Math.round(bVal*100);
     const copy = entry.copy || { how:'Gas pedal meets brake.', helps:'quick crisis moves.', hurts:'long uncertainty.', tip:'pause for 2 beats, then pick one next step.' };
-    const aLabel = entry.a.pol==='up' ? 'High' : 'Low';
-    const bLabel = entry.b.pol==='up' ? 'High' : 'Low';
+    // Derive H/M/L labels for each side based on percentile strength relative to its polarity
+    const level = (v:number)=> v>=0.70 ? 'High' : v>=0.40 ? 'Medium' : 'Low';
+    const norm = (val:number, pol:Pol)=> pol==='up' ? val : (1 - val);
+    const aLabel = level(norm(aVal, entry.a.pol));
+    const bLabel = level(norm(bVal, entry.b.pol));
     cards.push({
       type: 'conflict',
       facet: `Conflict Pair — ${entry.a.trait} ${aLabel} × ${entry.b.trait} ${bLabel}`,

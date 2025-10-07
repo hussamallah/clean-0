@@ -20,7 +20,7 @@ export async function POST(req: NextRequest){
   const prior = Engine.computePrior(picksP, picksT, picksM, facets);
   s.scratch.p1 = { picksP, picksM, picksT, prior };
 
-  const budget = Engine.anchorsBudget(prior, facets);
+  const budget = Engine.anchorsBudget(prior, facets, domain);
   const queue: Array<{facet:string; idx:number; prompt:string}> = [];
   for (const f of facets){
     for (let i=0;i<budget[f];i++){

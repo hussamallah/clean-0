@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { shortlistResolver } from "@/lib/bigfive/logic";
+import { FACET_DESCRIPTIONS, FACET_HINTS } from "@/lib/bigfive/constants";
 
 type StepP1 = { kind:'p1'; domain:string; label:string; prompts:{q1:string;q2:string;q3:string}; facets:string[] };
 type StepP2 = { kind:'p2'; domain:string; label:string; queue:Array<{facet:string; idx:number; prompt:string}> };
@@ -96,12 +97,18 @@ function Phase1({ ui, onSubmit }:{ ui: StepP1; onSubmit:(p:{picksP:any;picksM:an
       <h2>{ui.label}</h2>
       <p>{stage===1? ui.prompts.q1 : stage===2? ui.prompts.q2 : ui.prompts.q3}</p>
       <div className="facet-grid">
-        {options.map(f=>(
-          <button key={f} className={"btn-chip"+(stage===1? (sel.includes(f)?" selected":"") : stage===2? (drop.includes(f)?" selected":"") : (final.includes(f)?" selected":""))}
-            onClick={()=> stage===1? toggle(sel,setSel,f,3) : stage===2? toggle(drop,setDrop,f,2) : toggle(final,setFinal,f,required)}>
-            {f}
-          </button>
-        ))}
+        {options.map(f=>{
+          const description = (FACET_DESCRIPTIONS as any)[ui.domain]?.[f] ?? "";
+          const hint = (FACET_HINTS as any)[ui.domain]?.[f] ?? "";
+          return (
+            <button key={f} className={"btn-chip"+(stage===1? (sel.includes(f)?" selected":"") : stage===2? (drop.includes(f)?" selected":"") : (final.includes(f)?" selected":""))}
+              onClick={()=> stage===1? toggle(sel,setSel,f,3) : stage===2? toggle(drop,setDrop,f,2) : toggle(final,setFinal,f,required)}>
+              <b>{f}</b>
+              {description && <small className="facet-description">{description}</small>}
+              {hint && <small className="facet-hint">{hint}</small>}
+            </button>
+          );
+        })}
       </div>
       <div className="row mt16" style={{justifyContent:'space-between'}}>
         {stage>1 ? <button className="ghost" onClick={()=> setStage((s)=> (s-1) as any)}>Back</button> : <span/>}

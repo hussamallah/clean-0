@@ -9,10 +9,18 @@ type DomainKey = keyof typeof DOMAINS;
 
 function FacetChip({ domain, facet, selected, onToggle, tags = [] }: { domain: DomainKey; facet: string; selected: boolean; onToggle: () => void; tags?: string[] }){
   const hint = (FACET_HINTS as any)[domain]?.[facet] ?? "";
+  const description = (FACET_DESCRIPTIONS as any)[domain]?.[facet] ?? "";
+  
+  // Debug logging
+  console.log(`FacetChip - domain: ${domain}, facet: ${facet}`);
+  console.log(`FACET_DESCRIPTIONS[${domain}]:`, (FACET_DESCRIPTIONS as any)[domain]);
+  console.log(`description: "${description}"`);
+  
   return (
     <button className={`btn-chip${selected ? ' selected' : ''}`} title={hint} onClick={onToggle}>
       <b>{facet}</b>
-      <small>{hint}</small>
+      {description && <small className="facet-description">{description}</small>}
+      {hint && <small className="facet-hint">{hint}</small>}
       {tags.length ? (
         <div className="tags">{tags.map((t,i)=>(<span key={i} className="tag">{t}</span>))}</div>
       ) : null}
@@ -259,7 +267,7 @@ export default function Assessment({ initialDomain, silentOnComplete, onComplete
 
   if (!A_raw){
     const P = priorP!;
-    const budget = anchorsBudget(P, facets);
+    const budget = anchorsBudget(P, facets, domain);
     const queue: Array<{facet:string; idx:number}> = [];
     for (const f of facets){ for (let i=0;i<(budget as any)[f];i++){ queue.push({facet:f, idx:i}); } }
     return (

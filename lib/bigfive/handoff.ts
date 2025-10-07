@@ -47,11 +47,34 @@ export async function buildHandoff(fullResults: Array<{domain: DomainKey; payloa
   const tmpl = (handback as any).templates.mirror as Record<string,string>;
   const items: Array<FacetEntry> = [];
   (Object.keys(means) as DomainKey[]).forEach(d=>{
-    const topFacet = pickTopFacet(facetRaw[d]||{});
+    const rawMap = (facetRaw[d]||{}) as Record<string, number>;
+    // Stabilizer selection rules:
+    // - O/C/E/A: prefer a High positive lever; fallback to next-highest positive; never pick a Low as stabilizer
+    // - N: prefer Low Anxiety; else pick the lowest negative facet and prefix with "Low "
+    let chosenFacet = '';
+    if (d !== 'N'){
+      const positives = Object.keys(rawMap).filter(f=> !['Anxiety','Anger','Depression','Immoderation','Vulnerability','Self-Consciousness'].includes(f));
+      const sorted = positives.sort((a,b)=> (rawMap[b]??3) - (rawMap[a]??3));
+      const firstHigh = sorted.find(f=> (rawMap[f]??3) >= 3.5);
+      chosenFacet = firstHigh || sorted[0] || Object.keys(rawMap)[0] || '';
+    } else {
+      const anxiety = rawMap['Anxiety'];
+      if (typeof anxiety === 'number' && anxiety <= 2.5){
+        chosenFacet = 'Low Anxiety';
+      } else {
+        const negatives = ['Anxiety','Anger','Depression','Immoderation','Vulnerability','Self-Consciousness'];
+        const lowest = negatives
+          .filter(f=> f in rawMap)
+          .sort((a,b)=> (rawMap[a]??3) - (rawMap[b]??3))[0];
+        chosenFacet = lowest ? `Low ${lowest}` : 'Low Anxiety';
+      }
+    }
+
     const tplKey = indices.lead; // pursuit/threat/balanced
     const lineTemplate = tmpl[tplKey] || "{facet}";
-    const line = lineTemplate.replace('{facet}', topFacet);
-    const tag = (handback as any).domains[d]?.tags?.High?.[topFacet] || '';
+    const line = lineTemplate.replace('{facet}', chosenFacet);
+    const tagKey = (d==='N' && chosenFacet.startsWith('Low ')) ? chosenFacet.slice(4) : chosenFacet;
+    const tag = (handback as any).domains[d]?.tags?.High?.[tagKey] || '';
     items.push({ domain:d, line, tag });
   });
 

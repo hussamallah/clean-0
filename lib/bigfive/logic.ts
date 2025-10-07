@@ -1,4 +1,4 @@
-import { canonicalFacets, DomainKey } from "./constants";
+import { canonicalFacets, DomainKey, ANCHORS } from "./constants";
 
 export type Phase1 = {
   p: Record<string, number>;
@@ -55,7 +55,7 @@ export const HIGH_CUT = 3.64;
 // 1) Bandwidth – ensure every facet receives at least one anchor statement and
 //    distribute extra items deterministically based on prior magnitude.
 //    Domain total will sit between 6–12 inclusive.
-export function anchorsBudget(P: Record<string, number>, facets: string[]): Record<string, number> {
+export function anchorsBudget(P: Record<string, number>, facets: string[], domain?: DomainKey): Record<string, number> {
   // Start with baseline of 1 item per facet (guarantees no default 3.0 values)
   const budget: Record<string, number> = Object.fromEntries(facets.map(f => [f, 1]));
 
@@ -85,7 +85,14 @@ export function anchorsBudget(P: Record<string, number>, facets: string[]): Reco
     if (priSum === 0) break; // safeguard against infinite loop
   }
 
-  return budget;
+  // Cap each facet's budget to the actual number of available statements
+  const cappedBudget: Record<string, number> = {};
+  for (const f of facets) {
+    const availableStatements = domain ? ((ANCHORS as any)[domain]?.[f]?.length || 0) : 2; // default to 2 if no domain
+    cappedBudget[f] = Math.min(budget[f], availableStatements);
+  }
+
+  return cappedBudget;
 }
 
 // Helper – minimal distance of raw score to either cutline
