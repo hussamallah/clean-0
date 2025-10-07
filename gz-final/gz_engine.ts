@@ -138,7 +138,7 @@ function scorePicked(
   y: Bin[],
   l: Lik[] | undefined
 ): { S: number; V: number; B: number; L?: number; usedLikert: boolean } {
-  const V = y.reduce((a, b) => a + b, 0);
+  const V = y.reduce((a: number, b: Bin) => a + b, 0);
   const B = V / 6; // {0,1/6,...,1}
   const needLikert = B === 1 / 3 || B === 2 / 3 || (P === 1 && B < 2 / 3);
   if (!needLikert || !l) {
@@ -156,7 +156,7 @@ function scoreUnpicked(
   allowVeryHighUnpicked: boolean
 ): { S: number; B3: number; L3?: number; stageUsed: 1 | 2 } {
   const S0 = 0.5;
-  const B3 = stage1.reduce((a, b) => a + b, 0) / 3; // {0, 1/3, 2/3, 1}
+  const B3 = stage1.reduce((a: number, b: Bin) => a + b, 0) / 3; // {0, 1/3, 2/3, 1}
   if (B3 === 0) return { S: 0.12, B3, stageUsed: 1 };
   if (B3 < 2 / 3) return { S: 0.6 * S0 + 0.4 * B3, B3, stageUsed: 1 };
   // Stage-2 path
@@ -236,7 +236,7 @@ export class GZEngine {
       }
       // 2) decide if Likert needed
       const binVals = db.picked_binary.map((it) => this.pickedAnswers[d].bin[it.id] ?? 0);
-      const V = binVals.reduce((a, b) => a + b, 0);
+      const V = binVals.reduce((a: number, b: Bin) => a + b, 0);
       const B = V / 6;
       const needLikert = B === 1 / 3 || B === 2 / 3 || B < 2 / 3; // P=1 always when in picked phase
       if (needLikert) {
@@ -271,7 +271,7 @@ export class GZEngine {
       }
       // Decide if Stage-2 needed
       const b3Vals = db.unpicked_stage1_binary.map((it) => this.unpickedAnswers[d].stage1[it.id] ?? 0);
-      const B3 = b3Vals.reduce((a, b) => a + b, 0) / 3;
+      const B3 = b3Vals.reduce((a: number, b: Bin) => a + b, 0) / 3;
       const needStage2 = B3 >= 2 / 3;
       if (needStage2) {
         for (const item of db.unpicked_stage2_likert) {
@@ -398,7 +398,7 @@ export class GZEngine {
         const stage1 = this.unpickedAnswers[d];
         const B3 = this.bank.domains[d].unpicked_stage1_binary
           .map((it) => stage1.stage1[it.id] ?? 0)
-          .reduce((a, b) => a + b, 0) / 3;
+          .reduce((a: number, b: Bin) => a + b, 0) / 3;
         if (B3 >= 2 / 3 && Object.keys(stage1.stage2 ?? {}).length === 0) {
           ds.flags.push("Provisional (needs Stage-2)");
         }
@@ -500,7 +500,7 @@ export class GZEngine {
         // picked: remaining binaries
         rem += db.picked_binary.filter((it) => this.pickedAnswers[d].bin[it.id] === undefined).length;
         // decide gate on current answers
-        const V = db.picked_binary.map((it) => this.pickedAnswers[d].bin[it.id] ?? 0).reduce((a, b) => a + b, 0);
+        const V = db.picked_binary.map((it) => this.pickedAnswers[d].bin[it.id] ?? 0).reduce((a: number, b: Bin) => a + b, 0);
         const B = V / 6;
         const needLikert = B === 1 / 3 || B === 2 / 3 || B < 2 / 3;
         if (needLikert) rem += db.picked_likert.filter((it) => (this.pickedAnswers[d].lik || {})[it.id] === undefined).length;
@@ -509,7 +509,7 @@ export class GZEngine {
         rem += db.unpicked_stage1_binary.filter((it) => this.unpickedAnswers[d].stage1[it.id] === undefined).length;
         const B3 = db.unpicked_stage1_binary
           .map((it) => this.unpickedAnswers[d].stage1[it.id] ?? 0)
-          .reduce((a, b) => a + b, 0) / 3;
+          .reduce((a: number, b: Bin) => a + b, 0) / 3;
         if (B3 >= 2 / 3) rem += db.unpicked_stage2_likert.filter((it) => (this.unpickedAnswers[d].stage2 || {})[it.id] === undefined).length;
       }
     };

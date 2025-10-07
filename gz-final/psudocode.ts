@@ -3,7 +3,7 @@ type Lik = 1|2|3|4|5;
 const norm = (x:Lik)=> (x-1)/4;
 
 function scorePicked(P:0|1, y:Bin[], l?:Lik[]): number {
-  const V = y.reduce((a,b)=>a+b,0);
+  const V = y.reduce((a: number, b: Bin) => a + b, 0);
   const B = V/6; // {0,1/6,...,1}
   const needLikert = (B===1/3 || B===2/3) || (P===1 && B<2/3);
   if (!needLikert || !l) return 0.30*P + 0.70*B;
@@ -13,7 +13,7 @@ function scorePicked(P:0|1, y:Bin[], l?:Lik[]): number {
 
 function scoreUnpicked(stage1:Bin[], stage2?:Lik[], allowVeryHighUnpicked=false): number {
   const S0 = 0.50;
-  const B3 = stage1.reduce((a,b)=>a+b,0)/3; // {0,1/3,2/3,1}
+  const B3 = stage1.reduce((a: number, b: Bin) => a + b, 0) / 3; // {0,1/3,2/3,1}
   if (B3===0) return 0.12;                  // Very Low
   if (B3<2/3) return 0.6*S0 + 0.4*B3;       // stop
   // B3 ≥ 2/3 ⇒ Stage-2
