@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import bank from "@/gz-final/bankv1.json";
-import { GZEngine, type NextItem, type DomainKey as GZDomainKey, type Lik, type Bin } from "@/gz-final/gz_engine";
 import { DOMAINS, canonicalFacets } from "@/lib/bigfive/constants";
 import { getFacetScoreLevel, toPercentFromRaw } from "@/lib/bigfive/format";
 
@@ -13,80 +12,48 @@ function toCanonicalFacet(domain: DomainKey, facet: string): string {
 }
 
 export default function GZFinalAssessment(){
-  const engineRef = useRef<GZEngine | null>(null);
-  const [item, setItem] = useState<NextItem | null>(null);
-  const [phase1Sel, setPhase1Sel] = useState<GZDomainKey[]>([]);
-  const [progress, setProgress] = useState<{ answered:number; remaining:number; done:boolean; phase:string; currentDomain:GZDomainKey|null } | null>(null);
-  // Capture answers locally per facet so we can build per-facet A_raw for results/who pages
-  const answersRef = useRef<Record<DomainKey, { lik: Record<string, number[]>; bin: Record<string, number[]> }>>({
-    O: { lik: {}, bin: {} },
-    C: { lik: {}, bin: {} },
-    E: { lik: {}, bin: {} },
-    A: { lik: {}, bin: {} },
-    N: { lik: {}, bin: {} },
-  });
-
-  // bootstrap engine once
-  useEffect(()=>{
-    const e = new GZEngine(bank as any, { domainOrder: (bank as any).domain_order });
-    engineRef.current = e;
-    setItem(e.getNextItem());
-    setProgress(e.getProgress());
-  },[]);
-
+  // Linear 30-facet flow state
   const domainOrder = useMemo<DomainKey[]>(()=> (bank as any).domain_order as any, []);
+  type FacetItem = { domain: DomainKey; facet: string; binId: string; binQ: string; likId: string; likQ: string };
+  const facetList = useMemo<FacetItem[]>(()=>{
+    const items: FacetItem[] = [];
+    for (const d of domainOrder){
+      // New linear bank format support
+      const facetsSpec = (bank as any).domains?.[d]?.facets as Array<{id:string; facet:string; binary_question:string; likert_question:string}> | undefined;
+      if (Array.isArray(facetsSpec) && facetsSpec.length){
+        for (const s of facetsSpec){
+          items.push({ domain: d, facet: s.facet, binId: `${s.id}.bin`, binQ: s.binary_question, likId: `${s.id}.lik`, likQ: s.likert_question });
+        }
+        continue;
+      }
+      // Fallback to legacy bank structure if present
+      const order: string[] = ((bank as any).facet_order?.[d] as string[]) || canonicalFacets(d);
+      const bin = (bank as any).domains?.[d]?.picked_binary as Array<{id:string; facet:string; q:string}> | undefined;
+      const lik = (bank as any).domains?.[d]?.picked_likert as Array<{id:string; facet:string; q:string}> | undefined;
+      for (const f of order){
+        const binItem = bin?.find(it=> it.facet === f);
+        const likItem = lik?.find(it=> it.facet === f);
+        if (binItem && likItem){
+          items.push({ domain: d, facet: f, binId: binItem.id, binQ: binItem.q, likId: likItem.id, likQ: likItem.q });
+        }
+      }
+    }
+    return items;
+  }, [domainOrder]);
 
-  function submitPhase1(){
-    const e = engineRef.current!;
-    e.submitPhase1(phase1Sel);
-    setItem(e.getNextItem());
-    setProgress(e.getProgress());
-  }
-
-  function submitBinary(id: string, domain: DomainKey, facet: string, v: Bin){
-    const e = engineRef.current!;
-    try { e.submitBinary(id, v); } catch {}
-    // record
-    const f = toCanonicalFacet(domain, facet);
-    const bin = answersRef.current[domain].bin;
-    bin[f] = bin[f] ? bin[f].concat(v) : [v];
-    setItem(e.getNextItem());
-    setProgress(e.getProgress());
-  }
-
-  function submitLikert(id: string, domain: DomainKey, facet: string, v: Lik){
-    const e = engineRef.current!;
-    try { e.submitLikert(id, v); } catch {}
-    // record
-    const f = toCanonicalFacet(domain, facet);
-    const lik = answersRef.current[domain].lik;
-    lik[f] = lik[f] ? lik[f].concat(v) : [v];
-    setItem(e.getNextItem());
-    setProgress(e.getProgress());
-  }
+  const [idx, setIdx] = useState(0);
+  const [step, setStep] = useState<'bin'|'likert'|'personalize'|'done'>('bin');
+  const [finalScores, setFinalScores] = useState<Record<DomainKey, Record<string, number>>>(()=> ({ O:{}, C:{}, E:{}, A:{}, N:{} } as any));
+  const personalization = useRef<DomainKey | null>(null);
+  // no error/bank blocking; we rely on bank for flow
 
   async function finalizeAndSave(){
     // Build legacy-compatible results array expected by results/who pages
     const results: Array<{ domain: DomainKey; payload: any }> = [];
     for (const d of domainOrder){
       const facets = canonicalFacets(d);
-      const packs = answersRef.current[d];
       const A_raw: Record<string, number> = {};
-      for (const f of facets){
-        const liks = packs.lik[f] || [];
-        const bins = packs.bin[f] || [];
-        if (liks.length){
-          const avg = liks.reduce((a,c)=>a+c,0)/liks.length;
-          A_raw[f] = Math.round(avg*100)/100;
-        } else if (bins.length){
-          // map binary → coarse 2 or 4 as a proxy; if multiple, average
-          const mapped = bins.map(b => b===1 ? 4 : 2);
-          const avg = mapped.reduce((a,c)=>a+c,0)/mapped.length;
-          A_raw[f] = Math.round(avg*100)/100;
-        } else {
-          A_raw[f] = 3.00;
-        }
-      }
+      for (const f of facets){ A_raw[f] = Math.max(1, Math.min(5, finalScores[d]?.[f] ?? 3)); }
       const A_pct: Record<string, number> = Object.fromEntries(facets.map(f=> [f, toPercentFromRaw(A_raw[f])])) as any;
       const bucket: Record<string, 'High'|'Medium'|'Low'> = Object.fromEntries(facets.map(f=> {
         const lvl = getFacetScoreLevel(A_raw[f]);
@@ -108,7 +75,7 @@ export default function GZFinalAssessment(){
         phase2: { answers: [], A_raw },
         phase3: { asked: [] },
         final: { A_pct, bucket, order, domain_mean_raw, domain_mean_pct },
-        audit: {}
+        audit: { personalization: personalization.current }
       };
       results.push({ domain: d, payload });
     }
@@ -122,77 +89,100 @@ export default function GZFinalAssessment(){
           return;
         }
       }
-    } catch {}
-    // fallback: store in local only and route to results
-    try{
-      localStorage.setItem('gz_full_results', JSON.stringify(results));
-    } catch {}
-    window.location.href = '/results';
+      // fallback: store in local only and route to results
+      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
+      window.location.href = '/results';
+    } catch {
+      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
+      window.location.href = '/results';
+    }
   }
 
   // Render
-  if (!item) return <div className="card">Loading…</div>;
+  const total = facetList.length;
+  const current = facetList[idx];
 
-  if (item.kind === 'phase1'){
+  if (!current && step !== 'personalize' && step !== 'done') return <div className="card">Loading…</div>;
+
+  if (step === 'bin' && current){
+    const d = current.domain;
     return (
       <div className="card">
-        <h2>Phase 1 — Choose 2–3 domains</h2>
-        <p>{(bank as any).phase1_prompt || 'When it’s real and you must act, which 2 or 3 domains do you lean on?'}</p>
+        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
+            <p className="muted">Answer Yes/No based on the last year.</p>
+          </div>
+          <div className="pill">{idx+1}/{total}</div>
+        </div>
+        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.binQ}</div>
+        <div className="row mt16">
+          <button className="rate btn" onClick={()=>{
+            // Yes → Final Score = 5, go next facet
+            setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
+            if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('personalize'); }
+          }}>Yes</button>
+          <button className="rate btn" onClick={()=> setStep('likert')}>No</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'likert' && current){
+    const d = current.domain;
+    const ratings = [1,2,3,4,5] as const;
+    return (
+      <div className="card">
+        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
+            <p className="muted">1..5 (Strongly disagree → Strongly agree)</p>
+          </div>
+          <div className="pill">{idx+1}/{total}</div>
+        </div>
+        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.likQ}</div>
+        <div className="row mt16">
+          {ratings.map(v=> (
+            <button key={v} className="rate btn" onClick={()=>{
+              // No → Likert reverse-scored mapping per spec
+              // Likert 1→4, 2→3, 3→2, 4→2, 5→1
+              const map: Record<number, number> = { 1:4, 2:3, 3:2, 4:2, 5:1 };
+              const final = map[v as number] ?? 2;
+              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
+              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('personalize'); }
+            }}>{v}</button>
+          ))}
+        </div>
+        <div className="row mt16" style={{justifyContent:'flex-start'}}>
+          <button className="ghost" onClick={()=> setStep('bin')}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'personalize'){
+    const opts: Array<{ key: DomainKey; label: string; hint: string }> = [
+      { key:'C', label:'Being organized and dependable', hint:'Conscientiousness' },
+      { key:'O', label:'Being creative and curious', hint:'Openness' },
+      { key:'E', label:'Being energetic and expressive', hint:'Extraversion' },
+      { key:'A', label:'Being collaborative and fair', hint:'Agreeableness' },
+      { key:'N', label:'Staying steady under stress', hint:'Stability' }
+    ];
+    return (
+      <div className="card">
+        <h2>One more thing (optional)</h2>
+        <p>Of the following, which area is most important to you?</p>
         <div className="facet-grid mt8">
-          {domainOrder.map((d)=> (
-            <button key={d} className={"btn-chip" + (phase1Sel.includes(d)?' selected':'')} onClick={()=>{
-              setPhase1Sel((prev)=> prev.includes(d) ? prev.filter(x=>x!==d) : (prev.length<3 ? prev.concat(d) : prev));
-            }}>
-              <b>{DOMAINS[d].label.split(' (')[0]}</b>
-              <small className="facet-description">{DOMAINS[d].label}</small>
+          {opts.map(o=> (
+            <button key={o.key} className="btn-chip" onClick={()=>{ personalization.current = o.key; setStep('done'); }}>
+              <b>{o.label}</b>
+              <small className="facet-description">{o.hint}</small>
             </button>
           ))}
         </div>
         <div className="row mt16" style={{justifyContent:'space-between'}}>
-          <span />
-          <button className="primary" disabled={phase1Sel.length<2 || phase1Sel.length>3} onClick={submitPhase1}>Start</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (item.kind === 'binary'){
-    const d = item.domain as DomainKey;
-    return (
-      <div className="card">
-        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-          <div>
-            <h2>{DOMAINS[d].label} — {item.facet}</h2>
-            <p className="muted">Answer Yes/No based on the last year.</p>
-          </div>
-          {progress ? (<div className="pill">{progress.answered} answered • {progress.remaining} left</div>) : null}
-        </div>
-        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{item.q}</div>
-        <div className="row mt16">
-          <button className="rate btn" onClick={()=> submitBinary(item.id, d, item.facet, 1)}>Yes</button>
-          <button className="rate btn" onClick={()=> submitBinary(item.id, d, item.facet, 0)}>No</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (item.kind === 'likert'){
-    const d = item.domain as DomainKey;
-    const ratings = [1,2,3,4,5] as Lik[];
-    return (
-      <div className="card">
-        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-          <div>
-            <h2>{DOMAINS[d].label} — {item.facet}</h2>
-            <p className="muted">{item.scaleHint || '1..5 (Strongly disagree → Strongly agree)'}</p>
-          </div>
-          {progress ? (<div className="pill">{progress.answered} answered • {progress.remaining} left</div>) : null}
-        </div>
-        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{item.q}</div>
-        <div className="row mt16">
-          {ratings.map(v=> (
-            <button key={v} className="rate btn" onClick={()=> submitLikert(item.id, d, item.facet, v)}>{v}</button>
-          ))}
+          <button className="ghost" onClick={()=> setStep('bin')}>Back</button>
+          <button className="primary" onClick={()=> { personalization.current = personalization.current || null; setStep('done'); }}>Skip</button>
         </div>
       </div>
     );
