@@ -1,0 +1,247 @@
+{
+    "version": "gz_archetype_rules.v3_rounds",
+    "buckets": { "low": 0.34, "high": 0.67 },
+    "domains": {
+      "O": { "label": "Openness", "facets": ["Imagination","Artistic Interests","Emotionality","Adventurousness","Intellect","Liberalism"] },
+      "C": { "label": "Conscientiousness", "facets": ["Orderliness","Dutifulness","Achievement","Self-Discipline","Cautiousness","Self-Efficacy"] },
+      "E": { "label": "Extraversion", "facets": ["Friendliness","Gregariousness","Assertiveness","Activity Level","Excitement-Seeking","Cheerfulness"] },
+      "A": { "label": "Agreeableness", "facets": ["Trust","Morality","Altruism","Cooperation","Modesty","Sympathy"] },
+      "N": { "label": "Neuroticism", "facets": ["Anxiety","Anger","Depression","Self-Consciousness","Immoderation","Vulnerability"] }
+    },
+    "operators": {
+      "require": "all listed facets must meet the stated bucket",
+      "min_high": "at least N of listed facets are High",
+      "any_high": "at least one listed facet is High",
+      "any_low": "at least one listed facet is Low"
+    },
+    "archetypes": [
+      {
+        "id": "sovereign",
+        "gz": "Sovereign",
+        "color": { "name": "Royal violet", "hex": "#6D28D9" },
+        "rules": {
+          "domains": { "C": "High", "E": "High", "A": "Low" },
+          "facet_clusters": {
+            "C": { "min_high": 2, "facets": ["Orderliness","Achievement","Dutifulness"] },
+            "E": { "any_high": ["Assertiveness"] }
+          }
+        }
+      },
+      {
+        "id": "rebel",
+        "gz": "Rebel",
+        "color": { "name": "Ink black", "hex": "#111827" },
+        "rules": {
+          "domains": { "O": "High", "A": "Low" },
+          "facet_clusters": {
+            "O": { "any_high": ["Adventurousness","Liberalism"] },
+            "A": { "any_low": ["Cooperation","Modesty","Morality"] }
+          }
+        }
+      },
+      {
+        "id": "visionary",
+        "gz": "Visionary",
+        "color": { "name": "Indigo", "hex": "#4338CA" },
+        "rules": {
+          "domains": { "O": "High", "N": "Medium" },
+          "facet_clusters": {
+            "O": { "min_high": 2, "facets": ["Imagination","Intellect","Artistic Interests"] }
+          }
+        }
+      },
+      {
+        "id": "guardian",
+        "gz": "Guardian",
+        "color": { "name": "Signal red", "hex": "#DC2626" },
+        "rules": {
+          "domains": { "E": "High", "C": "High" },
+          "facet_clusters": {
+            "E": { "any_high": ["Assertiveness","Activity Level"] },
+            "C": { "any_high": ["Achievement","Dutifulness"] }
+          }
+        }
+      },
+      {
+        "id": "navigator",
+        "gz": "Navigator",
+        "color": { "name": "Forest green", "hex": "#166534" },
+        "rules": {
+          "domains": { "O": "High", "E": "High" },
+          "facet_clusters": {
+            "O": { "any_high": ["Adventurousness"] },
+            "E": { "any_high": ["Excitement-Seeking","Gregariousness"] }
+          }
+        }
+      },
+      {
+        "id": "seeker",
+        "gz": "Seeker",
+        "color": { "name": "Deep blue", "hex": "#2563EB" },
+        "rules": {
+          "domains": { "O": "High", "N": "Low" },
+          "facet_clusters": {
+            "O": { "any_high": ["Intellect"] },
+            "N": { "any_low": ["Anxiety","Vulnerability"] }
+          }
+        }
+      },
+      {
+        "id": "vessel",
+        "gz": "Vessel",
+        "color": { "name": "Light sky", "hex": "#7DD3FC" },
+        "rules": {
+          "domains": { "A": "High", "N": "Low" },
+          "facet_clusters": {
+            "A": { "any_high": ["Trust","Altruism"] },
+            "N": { "any_low": ["Anxiety","Anger"] }
+          }
+        }
+      },
+      {
+        "id": "partner",
+        "gz": "Partner",
+        "color": { "name": "Denim slate", "hex": "#64748B" },
+        "rules": {
+          "domains": { "O": "Medium", "C": "Medium", "E": "Medium", "A": "Medium", "N": "Medium" }
+        }
+      },
+      {
+        "id": "diplomat",
+        "gz": "Diplomat",
+        "color": { "name": "Rose", "hex": "#E11D48" },
+        "rules": {
+          "domains": { "A": "High", "O": "High" },
+          "facet_clusters": {
+            "A": { "any_high": ["Altruism","Sympathy"] },
+            "O": { "any_high": ["Emotionality","Artistic Interests"] }
+          }
+        }
+      },
+      {
+        "id": "spotlight",
+        "gz": "Spotlight",
+        "color": { "name": "Golden yellow", "hex": "#EAB308" },
+        "rules": {
+          "domains": { "E": "High", "C": "Low" },
+          "facet_clusters": {
+            "E": { "any_high": ["Excitement-Seeking","Cheerfulness","Gregariousness"] },
+            "C": { "any_low": ["Orderliness","Cautiousness","Dutifulness"] }
+          }
+        }
+      },
+      {
+        "id": "architect",
+        "gz": "Architect",
+        "color": { "name": "Orange", "hex": "#F97316" },
+        "rules": {
+          "domains": { "O": "High", "C": "High" },
+          "facet_clusters": {
+            "O": { "any_high": ["Imagination","Artistic Interests"] },
+            "C": { "any_high": ["Orderliness","Achievement"] }
+          }
+        }
+      },
+      {
+        "id": "provider",
+        "gz": "Provider",
+        "color": { "name": "Teal", "hex": "#14B8A6" },
+        "rules": {
+          "domains": { "A": "High", "C": "High" },
+          "facet_clusters": {
+            "A": { "any_high": ["Altruism","Cooperation"] },
+            "C": { "any_high": ["Dutifulness"] }
+          }
+        }
+      }
+    ],
+    "tie_layer": {
+      "version": "v3",
+      "mode": "binary_brackets_4",
+      "group_size": 3,
+      "no_repeat_in_round": true,
+      "bye_policy": "auto",
+      "max_rounds": null,
+      "triad_templates": [
+        {
+          "id": "lead_style",
+          "when_candidates_any": ["sovereign","guardian","spotlight"],
+          "question": "When leading, what do you rely on first?",
+          "hints": {
+            "sovereign": "Rules and structure",
+            "guardian": "Energy and momentum",
+            "spotlight": "Fun and vibe"
+          }
+        },
+        {
+          "id": "change_drive",
+          "when_candidates_any": ["rebel","navigator","visionary"],
+          "question": "What best describes your drive to change things?",
+          "hints": {
+            "rebel": "Break constraints",
+            "navigator": "Explore new paths with people",
+            "visionary": "Invent through ideas"
+          }
+        },
+        {
+          "id": "care_mode",
+          "when_candidates_any": ["provider","diplomat","vessel"],
+          "question": "Care shows up first as:",
+          "hints": {
+            "provider": "Plans and responsibility",
+            "diplomat": "Empathy and emotion",
+            "vessel": "Peace and safety"
+          }
+        },
+        {
+          "id": "work_style",
+          "when_candidates_any": ["architect","partner","seeker"],
+          "question": "Your default work style is:",
+          "hints": {
+            "architect": "Design and build systems",
+            "partner": "Stabilize the group",
+            "seeker": "Think and analyze quietly"
+          }
+        }
+      ],
+      "binary_templates": [
+        {
+          "axis": "C_vs_E",
+          "question": "In a crunch, what’s your first move?",
+          "left_bucket": "C",
+          "left_hint": "Impose order and standards",
+          "right_bucket": "E",
+          "right_hint": "Rally people and drive action"
+        },
+        {
+          "axis": "A_vs_O",
+          "question": "How do you show care first?",
+          "left_bucket": "A",
+          "left_hint": "Duty and reliability",
+          "right_bucket": "O",
+          "right_hint": "Empathy and creative connection"
+        },
+        {
+          "axis": "E_vs_N",
+          "question": "Under pressure, which is closer?",
+          "left_bucket": "E",
+          "left_hint": "Move outward and engage",
+          "right_bucket": "N",
+          "right_hint": "Withdraw and stabilize"
+        },
+        {
+          "axis": "C_vs_O",
+          "question": "What do you trust more to get results?",
+          "left_bucket": "C",
+          "left_hint": "Structure and standards",
+          "right_bucket": "O",
+          "right_hint": "Ideas and exploration"
+        }
+      ],
+      "fallbacks": {
+        "triad_question": "Which feels most like you right now?",
+        "binary_question": "Which is more you right now?"
+      }
+    }
+  }
+  

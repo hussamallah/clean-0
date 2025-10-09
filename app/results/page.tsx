@@ -7,7 +7,6 @@ import { stableStringify } from "@/lib/bigfive/format";
 import { DOMAINS } from "@/lib/bigfive/constants";
 import { AxisModeScreen } from "@/components/assessment/AxisModeScreen";
 import { IdentityModeCard } from "@/components/results/IdentityModeCard";
-import { buildGZResult } from "@/lib/gz3switch/run";
 
 function ResultsContent(){
   const router = useRouter();
@@ -19,6 +18,7 @@ function ResultsContent(){
   const [single, setSingle] = useState<any|null>(null);
   const [mode, setMode] = useState<'full'|'single'>('full');
   const [mounted, setMounted] = useState(false);
+  // Identity mode disabled (gz3switch removed)
   const [identityResult, setIdentityResult] = useState<any|null>(null);
   useEffect(()=> setMounted(true), []);
 
@@ -67,23 +67,7 @@ function ResultsContent(){
 
   return (
     <main className="app">
-      {identityResult ? (
-        <div className="card" style={{marginBottom:24}}>
-          <IdentityModeCard identity={identityResult.identity} mode={identityResult.mode} />
-        </div>
-      ) : null}
-      {!identityResult && mode==='full' && data.length===5 ? (
-        <AxisModeScreen onDone={async (sw)=>{
-          const dom = data.reduce((acc:any,r:any)=>{ acc[r.domain]=Math.max(1,Math.min(5,Math.round(r.payload?.final?.domain_mean_raw||3))); return acc; },{});
-          if (Object.keys(dom).length===5){
-            const result = await buildGZResult({O:dom.O,C:dom.C,E:dom.E,A:dom.A,N:dom.N}, sw);
-            setIdentityResult(result);
-            try{
-              localStorage.setItem('gz_identity_axismode_v1_2', JSON.stringify(result));
-            } catch{}
-          }
-        }} />
-      ) : null}
+      {/* Identity mode temporarily disabled since gz3switch was removed */}
       {mode==='single' && single ? (
         <div className="card">
           <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>

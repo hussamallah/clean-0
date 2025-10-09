@@ -33,10 +33,13 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
       const results = data?.results;
       if (!Array.isArray(results)){ setError("Invalid data"); return; }
       setFullResults(results);
+      // Extract archetype if present (stored as an extra pseudo-domain 'ARCH')
+      const arch = Array.isArray(results) ? (results as any[]).find(r=> r?.domain === 'ARCH')?.payload : null;
       // Prefer server-provided who/handoff to keep API as source of truth
       const whoView = data?.who ?? await buildWhoFromFullResults(results, rid);
       const ho = data?.handoff ?? await buildHandoff(results, rid);
-      setWho(whoView); setHandoff(ho);
+      const merged = arch ? { ...whoView, archetype: arch } : whoView;
+      setWho(merged); setHandoff(ho);
       try {
         // Debug audit: view full payload in console and on window
         const audit = { rid, results, who: whoView, handoff: ho };
@@ -132,6 +135,16 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         </div>
       </header>
 
+      {/* Archetype summary if present */}
+      {who?.archetype?.winner ? (
+        <div className="card" style={{marginTop:12}}>
+          <h3>Archetype</h3>
+          <p className="muted" style={{marginTop:4}}>
+            Selected: <strong>{String(who.archetype.winner)}</strong>
+          </p>
+        </div>
+      ) : null}
+
       {Array.isArray(who?.narrative) && who.narrative.length ? (
         <div className="card" style={{marginTop: 12}}>
           <h3>Full Narrative</h3>
@@ -219,7 +232,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         </div>
 
       <AuthorityBar hash={(handoff as any)?.hash || rid} />
-      <FiveCardResults data={fullResults} />
+      <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
       <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
       {/* Hide T/P/S/D here to avoid duplicating Snapshot; Snapshot already shows these four */}
       <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />

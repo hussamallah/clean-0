@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import bank from "@/gz-final/bankv1.json";
 import { DOMAINS, canonicalFacets } from "@/lib/bigfive/constants";
+import { resolveWithArctypsRules } from "@/arctyps routing";
+import archRules from "@/arctyps rules.json";
 import { getFacetScoreLevel, toPercentFromRaw } from "@/lib/bigfive/format";
 
 type DomainKey = keyof typeof DOMAINS; // 'O'|'C'|'E'|'A'|'N'
@@ -12,6 +14,38 @@ function toCanonicalFacet(domain: DomainKey, facet: string): string {
 }
 
 export default function GZFinalAssessment(){
+  // Archetype UI meta: title, image, and bird description
+  const ARCHETYPE_META: Record<string, { title: string; img: string; desc: string }> = useMemo(()=>({
+    sovereign: { title:'Sovereign', img:'/sovereign.png', desc:'I rise in direct ascent, wings locked, owning the sky. Nothing above me but the sun itself.' },
+    rebel:     { title:'Rebel',     img:'/rebel.png',     desc:'I twist through air in erratic bursts, sharp turns breaking every pattern mid-flight. Order means nothing to me.' },
+    visionary: { title:'Visionary', img:'/visionary.png', desc:'I carve long arcs forward, eyes set on horizons no one else has seen yet. My body lives in tomorrow\'s wind.' },
+    navigator: { title:'Navigator', img:'/navigator.png', desc:'I glide across endless distances, adjusting course through every crosswind. Storm or calm, I find the way.' },
+    guardian:  { title:'Guardian',  img:'/guardian.png',  desc:'I circle wide, watching, shielding the formation. Approach with peace and I stay graceful; threaten and I rise fierce.' },
+    seeker:    { title:'Seeker',    img:'/seeker.png',    desc:'I dive with piercing precision, cutting through veils and illusions. What lies beneath is mine to uncover.' },
+    architect: { title:'Architect', img:'/architect.png', desc:'I climb in measured steps, every angle chosen, every strand reinforced. My flight builds as much as it moves.' },
+    spotlight: { title:'Spotlight', img:'/spotlight.png', desc:'I spiral upward, radiant, all eyes pulled to my shimmer. Flight is my stage, the sky my mirror.' },
+    diplomat:  { title:'Diplomat',  img:'/diplomat.png',  desc:'I weave gently through the currents, smoothing turbulence, easing the path of those beside me.' },
+    partner:   { title:'Partner',   img:'/partner.png',   desc:'I fly in water if not in sky, always wing-to-wing, never breaking from the one I\'ve chosen.' },
+    provider:  { title:'Provider',  img:'/provider.png',  desc:'I lift with strength enough for others, carrying their weight in my draft. My currents are never just for me.' },
+    catalyst:  { title:'Catalyst',  img:'/catalyst.png',  desc:'I explode off the air in impossible speed, scattering stillness, igniting motion where none existed.' },
+    vessel:    { title:'Vessel',    img:'/vessel.png',    desc:'I stroke the air in slow, deliberate movements, each motion refined, each landing an act of grace.' }
+  }), []);
+
+  // Short per-archetype hints for final match subtitles (dynamic, not axis-generic)
+  const ARCHETYPE_HINTS: Record<string, string> = useMemo(()=>({
+    sovereign: 'Lead with structure, authority, and decisive pace',
+    rebel: 'Break constraints; favor independence over consensus',
+    visionary: 'Invent through ideas; pull toward unseen horizons',
+    navigator: 'Guide through change; adjust course with people',
+    guardian: 'Protect the formation; push momentum when needed',
+    seeker: 'Cut through noise; dig for the underlying truth',
+    architect: 'Design and build systems; deliberate and precise',
+    spotlight: 'Energize the room; pull focus and lift morale',
+    diplomat: 'Smooth turbulence; connect through empathy',
+    partner: 'Stabilize the group; keep the lane steady',
+    provider: 'Carry the load; reliability for others',
+    vessel: 'Move with grace; keep peace and composure'
+  }), []);
   // Linear 30-facet flow state
   const domainOrder = useMemo<DomainKey[]>(()=> (bank as any).domain_order as any, []);
   type FacetItem = { domain: DomainKey; facet: string; binId: string; binQ: string; likId: string; likQ: string };
@@ -42,9 +76,18 @@ export default function GZFinalAssessment(){
   }, [domainOrder]);
 
   const [idx, setIdx] = useState(0);
-  const [step, setStep] = useState<'bin'|'likert'|'personalize'|'done'>('bin');
+  const [step, setStep] = useState<'bin'|'likert'|'arch'|'done'>('bin');
   const [finalScores, setFinalScores] = useState<Record<DomainKey, Record<string, number>>>(()=> ({ O:{}, C:{}, E:{}, A:{}, N:{} } as any));
   const personalization = useRef<DomainKey | null>(null);
+  // Archetype mini-quiz state
+  type TriadProbe = { type:'single_choice'; question:string; options:Array<{id:string; label:string}> };
+  type BinaryProbe = { type:'binary'; question:string; left:{id:string; label:string}; right:{id:string; label:string}; meta?:{ stage?:'pair'|'final'; present?:'image_pair'|'binary' } };
+  type AnyProbe = TriadProbe | BinaryProbe;
+  const [archProbe, setArchProbe] = useState<AnyProbe|null>(null);
+  const archResolveRef = useRef<((id:string)=>void)|null>(null);
+  const archStarted = useRef(false);
+  const [archWinner, setArchWinner] = useState<string|null>(null);
+  const archTrace = useRef<Array<{ q:string; type:'triad'|'binary'; options:string[]; pick:string }>>([]);
   // no error/bank blocking; we rely on bank for flow
 
   async function finalizeAndSave(){
@@ -56,8 +99,10 @@ export default function GZFinalAssessment(){
       for (const f of facets){ A_raw[f] = Math.max(1, Math.min(5, finalScores[d]?.[f] ?? 3)); }
       const A_pct: Record<string, number> = Object.fromEntries(facets.map(f=> [f, toPercentFromRaw(A_raw[f])])) as any;
       const bucket: Record<string, 'High'|'Medium'|'Low'> = Object.fromEntries(facets.map(f=> {
-        const lvl = getFacetScoreLevel(A_raw[f]);
-        return [f, (lvl==='high'?'High':lvl==='low'?'Low':'Medium') as 'High'|'Medium'|'Low'];
+        const raw = A_raw[f];
+        if (raw >= 5) return [f, 'High' as 'High'|'Medium'|'Low'];
+        if (raw <= 2) return [f, 'Low' as 'High'|'Medium'|'Low'];
+        return [f, 'Medium' as 'High'|'Medium'|'Low'];
       })) as any;
       const order = facets.slice().sort((a,b)=>{
         const rank = { High:3, Medium:2, Low:1 } as const;
@@ -79,6 +124,14 @@ export default function GZFinalAssessment(){
       };
       results.push({ domain: d, payload });
     }
+    // Append Archetype result if present
+    if (archWinner){
+      (results as any).push({
+        domain: 'ARCH',
+        payload: { winner: archWinner, trace: archTrace.current }
+      });
+    }
+
     try{
       const res = await fetch('/api/runs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ results }) });
       if (res.ok){
@@ -120,7 +173,7 @@ export default function GZFinalAssessment(){
           <button className="rate btn" onClick={()=>{
             // Yes → Final Score = 5, go next facet
             setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
-            if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('personalize'); }
+            if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
           }}>Yes</button>
           <button className="rate btn" onClick={()=> setStep('likert')}>No</button>
         </div>
@@ -145,11 +198,11 @@ export default function GZFinalAssessment(){
           {ratings.map(v=> (
             <button key={v} className="rate btn" onClick={()=>{
               // No → Likert reverse-scored mapping per spec
-              // Likert 1→4, 2→3, 3→2, 4→2, 5→1
-              const map: Record<number, number> = { 1:4, 2:3, 3:2, 4:2, 5:1 };
-              const final = map[v as number] ?? 2;
+              // Likert 1→5, 2→4, 3→3, 4→2, 5→1
+              const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
+              const final = map[v as number] ?? 3;
               setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
-              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('personalize'); }
+              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
             }}>{v}</button>
           ))}
         </div>
@@ -160,29 +213,190 @@ export default function GZFinalAssessment(){
     );
   }
 
-  if (step === 'personalize'){
-    const opts: Array<{ key: DomainKey; label: string; hint: string }> = [
-      { key:'C', label:'Being organized and dependable', hint:'Conscientiousness' },
-      { key:'O', label:'Being creative and curious', hint:'Openness' },
-      { key:'E', label:'Being energetic and expressive', hint:'Extraversion' },
-      { key:'A', label:'Being collaborative and fair', hint:'Agreeableness' },
-      { key:'N', label:'Staying steady under stress', hint:'Stability' }
-    ];
+  // personalization step removed
+
+  // Archetype mini-quiz driver
+  if (step === 'arch'){
+    // Start the resolver once
+    if (!archStarted.current){
+      archStarted.current = true;
+      (async () => {
+        const ask = async (probe: AnyProbe): Promise<string> => {
+          return new Promise<string>((resolve) => {
+            setArchProbe(probe);
+            archResolveRef.current = (id:string)=>{
+              // record trace
+              if (probe.type === 'single_choice'){
+                archTrace.current.push({ q: probe.question, type:'triad', options: probe.options.map(o=>o.label), pick: id });
+              } else {
+                archTrace.current.push({ q: probe.question, type:'binary', options: [probe.left.label, probe.right.label], pick: id });
+              }
+              resolve(id);
+            };
+          });
+        };
+        try{
+          // 1) Build user buckets from finalScores
+          const domains: Record<DomainKey, { mean: number; bucket: 'High'|'Medium'|'Low'; facet: Record<string,'High'|'Medium'|'Low'> }> = { O: {} as any, C: {} as any, E: {} as any, A: {} as any, N: {} as any };
+          const toBucket = (v:number): 'High'|'Medium'|'Low' => (v>=5?'High':(v<=2?'Low':'Medium'));
+          for (const d of domainOrder){
+            const facs = canonicalFacets(d);
+            const raw = facs.map(f=> Math.max(1, Math.min(5, finalScores[d]?.[toCanonicalFacet(d,f)] ?? 3)));
+            const mean = Math.round((raw.reduce((a,c)=>a+c,0)/raw.length)*100)/100;
+            const facetBuckets: Record<string,'High'|'Medium'|'Low'> = {} as any;
+            facs.forEach((f,i)=>{ facetBuckets[f] = toBucket(raw[i]); });
+            const meanBucket: 'High'|'Medium'|'Low' = (mean>=4.0?'High':(mean<=2.0?'Low':'Medium'));
+            domains[d] = { mean, bucket: meanBucket, facet: facetBuckets } as any;
+          }
+
+          // 2) Evaluate JSON rules to select matching archetypes
+          type Bucket = 'High'|'Medium'|'Low';
+          const A = (archRules as any).archetypes as Array<any>;
+          function passFacetCluster(d:DomainKey, cluster:any): boolean {
+            if (!cluster) return true;
+            if (cluster.require){
+              return Array.isArray(cluster.require) && cluster.require.every((r:any)=> domains[d].facet[r.facet] === r.bucket);
+            }
+            if (typeof cluster.min_high === 'number' && Array.isArray(cluster.facets)){
+              let c=0; for (const f of cluster.facets){ if (domains[d].facet[f]==='High') c++; }
+              return c >= cluster.min_high;
+            }
+            if (Array.isArray(cluster.any_high)){
+              return cluster.any_high.some((f:string)=> domains[d].facet[f]==='High');
+            }
+            if (Array.isArray(cluster.any_low)){
+              return cluster.any_low.some((f:string)=> domains[d].facet[f]==='Low');
+            }
+            return true;
+          }
+          function matchesRules(ar:any): boolean {
+            const domReq = ar?.rules?.domains || {};
+            for (const k of Object.keys(domReq||{}) as DomainKey[]){
+              const want = domReq[k] as Bucket; if (!want) continue;
+              if (domains[k].bucket !== want) return false;
+            }
+            const clusters = ar?.rules?.facet_clusters || {};
+            for (const k of Object.keys(clusters||{}) as DomainKey[]){
+              if (!passFacetCluster(k, clusters[k])) return false;
+            }
+            return true;
+          }
+          let ids = A.filter(matchesRules).map(x=> x.id as string);
+          // Ensure sufficient pool: if <4, backfill with most divergent from the matched set first
+          if (ids.length < 4){
+            const all = A.map(x=>x.id as string);
+            const rest = all.filter(x=> !ids.includes(x));
+            ids = ids.concat(rest.slice(0, Math.max(0, 4-ids.length)));
+          }
+          // Keep deterministic order but cap unreasonable size (12 → ok); winners will bracket down
+          const winner = await resolveWithArctypsRules(ids, ask);
+          setArchWinner(winner);
+        } finally {
+          setArchProbe(null);
+          setStep('done');
+        }
+      })();
+    }
+    // Render current probe UI
+    if (!archProbe){
+      return (
+        <div className="card">
+          <h2>Finding your archetype…</h2>
+          <p className="muted">Setting up a quick 2–3 question tie-breaker.</p>
+        </div>
+      );
+    }
+    if (archProbe.type === 'single_choice'){
+      const fallbackTriadQ = (archRules as any)?.tie_layer?.fallbacks?.triad_question as string | undefined;
+      const isFallbackTriad = fallbackTriadQ && archProbe.question === fallbackTriadQ;
+      return (
+        <div className="card">
+          <h2>Quick mini-quiz</h2>
+          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
+          {isFallbackTriad ? (
+            <div className="facet-grid mt8" style={{gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))'}}>
+              {archProbe.options.map(o=> {
+                const meta = ARCHETYPE_META[o.id] || { title:o.id, img:'/equalizer.png', desc:o.label };
+                return (
+                  <button key={o.id} className="btn-chip" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(o.id)}>
+                    <div className="card" style={{background:'#111', border:'1px solid #333'}}>
+                      <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}>
+                        <strong>{meta.title}</strong>
+                      </div>
+                      <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
+                        <img src={meta.img} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
+                      </div>
+                      <div style={{padding:'0 12px 12px 12px'}}>
+                        <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{meta.desc}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="facet-grid mt8">
+              {archProbe.options.map(o=> (
+                <button key={o.id} className="btn-chip" onClick={()=> archResolveRef.current?.(o.id)}>
+                  <b>{o.label}</b>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+    const isImagePair = (archProbe as any)?.meta?.present === 'image_pair';
+    if (isImagePair){
+      const L = archProbe.left.id; const R = archProbe.right.id;
+      const leftMeta  = ARCHETYPE_META[L] || { title: L, img:'/equalizer.png', desc: L };
+      const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
+      return (
+        <div className="card">
+          <h2>Quick mini-quiz</h2>
+          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
+          <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
+            <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(L)}>
+              <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
+                <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
+                <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
+                  <img src={leftMeta.img} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
+                </div>
+                <div style={{padding:'0 12px 12px 12px'}}>
+                  <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{leftMeta.desc}</p>
+                </div>
+              </div>
+            </button>
+            <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(R)}>
+              <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
+                <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{rightMeta.title}</strong></div>
+                <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
+                  <img src={rightMeta.img} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
+                </div>
+                <div style={{padding:'0 12px 12px 12px'}}>
+                  <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{rightMeta.desc}</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="card">
-        <h2>One more thing (optional)</h2>
-        <p>Of the following, which area is most important to you?</p>
-        <div className="facet-grid mt8">
-          {opts.map(o=> (
-            <button key={o.key} className="btn-chip" onClick={()=>{ personalization.current = o.key; setStep('done'); }}>
-              <b>{o.label}</b>
-              <small className="facet-description">{o.hint}</small>
-            </button>
-          ))}
-        </div>
-        <div className="row mt16" style={{justifyContent:'space-between'}}>
-          <button className="ghost" onClick={()=> setStep('bin')}>Back</button>
-          <button className="primary" onClick={()=> { personalization.current = personalization.current || null; setStep('done'); }}>Skip</button>
+        <h2>Quick mini-quiz</h2>
+        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
+        <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
+          <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.left.id)}>
+            <span className="muted" style={{fontSize:12}}>
+              {ARCHETYPE_HINTS[archProbe.left.id]}
+            </span>
+          </button>
+          <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.right.id)}>
+            <span className="muted" style={{fontSize:12}}>
+              {ARCHETYPE_HINTS[archProbe.right.id]}
+            </span>
+          </button>
         </div>
       </div>
     );
