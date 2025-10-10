@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import bank from "@/gz-final/bankv1.json";
 import { DOMAINS, canonicalFacets } from "@/lib/bigfive/constants";
 import { resolveWithArctypsRules } from "@/arctyps routing";
 import archRules from "@/arctyps rules.json";
-import { getFacetScoreLevel, toPercentFromRaw } from "@/lib/bigfive/format";
+import { getFacetScoreLevel, toPercentFromRaw, stableStringify } from "@/lib/bigfive/format";
+import { sha256Hex } from "@/lib/crypto/sha256hex";
 
 type DomainKey = keyof typeof DOMAINS; // 'O'|'C'|'E'|'A'|'N'
 
@@ -14,6 +16,7 @@ function toCanonicalFacet(domain: DomainKey, facet: string): string {
 }
 
 export default function GZFinalAssessment(){
+  const router = useRouter();
   // Archetype UI meta: title, image, and bird description
   const ARCHETYPE_META: Record<string, { title: string; img: string; desc: string }> = useMemo(()=>({
     sovereign: { title:'Sovereign', img:'/sovereign.png', desc:'I rise in direct ascent, wings locked, owning the sky. Nothing above me but the sun itself.' },
@@ -138,16 +141,29 @@ export default function GZFinalAssessment(){
         const data = await res.json();
         const rid = data?.rid;
         if (typeof rid === 'string' && rid.length){
-          window.location.href = `/who?rid=${rid}`;
+          router.push(`/who?rid=${rid}`);
           return;
         }
       }
-      // fallback: store in local only and route to results
+      // fallback: compute client rid deterministically and route to who page
+      try {
+        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
+        localStorage.setItem('gz_full_results', JSON.stringify(results));
+        router.push(`/who?rid=${rid}`);
+        return;
+      } catch {}
+      // last resort: route to results
       try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
-      window.location.href = '/results';
+      router.push('/results');
     } catch {
+      try {
+        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
+        localStorage.setItem('gz_full_results', JSON.stringify(results));
+        router.push(`/who?rid=${rid}`);
+        return;
+      } catch {}
       try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
-      window.location.href = '/results';
+      router.push('/results');
     }
   }
 
@@ -323,9 +339,10 @@ export default function GZFinalAssessment(){
                       <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}>
                         <strong>{meta.title}</strong>
                       </div>
-                      <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-                        <img src={meta.img} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
-                      </div>
+            <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
+              <img src={meta.img} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
+            </div>
                       <div style={{padding:'0 12px 12px 12px'}}>
                         <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{meta.desc}</p>
                       </div>
@@ -360,7 +377,8 @@ export default function GZFinalAssessment(){
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-                  <img src={leftMeta.img} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
+                  <img src={leftMeta.img} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
                 </div>
                 <div style={{padding:'0 12px 12px 12px'}}>
                   <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{leftMeta.desc}</p>
@@ -371,7 +389,8 @@ export default function GZFinalAssessment(){
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{rightMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-                  <img src={rightMeta.img} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}} />
+                  <img src={rightMeta.img} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
                 </div>
                 <div style={{padding:'0 12px 12px 12px'}}>
                   <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{rightMeta.desc}</p>

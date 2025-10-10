@@ -6,6 +6,8 @@ import ExistentialCircuits from "@components/who/ExistentialCircuits";
 import AllLifeSignals from "@components/who/AllLifeSignals";
 import { buildWhoFromFullResults } from "@/lib/bigfive/who";
 import { buildHandoff } from "@/lib/bigfive/handoff";
+import { sha256Hex } from "@/lib/crypto/sha256hex";
+import { stableStringify } from "@/lib/bigfive/format";
 import { computeSignals } from "@/lib/bigfive/signals";
 
 // ================= Types =================
@@ -185,34 +187,71 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
   const [handoff, setHandoff] = useState<any|null>(null);
   const [error, setError] = useState<string|null>(null);
   const [panels, setPanels] = useState<any|null>(null);
+  const [ridState, setRidState] = useState<string>(rid);
 
   useEffect(()=>{ import("@/lib/data/who_panels.json").then(m=> setPanels((m as any).default || m)); }, []);
 
   useEffect(()=>{
     async function run(){
-      if (!rid){ setError("Missing result id."); return; }
-      const res = await fetch(`/api/who/${rid}`, { cache:'no-store' });
-      if (!res.ok){ setError("Not found"); return; }
-      const data = await res.json();
-      const results = data?.results;
-      if (!Array.isArray(results)){ setError("Invalid data"); return; }
-      setFullResults(results);
-      // Extract archetype if present (stored as an extra pseudo-domain 'ARCH')
-      const arch = Array.isArray(results) ? (results as any[]).find(r=> r?.domain === 'ARCH')?.payload : null;
-      // Prefer server-provided who/handoff to keep API as source of truth
-      const whoView = data?.who ?? await buildWhoFromFullResults(results, rid);
-      const ho = data?.handoff ?? await buildHandoff(results, rid);
-      const merged = arch ? { ...whoView, archetype: arch } : whoView;
-      setWho(merged); setHandoff(ho);
-      
-      try {
-        // Debug audit: view full payload in console and on window
-        const audit = { rid, results, who: whoView, handoff: ho };
-        console.log('[WHO AUDIT]', audit);
-        (globalThis as any).gzAudit = audit;
+      // If no rid in URL, try client fallback
+      if (!rid){
+        try{
+          const stored = localStorage.getItem('gz_full_results');
+          const results = stored ? JSON.parse(stored) : null;
+          if (Array.isArray(results)){
+            const ridLocal = (await sha256Hex(stableStringify(results))).slice(0,24);
+            setRidState(ridLocal);
+            setFullResults(results);
+            const arch = (results as any[]).find(r=> r?.domain === 'ARCH')?.payload ?? null;
+            const whoView = await buildWhoFromFullResults(results, ridLocal);
+            const ho = await buildHandoff(results, ridLocal);
+            const merged = arch ? { ...whoView, archetype: arch } : whoView;
+            setWho(merged); setHandoff(ho);
+            try { const audit = { rid: ridLocal, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+            return;
+          }
+        } catch {}
+        setError("Missing result id.");
+        return;
+      }
+
+      // Try server by rid
+      try{
+        const res = await fetch(`/api/who/${rid}`, { cache:'no-store' });
+        if (res.ok){
+          const data = await res.json();
+          const results = data?.results;
+          if (!Array.isArray(results)){ setError("Invalid data"); return; }
+          setRidState(rid);
+          setFullResults(results);
+          const arch = (results as any[]).find(r=> r?.domain === 'ARCH')?.payload ?? null;
+          const whoView = data?.who ?? await buildWhoFromFullResults(results, rid);
+          const ho = data?.handoff ?? await buildHandoff(results, rid);
+          const merged = arch ? { ...whoView, archetype: arch } : whoView;
+          setWho(merged); setHandoff(ho);
+          try { const audit = { rid, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+          return;
+        }
       } catch {}
-      
-      // (debug narrative removed)
+
+      // Fallback to client store if server not available
+      try{
+        const stored = localStorage.getItem('gz_full_results');
+        const results = stored ? JSON.parse(stored) : null;
+        if (Array.isArray(results)){
+          const ridLocal = (await sha256Hex(stableStringify(results))).slice(0,24);
+          setRidState(ridLocal);
+          setFullResults(results);
+          const arch = (results as any[]).find(r=> r?.domain === 'ARCH')?.payload ?? null;
+          const whoView = await buildWhoFromFullResults(results, ridLocal);
+          const ho = await buildHandoff(results, ridLocal);
+          const merged = arch ? { ...whoView, archetype: arch } : whoView;
+          setWho(merged); setHandoff(ho);
+          try { const audit = { rid: ridLocal, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+          return;
+        }
+      } catch {}
+      setError("Not found");
     }
     run();
   }, [rid]);
@@ -235,6 +274,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
 
   // Tone from server, overridable via URL param
   const inferredTone: Tone = (toneQuery ?? who.tone) as Tone;
+  const ridUsed = ridState || rid;
 
   // helper: apply tone variant if present
   const withTone = (panel:any|undefined|null)=>{
@@ -298,10 +338,10 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
     : ((who as any)?.archetype?.winner ? String((who as any).archetype.winner) : 'Unknown');
 
   const whoResultData: WhoResult = {
-    resultId: rid,
+    resultId: ridUsed,
     tone: (who as any)?.tone || String(inferredTone) || 'neutral',
     archetype: archetypeStr,
-    hash: (handoff as any)?.hash || rid,
+    hash: (handoff as any)?.hash || ridUsed,
     weeklyFinishers: 0,
     narrative: Array.isArray((who as any)?.narrative) ? (who as any).narrative : [],
     interpersonal: {
@@ -342,7 +382,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
       <header className="row between">
         <div>
           <h1>Who You Are</h1>
-          <div className="muted">Result ID: <code>{rid}</code></div>
+          <div className="muted">Result ID: <code>{ridUsed}</code></div>
           <div className="muted">Tone: <code>{inferredTone}</code></div>
         </div>
       </header>
@@ -405,14 +445,14 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         </div>
         </div>
 
-      <AuthorityBar hash={(handoff as any)?.hash || rid} />
+      <AuthorityBar hash={(handoff as any)?.hash || ridUsed} />
       <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
       <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
       {/* Hide T/P/S/D here to avoid duplicating Snapshot; Snapshot already shows these four */}
       <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />
 
       <div style={{marginTop:24, display:'flex', justifyContent:'center'}}>
-        <a href={`/results?rid=${rid}`} className="btn">View Detailed Results →</a>
+        <a href={`/results?rid=${ridUsed}`} className="btn">View Detailed Results →</a>
     </div>
     </main>
   );
