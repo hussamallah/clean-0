@@ -17,6 +17,8 @@ function toCanonicalFacet(domain: DomainKey, facet: string): string {
 
 export default function GZFinalAssessment(){
   const router = useRouter();
+  const basePath = useMemo(()=> (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/$/, ''), []);
+  const assetUrl = (p:string)=> `${basePath}${p}`;
   // Archetype UI meta: title, image, and bird description
   const ARCHETYPE_META: Record<string, { title: string; img: string; desc: string }> = useMemo(()=>({
     sovereign: { title:'Sovereign', img:'/sovereign.png', desc:'I rise in direct ascent, wings locked, owning the sky. Nothing above me but the sun itself.' },
@@ -340,8 +342,8 @@ export default function GZFinalAssessment(){
                         <strong>{meta.title}</strong>
                       </div>
             <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-              <img src={meta.img} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
-                onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
+              <img src={assetUrl(meta.img)} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src=assetUrl('/equalizer.png'); }} />
             </div>
                       <div style={{padding:'0 12px 12px 12px'}}>
                         <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{meta.desc}</p>
@@ -377,8 +379,8 @@ export default function GZFinalAssessment(){
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-                  <img src={leftMeta.img} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
-                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
+                  <img src={assetUrl(leftMeta.img)} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src=assetUrl('/equalizer.png'); }} />
                 </div>
                 <div style={{padding:'0 12px 12px 12px'}}>
                   <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{leftMeta.desc}</p>
@@ -389,8 +391,8 @@ export default function GZFinalAssessment(){
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{rightMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-                  <img src={rightMeta.img} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
-                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src='/equalizer.png'; }} />
+                  <img src={assetUrl(rightMeta.img)} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                    onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src=assetUrl('/equalizer.png'); }} />
                 </div>
                 <div style={{padding:'0 12px 12px 12px'}}>
                   <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{rightMeta.desc}</p>
