@@ -24,6 +24,7 @@ interface TriadTemplate {
   when_candidates_any: string[];
   question: string;
   hints: Record<string,string>;
+  labels?: Record<string,string>;
 }
 interface BinaryTemplate {
   axis: string;
@@ -355,7 +356,7 @@ function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: 
   const templates: Array<{question: string, labels: Record<string, string>}> = [];
   
   // Leadership style triads
-  const leadershipTriads = [
+  const leadershipTriads: Array<{question: string, labels: Record<string, string>}> = [
     {
       question: "When leading a team, you naturally:",
       labels: {
@@ -375,7 +376,7 @@ function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: 
   ];
   
   // Problem-solving style triads
-  const problemSolvingTriads = [
+  const problemSolvingTriads: Array<{question: string, labels: Record<string, string>}> = [
     {
       question: "When facing a complex challenge, you:",
       labels: {
@@ -395,7 +396,7 @@ function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: 
   ];
   
   // Relationship and care style triads
-  const relationshipTriads = [
+  const relationshipTriads: Array<{question: string, labels: Record<string, string>}> = [
     {
       question: "How do you show you care?",
       labels: {
@@ -415,7 +416,7 @@ function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: 
   ];
   
   // Work style triads
-  const workStyleTriads = [
+  const workStyleTriads: Array<{question: string, labels: Record<string, string>}> = [
     {
       question: "Your ideal work environment is:",
       labels: {
@@ -458,7 +459,7 @@ function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: 
   }
   
   // Generic fallback templates for any combination
-  const genericTemplates = [
+  const genericTemplates: Array<{question: string, labels: Record<string, string>}> = [
     {
       question: "Which approach feels most natural to you?",
       labels: {}

@@ -155,7 +155,7 @@ export default function GZFinalAssessment(){
   const total = facetList.length;
   const current = facetList[idx];
 
-  if (!current && step !== 'personalize' && step !== 'done') return <div className="card">Loading…</div>;
+  if (!current && step !== 'done') return <div className="card">Loading…</div>;
 
   if (step === 'bin' && current){
     const d = current.domain;
