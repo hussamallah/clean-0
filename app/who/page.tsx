@@ -8,6 +8,170 @@ import { buildWhoFromFullResults } from "@/lib/bigfive/who";
 import { buildHandoff } from "@/lib/bigfive/handoff";
 import { computeSignals } from "@/lib/bigfive/signals";
 
+// ================= Types =================
+type StressItem = {
+  key: string;
+  desc: string;
+  move: string;
+};
+
+type SnapshotItem = {
+  key: string;
+  pct: number;
+  meaning: string;
+  move?: string;
+};
+
+type ConflictItem = {
+  title: string;
+  desc: string;
+  tip: string;
+};
+
+type Circuit = {
+  key: string;
+  pct: number;
+  meaning: string;
+  risk: string;
+  move: string;
+};
+
+type LifeSignal = {
+  key: string;
+  pct: number;
+  desc: string;
+};
+
+type WhoResult = {
+  resultId: string;
+  tone: string;
+  archetype: string;
+  hash: string;
+  weeklyFinishers: number;
+  narrative: string[];
+  interpersonal: {
+    label: string;
+    lines: string[];
+    actions: string[];
+  };
+  workStyle: {
+    heading: string;
+    text: string;
+    guidance: string;
+    actions: string[];
+  };
+  decisionStyle: {
+    heading: string;
+    label: string;
+    text: string;
+    strength: string;
+    risk: string;
+    fix: string;
+  };
+  stress: StressItem[];
+  snapshot: SnapshotItem[];
+  conflicts: ConflictItem[];
+  circuits: Circuit[];
+  lifeSignals: LifeSignal[];
+};
+
+// ================= Narrative Builder =================
+type NarrativeOptions = {
+  includeNumbers?: boolean;
+  includeAllSignals?: boolean;
+  includeSnapshot?: boolean;
+};
+
+const defaultOpts: Required<NarrativeOptions> = {
+  includeNumbers: true,
+  includeAllSignals: true,
+  includeSnapshot: true,
+};
+
+function formatInt(n: number) {
+  return new Intl.NumberFormat().format(n);
+}
+
+function capitalize(s: any) {
+  if (typeof s !== 'string' || !s) return s || '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function buildNarrativeStory(data: WhoResult, opts: NarrativeOptions = defaultOpts): string[] {
+  const { includeNumbers, includeAllSignals, includeSnapshot } = { ...defaultOpts, ...opts };
+  const out: string[] = [];
+
+  // Header
+  const archetype = capitalize(data.archetype || 'Unknown');
+  const tone = capitalize(data.tone || 'neutral');
+  const resultId = data.resultId || 'Unknown';
+  const hash = data.hash || 'Unknown';
+  const weeklyFinishers = data.weeklyFinishers || 0;
+  
+  const header = includeNumbers
+    ? `You are the ${archetype}. ${tone} tone, result ${resultId}. This run is verified (hash ${hash}). This week, ${formatInt(weeklyFinishers)} people finished; you read yours now.`
+    : `You are the ${archetype}. ${tone} tone. This run is verified.`;
+  out.push(header);
+
+  // Narrative blocks
+  if (Array.isArray(data.narrative) && data.narrative.length) {
+    out.push(data.narrative.slice(0, 5).join(' '));
+    out.push(data.narrative.slice(5, 10).join(' '));
+    out.push(data.narrative.slice(10).join(' '));
+  }
+
+  // Interpersonal, Work, Decision
+  if (data.interpersonal) {
+    const l0 = data.interpersonal.lines?.[0] ?? '';
+    const l1 = data.interpersonal.lines?.[1] ?? '';
+    const acts = (data.interpersonal.actions ?? []).join('; ');
+    out.push(`Your stance with people is ${data.interpersonal.label.toLowerCase()}. ${l0} ${l1} Two concrete steps beat a perfect map: ${acts}.`);
+  }
+
+  if (data.workStyle) {
+    out.push(`${data.workStyle.text} ${data.workStyle.guidance} Actions: ${(data.workStyle.actions ?? []).join('; ')}.`);
+  }
+
+  if (data.decisionStyle) {
+    out.push(`${data.decisionStyle.label}. ${data.decisionStyle.text} ${data.decisionStyle.strength} ${data.decisionStyle.risk} ${data.decisionStyle.fix}`);
+  }
+
+  // Conflicts
+  if (Array.isArray(data.conflicts) && data.conflicts.length) {
+    const parts = data.conflicts.map(c => `${c.title.replace('Conflict Pair — ', '')}: ${c.desc} Tip: ${c.tip}`);
+    out.push(`Tensions live inside your engine. ${parts.join(' ')}.`);
+  }
+
+  // Stress
+  if (Array.isArray(data.stress) && data.stress.length) {
+    const parts = data.stress.map(s => `${s.key}: ${s.desc} Move: ${s.move}`);
+    out.push(`When pressure climbs, you respond with moves. ${parts.join(' ')}.`);
+  }
+
+  // Snapshot
+  if (includeSnapshot && Array.isArray(data.snapshot) && data.snapshot.length) {
+    const parts = data.snapshot.map(s => includeNumbers ? `${s.key} ${s.pct}% — ${s.meaning}` : `${s.key} — ${s.meaning}`);
+    out.push(`Your frontline signals run hot and directional. ${parts.join(' ')}.`);
+  }
+
+  // Circuits
+  if (Array.isArray(data.circuits) && data.circuits.length) {
+    const parts = data.circuits.map(c => includeNumbers ? `${c.key} ${c.pct}% — ${c.meaning}. Risk: ${c.risk} Move: ${c.move}` : `${c.key} — ${c.meaning}. Risk: ${c.risk} Move: ${c.move}`);
+    out.push(`Your circuits are bright. ${parts.join(' ')}.`);
+  }
+
+  // All Life Signals
+  if (includeAllSignals && Array.isArray(data.lifeSignals) && data.lifeSignals.length) {
+    const parts = data.lifeSignals.map(l => includeNumbers ? `${l.key} ${l.pct}% — ${l.desc}` : `${l.key} — ${l.desc}`);
+    out.push(`All your life signals sit inside this pattern. ${parts.join(' ')}.`);
+  }
+
+  // Close
+  out.push('This is your story: heat plus direction equals motion. Define the win, claim the lane, and work in short, certain cycles.');
+
+  return out;
+}
+
 type DomainKey = 'O'|'C'|'E'|'A'|'N';
 type Level = 'High'|'Medium'|'Low';
 type Tone = 'neutral'|'alpha'|'warm'|'calm'|'technical';
@@ -40,12 +204,15 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
       const ho = data?.handoff ?? await buildHandoff(results, rid);
       const merged = arch ? { ...whoView, archetype: arch } : whoView;
       setWho(merged); setHandoff(ho);
+      
       try {
         // Debug audit: view full payload in console and on window
         const audit = { rid, results, who: whoView, handoff: ho };
         console.log('[WHO AUDIT]', audit);
         (globalThis as any).gzAudit = audit;
       } catch {}
+      
+      // (debug narrative removed)
     }
     run();
   }, [rid]);
@@ -125,6 +292,51 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
     { key:'D', name: lifePanels?.D?.name || 'Dominance/Drive', value: signals.D }
   ] as const;
 
+  // Build Story Narrative feature
+  const archetypeStr = (typeof (who as any)?.archetype === 'string')
+    ? String((who as any).archetype)
+    : ((who as any)?.archetype?.winner ? String((who as any).archetype.winner) : 'Unknown');
+
+  const whoResultData: WhoResult = {
+    resultId: rid,
+    tone: (who as any)?.tone || String(inferredTone) || 'neutral',
+    archetype: archetypeStr,
+    hash: (handoff as any)?.hash || rid,
+    weeklyFinishers: 0,
+    narrative: Array.isArray((who as any)?.narrative) ? (who as any).narrative : [],
+    interpersonal: {
+      label: interpersonalPanel?.title || 'Adaptive',
+      lines: interpersonalPanel?.lines || [],
+      actions: interpersonalPanel?.actions || []
+    },
+    workStyle: {
+      heading: workPanel?.title || 'Work Style',
+      text: (workPanel?.lines || []).join(' '),
+      guidance: 'Work with intention',
+      actions: workPanel?.actions || []
+    },
+    decisionStyle: {
+      heading: decisionPanel?.title || 'Decision Style',
+      label: decisionPanel?.title || 'Pragmatic',
+      text: (decisionPanel?.lines || []).join(' '),
+      strength: 'Adaptable',
+      risk: 'Overthinking',
+      fix: 'Set time limits'
+    },
+    stress: stressHighs.map(s => ({ key: s.facet, desc: s.meaning || '', move: s.move || '' })),
+    snapshot: topo.map(t => ({
+      key: t.key,
+      pct: Math.round(t.value * 100),
+      meaning: lifePanels?.[t.key]?.levels?.[toLevel(t.value)] || '',
+      move: undefined
+    })),
+    conflicts: [],
+    circuits: [],
+    lifeSignals: topo.map(t => ({ key: t.key, pct: Math.round(t.value * 100), desc: lifePanels?.[t.key]?.levels?.[toLevel(t.value)] || '' }))
+  };
+
+  const storyParagraphs = buildNarrativeStory(whoResultData, { includeNumbers: true, includeAllSignals: false, includeSnapshot: false });
+
   return (
     <main className="stack">
       <header className="row between">
@@ -145,67 +357,29 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         </div>
       ) : null}
 
-      {Array.isArray(who?.narrative) && who.narrative.length ? (
+      {/* Narrative Story (feature) */}
+      {Array.isArray(storyParagraphs) && storyParagraphs.length ? (
         <div className="card" style={{marginTop: 12}}>
-          <h3>Full Narrative</h3>
+          <h3>Narrative Story</h3>
           <div style={{marginTop:8}}>
-            {who.narrative.map((line:string, idx:number)=> (
-              <p key={idx} style={{margin:'8px 0', lineHeight:1.7}}>{line}</p>
+            {storyParagraphs.map((p:string, i:number)=> (
+              <p key={i} style={{margin:'8px 0', lineHeight:1.7}}>{p}</p>
             ))}
           </div>
         </div>
       ) : null}
 
-      <div className="card" style={{marginTop:12}}>
-        <h3>Interpersonal Style (E×A)</h3>
-        {interpersonalPanel ? (
-          <>
-            {interpersonalPanel.title ? (<p className="muted" style={{marginTop:4}}>{interpersonalPanel.title}</p>) : null}
-            {(interpersonalPanel.lines||[]).map((l:string,i:number)=>(<p key={i} style={{marginTop:4}}>{l}</p>))}
-            {Array.isArray(interpersonalPanel.actions) && interpersonalPanel.actions.length ? (
-              <ul style={{marginTop:8}}>{interpersonalPanel.actions.map((a:string,i:number)=>(<li key={i} className="muted">{a}</li>))}</ul>
-            ) : null}
-          </>
-        ) : (
-          <p className="muted" style={{marginTop:4}}>Adaptive / Balanced.</p>
-        )}
-      </div>
+      {/* Full Narrative removed per request */}
 
-      <div className="card" style={{marginTop:12}}>
-        <h3>Work Style (C)</h3>
-        {workPanel ? (
-          <>
-            {(workPanel.lines||[]).map((l:string,i:number)=>(<p key={i} style={{marginTop:4}}>{l}</p>))}
-            {Array.isArray(workPanel.actions) && workPanel.actions.length ? (
-              <ul style={{marginTop:8}}>{workPanel.actions.map((a:string,i:number)=>(<li key={i} className="muted">{a}</li>))}</ul>
-            ) : null}
-          </>
-        ) : <p className="muted" style={{marginTop:4}}>Balances plans with motion.</p>}
-    </div>
+      {/* Narrative debug removed from UI */}
 
-      <div className="card" style={{marginTop:12}}>
-        <h3>Decision Style (O×C)</h3>
-        {decisionPanel ? (
-          <>
-            {decisionPanel.title ? (<p className="muted" style={{marginTop:4}}>{decisionPanel.title}</p>) : null}
-            {(decisionPanel.lines||[]).map((l:string,i:number)=>(<p key={i} style={{marginTop:4}}>{l}</p>))}
-          </>
-        ) : <p className="muted" style={{marginTop:4}}>Decide pragmatically based on context.</p>}
-      </div>
+      {/* Interpersonal Style removed per request */}
 
-      {stressHighs.length ? (
-        <div className="card" style={{marginTop:12}}>
-          <h3>Stress Pattern (N)</h3>
-          <ul style={{marginTop:8}}>
-            {stressHighs.map((s, i)=> (
-              <li key={i} style={{marginTop:6}}>
-                <strong>{s.facet}:</strong> <span className="muted">{s.meaning}</span>
-                {s.move ? (<div className="muted" style={{marginTop:2}}>Move: {s.move}</div>) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-            ) : null}
+      {/* Work Style removed per request */}
+
+      {/* Decision Style removed per request */}
+
+      {/* Stress Pattern removed per request */}
 
       <div className="card" style={{marginTop:12}}>
         <h3>Life Signals Snapshot</h3>

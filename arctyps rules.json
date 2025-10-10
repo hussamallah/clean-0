@@ -239,8 +239,8 @@
         }
       ],
       "fallbacks": {
-        "triad_question": "Which feels most like you right now?",
-        "binary_question": "Which is more you right now?"
+        "triad_question": "DEPRECATED - Using comprehensive templates",
+        "binary_question": "DEPRECATED - Using comprehensive templates"
       }
     }
   }

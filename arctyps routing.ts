@@ -115,6 +115,7 @@ function formRoundGroups(S:string[], A:Record<string,Archetype>, groupSize=3): s
 }
 
 function pickTriadTemplate(triad:string[], tie:TieLayer){
+  // First try existing specific templates
   for (const t of tie.triad_templates){
     const overlap=triad.filter(id=>t.when_candidates_any.includes(id));
     if (overlap.length>=2){
@@ -123,8 +124,28 @@ function pickTriadTemplate(triad:string[], tie:TieLayer){
       return { question:t.question, labels };
     }
   }
-  const labels:Record<string,string>={}; for (const id of triad) labels[id]=id;
-  return { question: tie.fallbacks.triad_question, labels };
+  
+  // Generate comprehensive triad templates for any combination
+  const comprehensiveTriadTemplates = generateComprehensiveTriadTemplates(triad);
+  
+  // Find the best template based on archetype characteristics
+  let bestTemplate = null;
+  let bestScore = -1;
+  
+  for (const template of comprehensiveTriadTemplates) {
+    const score = calculateTriadTemplateScore(triad, template);
+    if (score > bestScore) {
+      bestScore = score;
+      bestTemplate = template;
+    }
+  }
+  
+  if (bestTemplate) {
+    return bestTemplate;
+  }
+  
+  // This should never happen with comprehensive templates
+  throw new Error(`No suitable triad template found for: ${triad.join(', ')}`);
 }
 
 function largestDiffAxis(a:Archetype,b:Archetype): [DomainKey,DomainKey] {
@@ -138,21 +159,401 @@ function largestDiffAxis(a:Archetype,b:Archetype): [DomainKey,DomainKey] {
   return best;
 }
 
+// Comprehensive archetype-specific question templates
+function generateComprehensiveTemplates(aId: string, bId: string, a: Archetype, b: Archetype, rules: RulesJSON): BinaryTemplate[] {
+  const templates: BinaryTemplate[] = [];
+  
+  // Domain-based templates (existing logic enhanced)
+  const domainTemplates = [
+    {
+      axis: "C_vs_E",
+      question: "In a crunch, what's your first move?",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Impose order and standards",
+      right_bucket: "E" as DomainKey,
+      right_hint: "Rally people and drive action"
+    },
+    {
+      axis: "A_vs_O",
+      question: "How do you show care first?",
+      left_bucket: "A" as DomainKey,
+      left_hint: "Duty and reliability",
+      right_bucket: "O" as DomainKey,
+      right_hint: "Empathy and creative connection"
+    },
+    {
+      axis: "E_vs_N",
+      question: "Under pressure, which is closer?",
+      left_bucket: "E" as DomainKey,
+      left_hint: "Move outward and engage",
+      right_bucket: "N" as DomainKey,
+      right_hint: "Withdraw and stabilize"
+    },
+    {
+      axis: "C_vs_O",
+      question: "What do you trust more to get results?",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Structure and standards",
+      right_bucket: "O" as DomainKey,
+      right_hint: "Ideas and exploration"
+    },
+    {
+      axis: "A_vs_E",
+      question: "When helping others, you prefer to:",
+      left_bucket: "A" as DomainKey,
+      left_hint: "Support quietly and consistently",
+      right_bucket: "E" as DomainKey,
+      right_hint: "Motivate and energize them"
+    },
+    {
+      axis: "C_vs_N",
+      question: "When facing uncertainty, you:",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Create plans and systems",
+      right_bucket: "N" as DomainKey,
+      right_hint: "Adapt and stay flexible"
+    }
+  ];
+  
+  templates.push(...domainTemplates);
+  
+  // Archetype-specific templates for high-contrast pairs
+  const archetypeSpecificTemplates = getArchetypeSpecificTemplates(aId, bId);
+  templates.push(...archetypeSpecificTemplates);
+  
+  // Leadership style templates
+  const leadershipTemplates = [
+    {
+      axis: "Leadership_Structure_vs_Energy",
+      question: "As a leader, you naturally:",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Set clear structure and expectations",
+      right_bucket: "E" as DomainKey,
+      right_hint: "Inspire through energy and vision"
+    },
+    {
+      axis: "Leadership_Control_vs_Freedom",
+      question: "Your leadership approach is:",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Guide with clear direction",
+      right_bucket: "O" as DomainKey,
+      right_hint: "Encourage exploration and creativity"
+    },
+    {
+      axis: "Leadership_Authority_vs_Collaboration",
+      question: "When making decisions, you:",
+      left_bucket: "E" as DomainKey,
+      left_hint: "Take charge and move forward",
+      right_bucket: "A" as DomainKey,
+      right_hint: "Seek input and build consensus"
+    }
+  ];
+  
+  templates.push(...leadershipTemplates);
+  
+  // Problem-solving style templates
+  const problemSolvingTemplates = [
+    {
+      axis: "Problem_Systematic_vs_Intuitive",
+      question: "When solving problems, you:",
+      left_bucket: "C" as DomainKey,
+      left_hint: "Analyze systematically and methodically",
+      right_bucket: "O" as DomainKey,
+      right_hint: "Follow intuition and creative insights"
+    },
+    {
+      axis: "Problem_Action_vs_Reflection",
+      question: "Your problem-solving style is:",
+      left_bucket: "E" as DomainKey,
+      left_hint: "Jump in and learn by doing",
+      right_bucket: "N" as DomainKey,
+      right_hint: "Think deeply before acting"
+    },
+    {
+      axis: "Problem_Independent_vs_Collaborative",
+      question: "You prefer to solve problems:",
+      left_bucket: "O" as DomainKey,
+      left_hint: "Independently with your own approach",
+      right_bucket: "A" as DomainKey,
+      right_hint: "Through collaboration and discussion"
+    }
+  ];
+  
+  templates.push(...problemSolvingTemplates);
+  
+  return templates;
+}
+
+function getArchetypeSpecificTemplates(aId: string, bId: string): BinaryTemplate[] {
+  const templates: BinaryTemplate[] = [];
+  
+  // High-contrast archetype pairs get specific questions
+  const highContrastPairs = [
+    { pair: ['sovereign', 'rebel'], question: "When rules conflict with your values, you:", left: "Follow the rules anyway", right: "Break the rules for what's right" },
+    { pair: ['guardian', 'spotlight'], question: "Your ideal team environment is:", left: "Structured and disciplined", right: "Fun and spontaneous" },
+    { pair: ['visionary', 'partner'], question: "You're most energized by:", left: "Big ideas and possibilities", right: "Stable relationships and consistency" },
+    { pair: ['seeker', 'diplomat'], question: "When seeking truth, you:", left: "Question everything independently", right: "Consider everyone's perspective" },
+    { pair: ['architect', 'navigator'], question: "Your approach to change is:", left: "Plan and design carefully", right: "Adapt and explore as you go" },
+    { pair: ['provider', 'vessel'], question: "Your care style is:", left: "Take action and responsibility", right: "Offer peace and emotional support" },
+    { pair: ['sovereign', 'spotlight'], question: "In leadership, you prioritize:", left: "Authority and control", right: "Energy and inspiration" },
+    { pair: ['rebel', 'guardian'], question: "When facing injustice, you:", left: "Challenge the system directly", right: "Protect others within the system" },
+    { pair: ['visionary', 'seeker'], question: "Your learning style is:", left: "Connect ideas across domains", right: "Dive deep into specific topics" },
+    { pair: ['architect', 'diplomat'], question: "Your creative process involves:", left: "Systematic design and structure", right: "Emotional connection and empathy" },
+    { pair: ['navigator', 'partner'], question: "Your ideal adventure is:", left: "Exploring new places and people", right: "Sharing familiar experiences" },
+    { pair: ['provider', 'spotlight'], question: "Your contribution style is:", left: "Reliable support behind the scenes", right: "Visible inspiration and motivation" },
+    // Add more specific pairs for better coverage
+    { pair: ['architect', 'provider'], question: "Your approach to helping others is:", left: "Design systems and structures", right: "Take direct action and responsibility" },
+    { pair: ['navigator', 'diplomat'], question: "When working with people, you:", left: "Guide them through exploration", right: "Connect through empathy and understanding" },
+    { pair: ['seeker', 'vessel'], question: "Your ideal environment is:", left: "Intellectually stimulating and independent", right: "Peaceful and emotionally supportive" },
+    { pair: ['visionary', 'guardian'], question: "Your leadership style is:", left: "Inspire through big ideas", right: "Protect and energize the team" },
+    { pair: ['sovereign', 'provider'], question: "When making decisions, you:", left: "Take authority and control", right: "Consider everyone's needs first" },
+    { pair: ['rebel', 'spotlight'], question: "Your energy comes from:", left: "Breaking constraints and patterns", right: "Inspiring and energizing others" }
+  ];
+  
+  for (const pair of highContrastPairs) {
+    // Check both directions of the pair
+    if ((pair.pair[0] === aId && pair.pair[1] === bId) || (pair.pair[0] === bId && pair.pair[1] === aId)) {
+      const isReversed = pair.pair[0] === bId;
+      templates.push({
+        axis: `Archetype_${aId}_vs_${bId}`,
+        question: pair.question,
+        left_bucket: "C" as DomainKey, // Placeholder - scoring will be based on domain differences
+        left_hint: isReversed ? pair.right : pair.left,
+        right_bucket: "E" as DomainKey, // Placeholder - scoring will be based on domain differences  
+        right_hint: isReversed ? pair.left : pair.right
+      });
+    }
+  }
+  
+  return templates;
+}
+
+function getArchetypeRelevanceScore(aId: string, bId: string, template: BinaryTemplate): number {
+  // Score based on how well the template matches the specific archetype pair
+  let score = 0;
+  
+  // Higher score for archetype-specific templates
+  if (template.axis.startsWith('Archetype_')) {
+    score += 2.0;
+  }
+  
+  // Medium score for leadership/problem-solving templates
+  if (template.axis.startsWith('Leadership_') || template.axis.startsWith('Problem_')) {
+    score += 1.0;
+  }
+  
+  // Lower score for generic domain templates
+  if (template.axis.includes('_vs_') && !template.axis.startsWith('Archetype_')) {
+    score += 0.5;
+  }
+  
+  return score;
+}
+
+// Comprehensive triad template generation
+function generateComprehensiveTriadTemplates(triad: string[]): Array<{question: string, labels: Record<string, string>}> {
+  const templates: Array<{question: string, labels: Record<string, string>}> = [];
+  
+  // Leadership style triads
+  const leadershipTriads = [
+    {
+      question: "When leading a team, you naturally:",
+      labels: {
+        sovereign: "Set clear authority and structure",
+        guardian: "Protect and energize the group", 
+        spotlight: "Inspire through energy and fun"
+      }
+    },
+    {
+      question: "Your leadership philosophy is:",
+      labels: {
+        architect: "Design systems that work",
+        navigator: "Guide through exploration",
+        partner: "Stabilize and support everyone"
+      }
+    }
+  ];
+  
+  // Problem-solving style triads
+  const problemSolvingTriads = [
+    {
+      question: "When facing a complex challenge, you:",
+      labels: {
+        seeker: "Analyze deeply and independently",
+        diplomat: "Consider all perspectives first",
+        vessel: "Create calm and safe space"
+      }
+    },
+    {
+      question: "Your approach to innovation is:",
+      labels: {
+        visionary: "Connect ideas across domains",
+        rebel: "Break existing patterns",
+        provider: "Build practical solutions"
+      }
+    }
+  ];
+  
+  // Relationship and care style triads
+  const relationshipTriads = [
+    {
+      question: "How do you show you care?",
+      labels: {
+        provider: "Take action and responsibility",
+        diplomat: "Offer empathy and understanding",
+        vessel: "Provide peace and emotional safety"
+      }
+    },
+    {
+      question: "Your ideal collaboration style is:",
+      labels: {
+        architect: "Design together systematically",
+        navigator: "Explore and adapt together",
+        partner: "Work steadily side by side"
+      }
+    }
+  ];
+  
+  // Work style triads
+  const workStyleTriads = [
+    {
+      question: "Your ideal work environment is:",
+      labels: {
+        sovereign: "Structured with clear hierarchy",
+        spotlight: "Dynamic and energizing",
+        seeker: "Quiet and intellectually stimulating"
+      }
+    },
+    {
+      question: "When working on a project, you:",
+      labels: {
+        guardian: "Take charge and drive momentum",
+        visionary: "Generate creative possibilities",
+        vessel: "Maintain harmony and balance"
+      }
+    }
+  ];
+  
+  // Check which templates apply to the current triad
+  const allTriadTemplates = [
+    ...leadershipTriads,
+    ...problemSolvingTriads, 
+    ...relationshipTriads,
+    ...workStyleTriads
+  ];
+  
+  for (const template of allTriadTemplates) {
+    const matchingArchetypes = triad.filter(id => template.labels[id]);
+    if (matchingArchetypes.length >= 2) {
+      // Create labels for all triad members
+      const labels: Record<string, string> = {};
+      for (const id of triad) {
+        labels[id] = template.labels[id] || getGenericArchetypeHint(id);
+      }
+      templates.push({
+        question: template.question,
+        labels
+      });
+    }
+  }
+  
+  // Generic fallback templates for any combination
+  const genericTemplates = [
+    {
+      question: "Which approach feels most natural to you?",
+      labels: {}
+    },
+    {
+      question: "In this moment, which resonates most?",
+      labels: {}
+    },
+    {
+      question: "Which best describes your current energy?",
+      labels: {}
+    }
+  ];
+  
+  for (const template of genericTemplates) {
+    const labels: Record<string, string> = {};
+    for (const id of triad) {
+      labels[id] = getGenericArchetypeHint(id);
+    }
+    templates.push({
+      question: template.question,
+      labels
+    });
+  }
+  
+  return templates;
+}
+
+function getGenericArchetypeHint(archetypeId: string): string {
+  const hints: Record<string, string> = {
+    sovereign: "Lead with authority and structure",
+    rebel: "Challenge and break constraints",
+    visionary: "Create and connect ideas",
+    navigator: "Guide through exploration",
+    guardian: "Protect and energize others",
+    seeker: "Analyze and discover truth",
+    architect: "Design and build systems",
+    spotlight: "Inspire and energize people",
+    diplomat: "Connect through empathy",
+    partner: "Stabilize and support",
+    provider: "Take care and responsibility",
+    vessel: "Offer peace and balance"
+  };
+  return hints[archetypeId] || archetypeId;
+}
+
+function calculateTriadTemplateScore(triad: string[], template: {question: string, labels: Record<string, string>}): number {
+  let score = 0;
+  
+  // Score based on how many archetypes have specific labels
+  const matchingLabels = triad.filter(id => template.labels[id] && template.labels[id] !== id);
+  score += matchingLabels.length * 2.0;
+  
+  // Bonus for templates that match all three archetypes
+  if (matchingLabels.length === triad.length) {
+    score += 1.0;
+  }
+  
+  // Prefer more specific questions over generic ones
+  if (template.question.includes("naturally") || template.question.includes("philosophy")) {
+    score += 0.5;
+  }
+  
+  return score;
+}
+
 function pickBinaryTemplate(aId:string,bId:string,rules:RulesJSON){
   const tie=rules.tie_layer;
   const Amap=Object.fromEntries(rules.archetypes.map(x=>[x.id,x])) as Record<string,Archetype>;
   const a=Amap[aId], b=Amap[bId];
-  // Choose the best available axis among templates by maximizing summed bucket differences
+  
+  // Generate comprehensive question templates for all possible archetype combinations
+  const comprehensiveTemplates = generateComprehensiveTemplates(aId, bId, a, b, rules);
+  
+  // Choose the best template by maximizing domain differences and archetype-specific relevance
   let bestT: BinaryTemplate | null = null;
   let bestScore = -1;
-  for (const tt of tie.binary_templates){
+  
+  for (const tt of comprehensiveTemplates){
     const lx = reqBucketNum(a, tt.left_bucket)  ?? 1;
     const rx = reqBucketNum(a, tt.right_bucket) ?? 1;
     const ly = reqBucketNum(b, tt.left_bucket)  ?? 1;
     const ry = reqBucketNum(b, tt.right_bucket) ?? 1;
-    const score = Math.abs(lx-ly) + Math.abs(rx-ry);
-    if (score > bestScore){ bestScore = score; bestT = tt; }
+    const domainScore = Math.abs(lx-ly) + Math.abs(rx-ry);
+    
+    // Add archetype-specific relevance score
+    const relevanceScore = getArchetypeRelevanceScore(aId, bId, tt);
+    const totalScore = domainScore + relevanceScore;
+    
+    if (totalScore > bestScore){ 
+      bestScore = totalScore; 
+      bestT = tt; 
+    }
   }
+  
   if (bestT){
     return {
       question: bestT.question,
@@ -160,8 +561,9 @@ function pickBinaryTemplate(aId:string,bId:string,rules:RulesJSON){
       right: { id:bId, label: bestT.right_hint }
     };
   }
-  // Fallback (no templates provided)
-  return { question: tie.fallbacks.binary_question, left:{id:aId,label:aId}, right:{id:bId,label:bId} };
+  
+  // This should never happen with comprehensive templates, but defensive fallback
+  throw new Error(`No suitable template found for archetype pair: ${aId} vs ${bId}`);
 }
 
 // Public: rounds KO resolver (no repeat within round)
@@ -214,21 +616,33 @@ export async function resolveArchetypeRounds(
 async function binaryPairWinner(aId:string, bId:string, ask:AskFn, rules:RulesJSON, stage:'pair'|'final', fromLeft?:string[], fromRight?:string[]): Promise<string> {
   const bin=pickBinaryTemplate(aId, bId, rules);
   const isPair = stage==='pair';
-  const triadFallbackQ = rules.tie_layer?.fallbacks?.triad_question || bin.question;
   const Amap=Object.fromEntries(rules.archetypes.map(x=>[x.id,x])) as Record<string,Archetype>;
   const leftTitle  = Amap[aId]?.gz || aId;
   const rightTitle = Amap[bId]?.gz || bId;
+  
+  // Debug logging
+  console.log(`BinaryPairWinner: ${aId} vs ${bId}, stage: ${stage}, fromLeft: ${fromLeft}, fromRight: ${fromRight}`);
+  
+  // Use comprehensive question selection - no fallbacks needed
+  let question = bin.question;
+  
+  // Add context for final rounds to make it clearer
+  if (fromLeft?.length || fromRight?.length) {
+    const leftContext = fromLeft?.length ? `Winner of ${fromLeft.join(' vs ')}` : aId;
+    const rightContext = fromRight?.length ? `Winner of ${fromRight.join(' vs ')}` : bId;
+    question = `${bin.question}\n\n${leftContext} vs ${rightContext}`;
+  }
+    
   const probe:BinaryProbe={
     type:'binary',
-    question: isPair ? triadFallbackQ : (fromLeft?.length || fromRight?.length
-      ? `${bin.question} — Winner of ${fromLeft?.join(' vs ')||aId} vs Winner of ${fromRight?.join(' vs ')||bId}`
-      : bin.question),
+    question,
     // Final: labels are the winners' names; Pair: labels are ids for image mapping
     left:  { id:aId, label: isPair ? aId : (Amap[aId]?.gz || aId) },
     right: { id:bId, label: isPair ? bId : (Amap[bId]?.gz || bId) },
     meta: { stage, present: isPair ? 'image_pair' : 'binary', from: { left: fromLeft||[], right: fromRight||[] }, hints: { left: bin.left.label, right: bin.right.label } }
   };
   const pick=await ask(probe);
+  console.log(`BinaryPairWinner result: ${pick} (chose between ${aId} and ${bId})`);
   return (pick===aId || pick===bId) ? pick : aId;
 }
 
@@ -242,6 +656,28 @@ function pickByeId(ids:string[], A:Record<string,Archetype>): string {
   return best;
 }
 
+function pickMostDivergentWildCard(currentPool: string[], remainingArchetypes: string[], Amap: Record<string, Archetype>): string {
+  let bestWildCard = remainingArchetypes[0];
+  let bestScore = -1;
+  
+  for (const wildCard of remainingArchetypes) {
+    // Calculate how different this wild card is from the current pool
+    let totalDivergence = 0;
+    for (const currentArchetype of currentPool) {
+      totalDivergence += pairDiv(Amap[wildCard], Amap[currentArchetype]);
+    }
+    
+    // Prefer wild cards that are most different from the current pool
+    if (totalDivergence > bestScore) {
+      bestScore = totalDivergence;
+      bestWildCard = wildCard;
+    }
+  }
+  
+  console.log(`Selected wild card: ${bestWildCard} (divergence score: ${bestScore})`);
+  return bestWildCard;
+}
+
 async function resolveArchetypeBinaryBrackets(
   candidateIds: string[],
   ask: AskFn,
@@ -252,36 +688,46 @@ async function resolveArchetypeBinaryBrackets(
   if (pool.length===1) return pool[0];
 
   const Amap=Object.fromEntries(rules.archetypes.map(x=>[x.id,x])) as Record<string,Archetype>;
+  
+  // Add wild card if odd number to ensure even tournament
+  if (pool.length % 2 === 1) {
+    const allArchetypes = rules.archetypes.map(x => x.id);
+    const remainingArchetypes = allArchetypes.filter(id => !pool.includes(id));
+    
+    if (remainingArchetypes.length > 0) {
+      // Pick the most divergent wild card from remaining archetypes
+      const wildCard = pickMostDivergentWildCard(pool, remainingArchetypes, Amap);
+      pool.push(wildCard);
+      console.log(`Added wild card: ${wildCard}. New pool: ${pool.join(', ')}`);
+    }
+  }
 
   while (pool.length>1){
+    console.log(`Binary brackets round starting with pool: ${pool.join(', ')}`);
     const next:string[]=[];
     let i=0;
+    
+    // Pure binary tournament - always pair archetypes 2 by 2
     while (i<pool.length){
       const remain = pool.length - i;
-      if (remain>=4){
-        const a=pool[i], b=pool[i+1], c=pool[i+2], d=pool[i+3];
-        const w1 = await binaryPairWinner(a,b,ask,rules,'pair');
-        const w2 = await binaryPairWinner(c,d,ask,rules,'pair');
-        const w  = await binaryPairWinner(w1,w2,ask,rules,'final',[a,b],[c,d]);
-        next.push(w); i+=4; continue;
-      }
-      if (remain===3){
-        // Bye policy: auto-select one with highest divergence vs others
-        const tri = [pool[i], pool[i+1], pool[i+2]];
-        const bye = pickByeId(tri, Amap);
-        const others = tri.filter(x=>x!==bye);
-        const w1 = await binaryPairWinner(others[0], others[1], ask, rules,'pair');
-        const w  = await binaryPairWinner(bye, w1, ask, rules,'final',[bye],[others[0], others[1]]);
-        next.push(w); i+=3; continue;
-      }
-      if (remain===2){
-        const w = await binaryPairWinner(pool[i], pool[i+1], ask, rules,'final',[pool[i]],[pool[i+1]]);
+      if (remain>=2){
+        const a=pool[i], b=pool[i+1];
+        console.log(`Processing binary pair: ${a} vs ${b}`);
+        
+        // Use 'pair' stage for bird images in early rounds, 'final' for text questions in final round
+        const isFinalRound = pool.length === 2;
+        const stage = isFinalRound ? 'final' : 'pair';
+        
+        const w = await binaryPairWinner(a, b, ask, rules, stage, [a], [b]);
+        console.log(`Binary pair winner: ${w}`);
         next.push(w); i+=2; continue;
       }
       // remain===1 → advance
+      console.log(`Advancing single archetype: ${pool[i]}`);
       next.push(pool[i]); i+=1;
     }
     pool = next;
+    console.log(`Round complete. Next pool: ${pool.join(', ')}`);
   }
   return pool[0];
 }
