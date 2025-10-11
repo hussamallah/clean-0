@@ -46,19 +46,15 @@ export default function LandingPage() {
 
       {/* HOW IT WORKS */}
       <section id="how" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-2">
           {[
             {
-              t: 'Phase 1 — Priorities',
-              d: 'Pick what matters (plus/minus/resolver). Establish context markers for fair scoring.',
+              t: 'Phase 1 — Behaviors',
+              d: '30 behavioral statements across OCEAN facets. Answer Yes or rate 1–5 (Very Inaccurate to Very Accurate). Deterministic scoring; no randomness.',
             },
             {
-              t: 'Phase 2 — Behaviors',
-              d: '30 concise items mapped to OCEAN facets. Deterministic scoring; no RNG.',
-            },
-            {
-              t: 'Phase 3 — Confirmers',
-              d: 'Quick tie‑breaker matchups (e.g., Guardian vs Navigator) to lock your best‑fit archetype.',
+              t: 'Phase 2 — Archetype Resolver',
+              d: 'Quick tie‑breaker matchups (e.g., Guardian vs Navigator) to confirm your best‑fit archetype from rule‑based candidates.',
             },
           ].map((c) => (
             <div key={c.t} className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] p-6 shadow-lg shadow-black/20">
@@ -77,11 +73,10 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {["Sovereign","Rebel","Visionary","Guardian","Navigator","Seeker","Vessel","Partner","Diplomat","Spotlight","Architect","Provider"].map((name) => (
-            <div key={name} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex h-24 items-center justify-center text-sm text-white/80">{name}</div>
-              <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100">
-                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                <div className="absolute bottom-0 w-full p-3 text-[11px] text-white/70">Rule‑based mapping from domain + facet clusters.</div>
+            <div key={name} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+              <div className="flex h-32 flex-col items-center justify-center gap-2">
+                <img src={`/${name.toLowerCase()}.png`} alt={name} className="h-20 w-20 object-contain" />
+                <div className="text-xs font-medium text-white/80">{name}</div>
               </div>
             </div>
           ))}
@@ -123,7 +118,7 @@ export default function LandingPage() {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <h3 className="text-lg font-semibold">Screens you’ll see</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {["Priorities","Behaviors","Tie‑breakers","Results"].map((x) => (
+              {["Behaviors (Yes/No + Likert)","Archetype Resolver","Results"].map((x) => (
                 <div key={x} className="rounded-xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] p-4 text-center text-xs text-white/70">
                   {x}
                 </div>
