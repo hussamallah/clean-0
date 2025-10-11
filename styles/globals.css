@@ -1,25 +1,25 @@
 :root{
-  --bg:#0a0a1a;
-  --panel:#1e1e3f;
-  --panel-2:#2a2a5a;
-  --text:#f0f8ff;
-  --muted:#a8c8e8;
-  --accent:#667eea;
-  --good:#4facfe;
-  --mid:#00f2fe;
-  --low:#ff6b6b;
-  --focus:#8b5cf6;
-  --bar:#3a3a7a;
-  --border:#4a4a8a;
-  --chip:#2a2a5a;
-  --tag:#1e1e3f;
+  --bg:#0f1115;
+  --panel:#151821;
+  --panel-2:#1a2030;
+  --text:#e7ebf0;
+  --muted:#a7b0bf;
+  --accent:#5b8def;
+  --good:#22c55e;
+  --mid:#60a5fa;
+  --low:#ef4444;
+  --focus:#7aa3ff;
+  --bar:#233044;
+  --border:#273142;
+  --chip:#151821;
+  --tag:#151821;
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
-  background:linear-gradient(135deg, #1a0b2e 0%, #2d1b69 25%, #1e3c72 50%, #2a5298 75%, #0f3460 100%);
+  background: var(--bg);
   color:var(--text);
   font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   letter-spacing:.1px;
@@ -184,12 +184,22 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
   display:flex;
   align-items:center;
   justify-content:center;
-  background:linear-gradient(135deg, #1a0b2e 0%, #2d1b69 25%, #1e3c72 50%, #2a5298 75%, #0f3460 100%);
+  background: var(--bg);
 }
 .full-center > *{
   transform:scale(1.25);
   transform-origin:center;
   max-width:1200px;
+}
+
+/* Mobile overrides */
+@media (max-width: 768px){
+  body{ transform:none; width:100%; }
+  .app{ padding:20px 14px 48px; }
+  .row-nowrap{ flex-wrap:wrap; }
+  .facet-grid{ grid-template-columns:1fr; }
+  .rate.btn{ min-width:140px; padding:10px 14px; }
+  .full-center > *{ transform:none; max-width:100%; }
 }
 
 /* Main question text styling */

@@ -651,7 +651,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .header { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); }
           .header h1 { font-size: 2.0rem; font-weight: 700; margin-bottom: 8px; color: var(--primary-text-color); }
           .archetype { font-size: 1.2rem; font-weight: 600; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
-          .archetype-img { display: inline-block; margin-top: 8px; height: 240px; width: auto; object-fit: contain; }
+          .archetype-img { display: inline-block; margin-top: 8px; height: 300px; width: auto; object-fit: contain; }
           .meta-info { font-size: 0.9rem; color: var(--secondary-text-color); margin-top: 8px; }
           .final-line { font-size: 1.05rem; color: var(--accent-color); letter-spacing: 0.3px; }
           .card { background-color: var(--surface-color); border-radius: 12px; padding: 24px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -660,6 +660,11 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .card p { margin: 8px 0; color: var(--secondary-text-color); line-height: 1.7; }
           .card ul { list-style: none; padding-left: 0; }
           .card li { background-color: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-color); }
+
+          @media (max-width: 768px){
+            .gz-theme.container { width: 100%; transform: none !important; }
+            .archetype-img { height: 200px; }
+          }
         `}</style>
       </div>
     </main>

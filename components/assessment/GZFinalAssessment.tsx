@@ -377,9 +377,7 @@ export default function GZFinalAssessment(){
       const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
       return (
         <div className="card">
-          <h2>Quick mini-quiz</h2>
-          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
-          <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
+          <div className="row mt16" style={{gap:24, alignItems:'center', justifyContent:'center', flexWrap:'wrap' as any}}>
             <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(L)}>
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
@@ -392,6 +390,7 @@ export default function GZFinalAssessment(){
                 </div>
               </div>
             </button>
+            <div style={{width:48,height:48,borderRadius:24,background:'#b81f1f',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>VS</div>
             <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(R)}>
               <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{rightMeta.title}</strong></div>
