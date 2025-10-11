@@ -18,7 +18,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <a href="/full" className="group inline-flex items-center rounded-2xl bg-indigo-500 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-400">
-                Start full assessment
+                Start assessment
                 <svg className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M13 5l7 7-7 7"/>
                 </svg>
@@ -85,11 +85,12 @@ export default function LandingPage() {
 
       {/* FEATURE CARDS */}
       <section id="features" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {[
             {t: 'Deterministic & transparent', d: 'Reproducible results with visible rules and a hash receipt.'},
             {t: 'Operational playbook', d: 'Daily actions, cycles, guardrails and stress moves tailored to you.'},
             {t: 'Existential circuits', d: 'Energy, Structure, Clarity, Bond and more — with risks and moves.'},
+            {t: 'Conflict patterns', d: 'Identify friction points with practical tips to navigate tension and align teams.'},
           ].map((f) => (
             <div key={f.t} className="rounded-2xl border border-white/10 bg-white/5 p-6">
               <h3 className="text-lg font-semibold">{f.t}</h3>
@@ -99,35 +100,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* RESULTS PREVIEW */}
-      <section id="results" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div className="grid items-start gap-8 lg:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">“Who You Are” page</h3>
-            <ul className="mt-3 space-y-2 text-sm text-white/70">
-              <li>• Identity narrative + run verification hash</li>
-              <li>• Operational layer: cycles, daily actions, guardrails</li>
-              <li>• Conflict patterns with practical tips</li>
-              <li>• Circuits with risks and recommended moves</li>
-            </ul>
-            <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-white/60">
-              <div className="font-mono">hash: e1def1b4… – immutable proof for this run</div>
-              <div className="mt-1">1,514 finished this week</div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h3 className="text-lg font-semibold">Screens you’ll see</h3>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {["Behaviors (Yes/No + Likert)","Archetype Resolver","Results"].map((x) => (
-                <div key={x} className="rounded-xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] p-4 text-center text-xs text-white/70">
-                  {x}
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-sm text-white/70">Built with Next.js + Tailwind on Vercel Edge.</p>
-          </div>
-        </div>
-      </section>
 
       {/* PRICING */}
       <section id="pricing" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
