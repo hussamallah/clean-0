@@ -182,7 +182,6 @@ export default function GZFinalAssessment(){
         <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
-            <p className="muted">Answer Yes/No based on the last year.</p>
           </div>
           <div className="pill">{idx+1}/{total}</div>
         </div>
@@ -201,27 +200,33 @@ export default function GZFinalAssessment(){
 
   if (step === 'likert' && current){
     const d = current.domain;
-    const ratings = [1,2,3,4,5] as const;
+    const ratings = [
+      { text: 'Very Inaccurate', val: 1 },
+      { text: 'Moderately Inaccurate', val: 2 },
+      { text: 'Neutral', val: 3 },
+      { text: 'Moderately Accurate', val: 4 },
+      { text: 'Very Accurate', val: 5 }
+    ] as const;
     return (
       <div className="card">
         <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
-            <p className="muted">1..5 (Strongly disagree → Strongly agree)</p>
+            <p className="muted">Scale: Very Inaccurate → Very Accurate</p>
           </div>
           <div className="pill">{idx+1}/{total}</div>
         </div>
         <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.likQ}</div>
         <div className="row mt16">
-          {ratings.map(v=> (
-            <button key={v} className="rate btn" onClick={()=>{
+          {ratings.map(r=> (
+            <button key={r.val} className="rate btn" onClick={()=>{
               // No → Likert reverse-scored mapping per spec
               // Likert 1→5, 2→4, 3→3, 4→2, 5→1
               const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
-              const final = map[v as number] ?? 3;
+              const final = map[r.val as number] ?? 3;
               setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
               if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
-            }}>{v}</button>
+            }}>{r.text}</button>
           ))}
         </div>
         <div className="row mt16" style={{justifyContent:'flex-start'}}>

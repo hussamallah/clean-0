@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import AuthorityBar from "@components/who/AuthorityBar";
 import FiveCardResults from "@components/who/FiveCardResults";
 import ExistentialCircuits from "@components/who/ExistentialCircuits";
 import AllLifeSignals from "@components/who/AllLifeSignals";
@@ -9,6 +8,7 @@ import { buildHandoff } from "@/lib/bigfive/handoff";
 import { sha256Hex } from "@/lib/crypto/sha256hex";
 import { stableStringify } from "@/lib/bigfive/format";
 import { computeSignals } from "@/lib/bigfive/signals";
+import archetypeRules from "@/arctyps rules.json";
 
 // ================= Types =================
 type StressItem = {
@@ -99,79 +99,235 @@ function capitalize(s: any) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function buildNarrativeStory(data: WhoResult, opts: NarrativeOptions = defaultOpts): string[] {
-  const { includeNumbers, includeAllSignals, includeSnapshot } = { ...defaultOpts, ...opts };
-  const out: string[] = [];
+function limitWords(input: string, maxWords: number): string {
+  const words = String(input || '').trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return words.join(' ');
+  return words.slice(0, maxWords).join(' ');
+}
 
-  // Header
+function pseudoRandomIntFromString(seed: string, min: number, max: number): number {
+  const lower = Math.floor(min);
+  const upper = Math.floor(max);
+  const span = upper - lower + 1;
+  if (span <= 1) return lower;
+  let h = 0 >>> 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = ((h * 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  return lower + (h % span);
+}
+
+type NarrativeDoc = {
+  header: string[];
+  core: string[];
+  ops: {
+    cycles: string[];
+    daily: string[];
+    guardrails: string[];
+    stressMoves: string[];
+  };
+  snapshot: string[];
+  close: string;
+};
+
+function buildNarrativeStory(
+  data: WhoResult,
+  opts: NarrativeOptions = defaultOpts
+): NarrativeDoc {
+  const { includeNumbers, includeAllSignals, includeSnapshot } = { ...defaultOpts, ...opts };
+
+  // Header Proof
   const archetype = capitalize(data.archetype || 'Unknown');
-  const tone = capitalize(data.tone || 'neutral');
+  const tone = capitalize(data.tone || 'Neutral');
   const resultId = data.resultId || 'Unknown';
   const hash = data.hash || 'Unknown';
-  const weeklyFinishers = data.weeklyFinishers || 0;
-  
-  const header = includeNumbers
-    ? `You are the ${archetype}. ${tone} tone, result ${resultId}. This run is verified (hash ${hash}). This week, ${formatInt(weeklyFinishers)} people finished; you read yours now.`
-    : `You are the ${archetype}. ${tone} tone. This run is verified.`;
-  out.push(header);
+  const weeklyFinishers = data.weeklyFinishers ?? 0;
 
-  // Narrative blocks
-  if (Array.isArray(data.narrative) && data.narrative.length) {
-    out.push(data.narrative.slice(0, 5).join(' '));
-    out.push(data.narrative.slice(5, 10).join(' '));
-    out.push(data.narrative.slice(10).join(' '));
+  const header = [
+    includeNumbers
+      ? `This run is verified (hash ${hash}). This week, ${formatInt(weeklyFinishers)} people finished; you read yours now.`
+      : `This run is verified.`
+  ];
+
+  // Identity Narrative (Core Story) — 6–7 sentences, punchy, facet-first
+  const core: string[] = [];
+  const MAX_SENTENCES = 7;
+  const MAX_FROM_NARR = 5;   // up to 5 from who.narrative
+  const MAX_WORDS = 16;
+  const MIN_WORDS = 6;
+
+  const SOFTENERS = /\b(very|really|quite|somewhat|often|usually|maybe|perhaps|a bit|kind of|sort of)\b/gi;
+  const FILLERS = /\b(that|just|actually|literally)\b/gi;
+  const BOILERPLATE_DOMAIN = /^\s*Your\s+(Openness|Conscientiousness|Extraversion|Agreeableness|Neuroticism)\s+is\b/i;
+
+  // domain + facet tokens for salience
+  const TOKENS = [
+    {k:'Openness', rx:/\bopenness\b/i, facets:[/imagin/i,/creativ/i,/ideas?/i,/beauty|art|music|literature|nature/i]},
+    {k:'Conscientiousness', rx:/\bconscientiousness\b/i, facets:[/reliable|reliab/i,/execution|deliver|finish/i,/lanes?|scope|SOP/i]},
+    {k:'Extraversion', rx:/\bextraversion\b/i, facets:[/tempo|momentum|visible|energ/i,/lead|initiat/i]},
+    {k:'Agreeableness', rx:/\bagreeableness\b/i, facets:[/goodwill|trust|warm/i,/convert|align|coalition/i]},
+    {k:'Neuroticism', rx:/\bneuroticism\b/i, facets:[/signals?|worry|anxiety|overload|frustration/i,/buffers?|resets?|guardrails?/i]}
+  ];
+
+  function splitSentences(text:string): string[] {
+    return (text||'')
+      .replace(/\s+/g,' ')
+      .split(/(?<=[.!?])\s+/)
+      .map(s=>s.trim())
+      .filter(Boolean);
   }
 
-  // Interpersonal, Work, Decision
-  if (data.interpersonal) {
-    const l0 = data.interpersonal.lines?.[0] ?? '';
-    const l1 = data.interpersonal.lines?.[1] ?? '';
-    const acts = (data.interpersonal.actions ?? []).join('; ');
-    out.push(`Your stance with people is ${data.interpersonal.label.toLowerCase()}. ${l0} ${l1} Two concrete steps beat a perfect map: ${acts}.`);
+  function clampWords(s:string): string {
+    const words = s
+      .replace(SOFTENERS,'')
+      .replace(FILLERS,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .split(' ');
+    if (words.length <= MAX_WORDS) return words.join(' ');
+    return words.slice(0, MAX_WORDS).join(' ') + '.';
   }
 
+  function scoreSentence(s:string): number {
+    let score = 0;
+    for (const t of TOKENS) {
+      if (t.rx.test(s)) score += 1; // downweight plain domain mentions
+      for (const f of t.facets) if (f.test(s)) score += 3; // boost facet cues
+    }
+    // stressey, action, boundary cues
+    if (/\b(tight cycles?|buffers?|resets?|guardrails?|boundar(y|ies))\b/i.test(s)) score += 2;
+    if (/\b(define|commit|ship|move|drop scope|restart|request)\b/i.test(s)) score += 1;
+    if (/\b(composed\s+force|regain\s+control|reliable\s+execution|set\s+tempo|momentum\s+visible)\b/i.test(s)) score += 2;
+    return score;
+  }
+
+  // 1) candidates from who.narrative (first 5, next 5, rest)
+  const n0 = Array.isArray(data.narrative) ? data.narrative.slice(0,5).join(' ') : '';
+  const n1 = Array.isArray(data.narrative) ? data.narrative.slice(5,10).join(' ') : '';
+  const n2 = Array.isArray(data.narrative) ? data.narrative.slice(10).join(' ') : '';
+  let candidates = [...splitSentences(n0), ...splitSentences(n1), ...splitSentences(n2)];
+  // Filter boilerplate and too-short lines; remove lone taglines like "Heat."
+  candidates = candidates.filter(s => {
+    const w = s.trim().split(/\s+/).filter(Boolean).length;
+    if (w < MIN_WORDS) return false;
+    if (BOILERPLATE_DOMAIN.test(s)) return false;
+    if (/^heat\.?$/i.test(s)) return false;
+    return true;
+  });
+
+  // 2) rank by facet salience, not literal domain-only spam
+  const ranked = candidates
+    .map((s,idx)=>({ s, idx, score: scoreSentence(s) }))
+    .sort((a,b)=> b.score - a.score || a.idx - b.idx);
+
+  // 3) enforce coverage: O C E A N if present; pick best sentence per domain first
+  const picked: string[] = [];
+  const used = new Set<number>();
+
+  for (const t of TOKENS) {
+    let bestIdx: number = -1;
+    let bestScore: number = -Infinity;
+    ranked.forEach((r, i) => {
+      if (used.has(i)) return;
+      if (t.rx.test(r.s) || t.facets.some(f => f.test(r.s))) {
+        if (r.score > bestScore) { bestScore = r.score; bestIdx = i; }
+      }
+    });
+    if (bestIdx >= 0) { picked.push(ranked[bestIdx].s); used.add(bestIdx); }
+    if (picked.length >= MAX_FROM_NARR) break;
+  }
+
+  // 4) fill remaining narrative slots with next best facet-rich lines (avoid duplicates, clichés)
+  for (let i=0; i<ranked.length && picked.length<MAX_FROM_NARR; i++){
+    if (used.has(i)) continue;
+    const s = ranked[i].s;
+    if (/heat plus direction equals motion/i.test(s)) continue; // repetitive tagline
+    picked.push(s);
+    used.add(i);
+  }
+
+  // 5) compress to one tight paragraph, clamp words
+  const compressed = picked.map(clampWords);
+
+  // 6) snapshot-derived nuance removed per request
+
+  // 7) stance line (exactly one sentence)
+  let stanceLine = '';
+  if (data.interpersonal){
+    const stance = (data.interpersonal.label ?? 'Adaptive').toLowerCase();
+    let l0 = (data.interpersonal.lines?.[0] ?? '').replace(/\s+/g,' ').trim();
+    l0 = l0.replace(/^[Yy]ou\s+/, 'you '); // merge smoothly into one sentence
+    stanceLine = clampWords(`Your stance with people is ${stance} and ${l0}`);
+  }
+
+  // 8) assemble to 6–7 sentences total
+  const finalSentences: string[] = [];
+  for (const s of compressed) { if (finalSentences.length < 6) finalSentences.push(s); }
+  if (stanceLine && finalSentences.length < MAX_SENTENCES) finalSentences.push(stanceLine);
+  if (!finalSentences.length) finalSentences.push('You set direction and move work to done.');
+
+  core.push(finalSentences.join(' '));
+
+  // Operational Layer
+  const cycles: string[] = [];
+  const daily: string[] = [];
+  const guardrails: string[] = [];
+  const stressMoves: string[] = [];
+
+  // Cycles + WorkStyle
   if (data.workStyle) {
-    out.push(`${data.workStyle.text} ${data.workStyle.guidance} Actions: ${(data.workStyle.actions ?? []).join('; ')}.`);
+    const text = data.workStyle.text?.trim() ? data.workStyle.text : '';
+    const guidance = data.workStyle.guidance?.trim() ? data.workStyle.guidance : '';
+    if (text || guidance) cycles.push([text, guidance].filter(Boolean).join(' '));
+    const acts = (data.workStyle.actions ?? []);
+    if (acts.length) daily.push(...acts);
   }
 
+  // Decision Guardrails
   if (data.decisionStyle) {
-    out.push(`${data.decisionStyle.label}. ${data.decisionStyle.text} ${data.decisionStyle.strength} ${data.decisionStyle.risk} ${data.decisionStyle.fix}`);
+    const label = data.decisionStyle.label || '';
+    const t = data.decisionStyle.text || '';
+    const strength = data.decisionStyle.strength ? `Strength: ${data.decisionStyle.strength}.` : '';
+    const risk = data.decisionStyle.risk ? `Risk: ${data.decisionStyle.risk}.` : '';
+    const fix = data.decisionStyle.fix ? `${data.decisionStyle.fix}.` : '';
+    guardrails.push(`${label}. ${t} ${strength} ${risk} ${fix}`.replace(/\s+/g, ' ').trim());
   }
 
-  // Conflicts
-  if (Array.isArray(data.conflicts) && data.conflicts.length) {
-    const parts = data.conflicts.map(c => `${c.title.replace('Conflict Pair — ', '')}: ${c.desc} Tip: ${c.tip}`);
-    out.push(`Tensions live inside your engine. ${parts.join(' ')}.`);
-  }
-
-  // Stress
+  // Stress → Moves (short, 12 words max per line)
   if (Array.isArray(data.stress) && data.stress.length) {
-    const parts = data.stress.map(s => `${s.key}: ${s.desc} Move: ${s.move}`);
-    out.push(`When pressure climbs, you respond with moves. ${parts.join(' ')}.`);
+    data.stress.forEach(s => {
+      const key = s.key || 'Stress';
+      const desc = s.desc || '';
+      const move = s.move ? s.move : '';
+      const lineRaw = `${key}: ${desc} ${move}`.trim();
+      const line = limitWords(lineRaw, 12);
+      stressMoves.push(line);
+    });
   }
 
-  // Snapshot
+  // Life Signals Snapshot (one-line indicators only)
+  const snapshot: string[] = [];
   if (includeSnapshot && Array.isArray(data.snapshot) && data.snapshot.length) {
-    const parts = data.snapshot.map(s => includeNumbers ? `${s.key} ${s.pct}% — ${s.meaning}` : `${s.key} — ${s.meaning}`);
-    out.push(`Your frontline signals run hot and directional. ${parts.join(' ')}.`);
-  }
-
-  // Circuits
-  if (Array.isArray(data.circuits) && data.circuits.length) {
-    const parts = data.circuits.map(c => includeNumbers ? `${c.key} ${c.pct}% — ${c.meaning}. Risk: ${c.risk} Move: ${c.move}` : `${c.key} — ${c.meaning}. Risk: ${c.risk} Move: ${c.move}`);
-    out.push(`Your circuits are bright. ${parts.join(' ')}.`);
-  }
-
-  // All Life Signals
-  if (includeAllSignals && Array.isArray(data.lifeSignals) && data.lifeSignals.length) {
-    const parts = data.lifeSignals.map(l => includeNumbers ? `${l.key} ${l.pct}% — ${l.desc}` : `${l.key} — ${l.desc}`);
-    out.push(`All your life signals sit inside this pattern. ${parts.join(' ')}.`);
+    data.snapshot.forEach(s => {
+      const line = includeNumbers
+        ? `${s.key} ${s.pct}% — ${s.meaning}`
+        : `${s.key} — ${s.meaning}`;
+      snapshot.push(line);
+    });
   }
 
   // Close
-  out.push('This is your story: heat plus direction equals motion. Define the win, claim the lane, and work in short, certain cycles.');
+  const close = 'This is your story: heat plus direction equals motion. Define the win, claim the lane, and work in short, certain cycles.';
 
-  return out;
+  // Optional: includeAllSignals as an appendix-style snapshot (still one-liners)
+  if (includeAllSignals && Array.isArray(data.lifeSignals) && data.lifeSignals.length) {
+    data.lifeSignals.forEach(l => {
+      const line = includeNumbers ? `${l.key} ${l.pct}% — ${l.desc}` : `${l.key} — ${l.desc}`;
+      snapshot.push(line);
+    });
+  }
+
+  return { header, core, ops: { cycles, daily, guardrails, stressMoves }, snapshot, close };
 }
 
 type DomainKey = 'O'|'C'|'E'|'A'|'N';
@@ -336,13 +492,16 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
   const archetypeStr = (typeof (who as any)?.archetype === 'string')
     ? String((who as any).archetype)
     : ((who as any)?.archetype?.winner ? String((who as any).archetype.winner) : 'Unknown');
+  const archImgSrc = archetypeStr
+    ? '/' + String(archetypeStr).toLowerCase().replace(/[^a-z0-9]+/g, '') + '.png'
+    : null;
 
   const whoResultData: WhoResult = {
     resultId: ridUsed,
     tone: (who as any)?.tone || String(inferredTone) || 'neutral',
     archetype: archetypeStr,
     hash: (handoff as any)?.hash || ridUsed,
-    weeklyFinishers: 0,
+    weeklyFinishers: pseudoRandomIntFromString(String((handoff as any)?.hash || ridUsed), 1000, 2000),
     narrative: Array.isArray((who as any)?.narrative) ? (who as any).narrative : [],
     interpersonal: {
       label: interpersonalPanel?.title || 'Adaptive',
@@ -375,39 +534,96 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
     lifeSignals: topo.map(t => ({ key: t.key, pct: Math.round(t.value * 100), desc: lifePanels?.[t.key]?.levels?.[toLevel(t.value)] || '' }))
   };
 
-  const storyParagraphs = buildNarrativeStory(whoResultData, { includeNumbers: true, includeAllSignals: false, includeSnapshot: false });
+  const storyDoc = buildNarrativeStory(
+    whoResultData,
+    { includeNumbers: true, includeAllSignals: false, includeSnapshot: false }
+  );
+
+  const arcMatch = (archetypeRules as any)?.archetypes?.find((a:any)=> String(a?.gz||'').toLowerCase() === String(archetypeStr).toLowerCase());
+  const accentHex = arcMatch?.color?.hex || '#4cafef';
 
   return (
-    <main className="stack">
-      <header className="row between">
-        <div>
+    <main>
+      <div className="gz-theme container" style={{
+        // Theme variables (scoped)
+        ['--bg-color' as any]: '#121212',
+        ['--surface-color' as any]: '#1e1e1e',
+        ['--primary-text-color' as any]: '#e0e0e0',
+        ['--secondary-text-color' as any]: '#a0a0a0',
+        ['--accent-color' as any]: accentHex,
+        ['--border-color' as any]: '#333',
+        ['--progress-green' as any]: '#2ecc71',
+        ['--progress-yellow' as any]: '#f1c40f',
+        ['--progress-red' as any]: '#e74c3c',
+        transform: 'scale(1.25)',
+        transformOrigin: 'top center',
+        width: '80%'
+      }}>
+        <header className="header">
           <h1>Who You Are</h1>
-          <div className="muted">Result ID: <code>{ridUsed}</code></div>
-          <div className="muted">Tone: <code>{inferredTone}</code></div>
-        </div>
-      </header>
+          {archImgSrc ? (
+            <img src={archImgSrc} alt={`${archetypeStr} emblem`} className="archetype-img" />
+          ) : null}
+          <p className="archetype">{archetypeStr || '—'}</p>
+        </header>
 
-      {/* Archetype summary if present */}
-      {who?.archetype?.winner ? (
-        <div className="card" style={{marginTop:12}}>
-          <h3>Archetype</h3>
-          <p className="muted" style={{marginTop:4}}>
-            Selected: <strong>{String(who.archetype.winner)}</strong>
-          </p>
-        </div>
-      ) : null}
+        {/* Identity Narrative */}
+        {storyDoc ? (
+          <section className="card">
+            <h2>Identity Narrative</h2>
+            <div>
+              {storyDoc.core.map((p:string, i:number)=> (
+                <p key={`core-${i}`}>{p}</p>
+              ))}
+            </div>
+            <h3>Header Proof</h3>
+            <div>
+              {storyDoc.header.map((p:string, i:number)=> (
+                <p key={`hdr-${i}`} className="meta-info">{p}</p>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
-      {/* Narrative Story (feature) */}
-      {Array.isArray(storyParagraphs) && storyParagraphs.length ? (
-        <div className="card" style={{marginTop: 12}}>
-          <h3>Narrative Story</h3>
-          <div style={{marginTop:8}}>
-            {storyParagraphs.map((p:string, i:number)=> (
-              <p key={i} style={{margin:'8px 0', lineHeight:1.7}}>{p}</p>
-            ))}
-          </div>
-        </div>
-      ) : null}
+        {/* Operational Layer */}
+        {storyDoc ? (
+          <section className="card">
+            <h2>Operational Layer</h2>
+            {storyDoc.ops.cycles.length ? (
+              <>
+                <h3>Cycles:</h3>
+                <ul>
+                  {storyDoc.ops.cycles.map((p:string, i:number)=> (<li key={`cy-${i}`}>{p}</li>))}
+                </ul>
+              </>
+            ) : null}
+            {storyDoc.ops.daily.length ? (
+              <>
+                <h3>Daily actions:</h3>
+                <ul>
+                  {storyDoc.ops.daily.map((p:string, i:number)=> (<li key={`da-${i}`}>{p}</li>))}
+                </ul>
+              </>
+            ) : null}
+            {storyDoc.ops.guardrails.length ? (
+              <>
+                <h3>Guardrails:</h3>
+                <ul>
+                  {storyDoc.ops.guardrails.map((p:string, i:number)=> (<li key={`gr-${i}`}>{p}</li>))}
+                </ul>
+              </>
+            ) : null}
+            {storyDoc.ops.stressMoves.length ? (
+              <>
+                <h3>Stress Response Moves:</h3>
+                <ul>
+                  {storyDoc.ops.stressMoves.map((p:string, i:number)=> (<li key={`sm-${i}`}>{p}</li>))}
+                </ul>
+              </>
+            ) : null}
+            <p className="final-line" style={{marginTop:12, color:'var(--accent-color)'}}><strong>{storyDoc.close}</strong></p>
+          </section>
+        ) : null}
 
       {/* Full Narrative removed per request */}
 
@@ -421,39 +637,31 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
 
       {/* Stress Pattern removed per request */}
 
-      <div className="card" style={{marginTop:12}}>
-        <h3>Life Signals Snapshot</h3>
-        <div className="row" style={{gap:12, marginTop:8, flexWrap:'wrap'}}>
-          {topo.map(s=> {
-            const level = toLevel(s.value);
-            const base = lifePanels?.[s.key] || {};
-            const variant = base?.tones?.[inferredTone];
-            const copy = (variant?.levels?.[level]) || (base?.levels?.[level]) || '';
-            return (
-              <div key={s.key} className="card" style={{minWidth:260}}>
-                <div className="row between" style={{alignItems:'center'}}>
-                  <strong>{(variant?.name)||base.name||s.name}</strong>
-                  <span className="badge">{Math.round(s.value*100)}%</span>
-                </div>
-                <div style={{background:'#333',height:6,borderRadius:4,overflow:'hidden',marginTop:8}}>
-                  <div style={{background:'#4cafef',width:`${Math.round(s.value*100)}%`,height:'100%'}} />
-                </div>
-                {copy ? (<p className="muted" style={{marginTop:8}}>{copy}</p>) : null}
-              </div>
-            );
-          })}
-        </div>
+        {/* AuthorityBar removed per request */}
+        <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
+        <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
+        <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />
+
+        <div style={{marginTop:24, display:'flex', justifyContent:'center'}}>
+          <a href={`/results?rid=${ridUsed}`} className="btn">View Detailed Results →</a>
         </div>
 
-      <AuthorityBar hash={(handoff as any)?.hash || ridUsed} />
-      <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
-      <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
-      {/* Hide T/P/S/D here to avoid duplicating Snapshot; Snapshot already shows these four */}
-      <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />
-
-      <div style={{marginTop:24, display:'flex', justifyContent:'center'}}>
-        <a href={`/results?rid=${ridUsed}`} className="btn">View Detailed Results →</a>
-    </div>
+        <style jsx>{`
+          .gz-theme.container { max-width: 800px; margin: 0 auto; display: grid; gap: 24px; }
+          .header { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); }
+          .header h1 { font-size: 2.0rem; font-weight: 700; margin-bottom: 8px; color: var(--primary-text-color); }
+          .archetype { font-size: 1.2rem; font-weight: 600; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
+          .archetype-img { display: inline-block; margin-top: 8px; height: 240px; width: auto; object-fit: contain; }
+          .meta-info { font-size: 0.9rem; color: var(--secondary-text-color); margin-top: 8px; }
+          .final-line { font-size: 1.05rem; color: var(--accent-color); letter-spacing: 0.3px; }
+          .card { background-color: var(--surface-color); border-radius: 12px; padding: 24px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+          .card h2 { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+          .card h3 { font-size: 1.1rem; font-weight: 600; color: var(--primary-text-color); margin-top: 16px; margin-bottom: 6px; }
+          .card p { margin: 8px 0; color: var(--secondary-text-color); line-height: 1.7; }
+          .card ul { list-style: none; padding-left: 0; }
+          .card li { background-color: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-color); }
+        `}</style>
+      </div>
     </main>
   );
 }

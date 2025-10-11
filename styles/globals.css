@@ -201,3 +201,39 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
   letter-spacing: .2px;
 }
 
+/* Premium focus states */
+button:focus-visible,
+.btn:focus-visible,
+.btn-chip:focus-visible,
+.pill:focus-visible,
+.count-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(102,126,234,0.25);
+}
+
+/* Premium rate buttons (quiz choices) */
+.rate.btn{
+  min-width: 180px;
+  justify-content: center;
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+.rate.btn:hover{
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--panel-2) 0%, var(--accent) 100%);
+  color: #fff;
+}
+.rate.btn.selected{
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+}
+
+/* Subtle transitions globally */
+a, button, .btn, .btn-chip, .pill, .count-pill { transition: all .25s ease; }
+
+/* Premium dividers */
+.divider { background: linear-gradient(90deg, transparent, #273244, transparent); }
+

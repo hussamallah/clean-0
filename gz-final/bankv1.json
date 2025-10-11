@@ -50,7 +50,7 @@
         {"id": "A.Morality", "facet": "Morality", "binary_question": "In a recent situation where it would have been easier to tell a white lie, did you choose to be completely honest instead?", "likert_question": "I believe a white lie is sometimes necessary to avoid conflict."},
         {"id": "A.Altruism", "facet": "Altruism", "binary_question": "Have you gone out of your way to help someone with a problem in the past month?", "likert_question": "I generally prioritize my own needs before helping others."},
         {"id": "A.Cooperation", "facet": "Cooperation", "binary_question": "When you disagreed with a friend or colleague recently, did you choose to go along with their preference to avoid an argument?", "likert_question": "I am willing to argue my point to get the best possible outcome."},
-        {"id": "A.Modesty", "facet": "Modesty", "binary_question": "When praised for an accomplishment recently, did you prefer to downplay your role or share the credit?", "likert_question": "I am comfortable talking about my personal achievements."},
+        {"id": "A.Modesty", "facet": "Modesty", "binary_question": "In the past year, when praised for an accomplishment, did you tend to downplay your role?", "likert_question": "I am comfortable talking about my personal achievements."},
         {"id": "A.Sympathy", "facet": "Sympathy", "binary_question": "Has someone else's hardship or misfortune genuinely moved you to sympathy in the past week?", "likert_question": "I am not easily affected by other people's problems."}
       ]
     },

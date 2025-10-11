@@ -205,26 +205,22 @@ export default function AllLifeSignals({ domainMeans, tone = 'neutral', hideKeys
   const visibleKeys = signalKeys.filter(k => !hideKeys.includes(k));
   
   return (
-    <div style={{
-      background: '#1a1a1a',
-      padding: '20px',
-      borderRadius: '10px',
+    <section style={{
+      background: 'var(--surface-color)',
+      border: '1px solid var(--border-color)',
+      borderRadius: 12,
+      padding: 24,
       margin: '20px 0'
     }}>
-      <h2 style={{ marginTop: 0, textAlign: 'center' }}>All Life Signals</h2>
-      <p style={{ 
-        textAlign: 'center', 
-        fontSize: '14px', 
-        color: '#b6c2d1', 
-        margin: '8px 0 20px 0'
-      }}>
-        Complete personality signal analysis
+      <h2 style={{ marginTop: 0, color: 'var(--accent-color)', textAlign: 'left' }}>All Life Signals</h2>
+      <p style={{ fontSize: 14, color: 'var(--secondary-text-color)', margin: '8px 0 20px 0' }}>
+        Complete personality signal analysis.
       </p>
       
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-        gap: '12px' 
+        gap: 12 
       }}>
         {visibleKeys.map(signalKey => {
           const value = signals[signalKey];
@@ -242,22 +238,22 @@ export default function AllLifeSignals({ domainMeans, tone = 'neutral', hideKeys
           
           return (
             <div key={signalKey} style={{
-              background: '#222',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              padding: '12px'
+              background: 'var(--surface-color)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 8,
+              padding: 12
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <strong style={{ fontSize: '13px', color: '#d6e5ff' }}>{signalInfo.name}</strong>
-                <span style={{ fontSize: '11px', color: '#ccc' }}>{percentage}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <strong style={{ fontSize: 13, color: 'var(--primary-text-color)' }}>{signalInfo.name}</strong>
+                <span style={{ fontSize: 12, color: 'var(--accent-color)' }}>{percentage}%</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#d6e5ff', lineHeight: 1.4 }}>
+              <div style={{ fontSize: 12, color: 'var(--secondary-text-color)', lineHeight: 1.5 }}>
                 {t || signalInfo.levels[level]}
               </div>
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

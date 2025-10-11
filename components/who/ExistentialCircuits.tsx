@@ -93,15 +93,16 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
 
   if (loading) {
     return (
-      <div style={{
-        background: '#1a1a1a',
-        padding: '20px',
-        borderRadius: '10px',
+      <section style={{
+        background: 'var(--surface-color)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 12,
+        padding: 24,
         margin: '20px 0'
       }}>
-        <h2 style={{ marginTop: 0 }}>Existential Circuits</h2>
-        <p style={{ color: '#aaa' }}>Calculating your existential profile...</p>
-      </div>
+        <h2 style={{ marginTop: 0, color: 'var(--accent-color)' }}>Existential Circuits</h2>
+        <p style={{ color: 'var(--secondary-text-color)' }}>Calculating your existential profile...</p>
+      </section>
     );
   }
 
@@ -155,28 +156,24 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
     `${primary.bucket} ${primary.name} — core pattern identified.`;
 
   return (
-    <div style={{
-      background: '#1a1a1a',
-      padding: '20px',
-      borderRadius: '10px',
+    <section style={{
+      background: 'var(--surface-color)',
+      border: '1px solid var(--border-color)',
+      borderRadius: 12,
+      padding: 24,
       margin: '20px 0'
     }}>
-      {/* 1. Combined Circuits with Domain Data */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-          <h3 style={{ fontSize: '14px', color: '#d6e5ff', margin: '0 0 8px 0' }}>Existential Circuits</h3>
-          <div style={{ fontSize: '12px', color: '#9aa3ad', lineHeight: '1.4' }}>
-            Scores are not morals. Green bar means "more access" red bar means "less use."<br/>
-            Use the "Move" to act.
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+      <h2 style={{ marginTop: 0, color: 'var(--accent-color)' }}>Existential Circuits</h2>
+      <p style={{ color: 'var(--secondary-text-color)', marginTop: 8 }}>
+        Scores are not morals. Green bar means "more access" red bar means "less use." Use the "Move" to act.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginTop: 12 }}>
           {(['vitality', 'signal', 'time', 'attachment', 'seeking'] as const).map(circuitKey => {
             const value = result.v[circuitKey];
             const label = circuitLabels[circuitKey];
             const description = circuitDescriptions[circuitKey];
             const percentage = Math.round(((value + 1) / 2) * 100); // Convert -1 to 1 range to 0-100%
-            const color = value >= 0 ? '#4caf50' : '#f44336';
+            const color = value >= 0 ? 'var(--progress-green)' : 'var(--progress-red)';
             
             // Map circuits to domains for finding data
             const domainMap: Record<string, DomainLetter> = {
@@ -192,26 +189,22 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
             
             return (
               <div key={circuitKey} style={{
-                background: '#222',
-                border: '1px solid #333',
-                borderRadius: '8px',
-                padding: '12px'
+                background: 'var(--surface-color)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 8,
+                padding: 12
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '13px', color: '#d6e5ff' }}>{label}</strong>
-                  <span style={{ fontSize: '11px', color: '#ccc' }}>{percentage}%</span>
-                </div>
-                <div style={{ fontSize: '11px', color: '#b6c2d1', marginBottom: '8px' }}>
-                  {description}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <strong style={{ fontSize: 13, color: 'var(--primary-text-color)' }}>{`${label.replace(' (Circuit)','')} (${description})`}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--accent-color)' }}>{percentage}%</span>
                 </div>
                 
-                {/* Progress bar */}
                 <div style={{
-                  background: '#333',
-                  borderRadius: '4px',
+                  background: 'var(--border-color)',
+                  borderRadius: 6,
                   overflow: 'hidden',
-                  height: '6px',
-                  marginBottom: '12px'
+                  height: 12,
+                  marginBottom: 12
                 }}>
                   <div style={{
                     background: color,
@@ -221,16 +214,15 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
                   }} />
                 </div>
                 
-                {/* Domain findings */}
                 {findings && (
                   <>
-                    <div style={{ fontSize: '11px', color: '#b6c2d1', marginBottom: '6px' }}>
+                    <div style={{ fontSize: 12, color: 'var(--secondary-text-color)', marginBottom: 6 }}>
                       <strong>Meaning:</strong> {findings.meaning}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#f39c12', marginBottom: '6px' }}>
+                    <div style={{ fontSize: 12, color: 'var(--secondary-text-color)', marginBottom: 6 }}>
                       <strong>Risk:</strong> {findings.risk}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#4caf50' }}>
+                    <div style={{ fontSize: 12, color: 'var(--secondary-text-color)' }}>
                       <strong>Move:</strong> {findings.move}
                     </div>
                   </>
@@ -238,9 +230,8 @@ export default function ExistentialCircuits({ domainMeans, fullResults }: Existe
               </div>
             );
           })}
-        </div>
       </div>
 
-    </div>
+    </section>
   );
 }

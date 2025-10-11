@@ -30,7 +30,7 @@
       {
         "id": "rebel",
         "gz": "Rebel",
-        "color": { "name": "Ink black", "hex": "#111827" },
+        "color": { "name": "Fiery orange", "hex": "#FF6A00" },
         "rules": {
           "domains": { "O": "High", "A": "Low" },
           "facet_clusters": {

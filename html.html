@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Guardian Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-text-color: #e0e0e0;
+            --secondary-text-color: #a0a0a0;
+            --accent-color: #00bfff; /* Deep Sky Blue */
+            --border-color: #333;
+            --progress-green: #2ecc71;
+            --progress-yellow: #f1c40f;
+            --progress-red: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            gap: 24px;
+        }
+
+        /* --- Header --- */
+        .header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--primary-text-color);
+        }
+
+        .header .archetype {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .header .meta-info {
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: 12px;
+            word-wrap: break-word;
+        }
+
+        /* --- Card Styling --- */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-text-color);
+            margin-top: 20px;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            margin-bottom: 12px;
+            color: var(--secondary-text-color);
+        }
+
+        .card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .card li {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .card li strong {
+            color: var(--primary-text-color);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* --- Conflict & Offers --- */
+        .conflict-pair, .offer {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .conflict-pair h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        .offers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .offer {
+            text-align: center;
+        }
+
+        .offer .price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--progress-green);
+            margin-bottom: 8px;
+        }
+
+        .offer .subtitle {
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+        }
+
+        /* --- Progress Bars --- */
+        .metric {
+            margin-bottom: 18px;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .metric-label {
+            color: var(--primary-text-color);
+        }
+
+        .metric-value {
+            color: var(--accent-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: #333;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .bg-green { background-color: var(--progress-green); }
+        .bg-yellow { background-color: var(--progress-yellow); }
+        .bg-red { background-color: var(--progress-red); }
+
+        /* --- Footer --- */
+        .footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--secondary-text-color);
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <header class="header">
+            <h1>Who You Are</h1>
+            <p class="archetype">Guardian</p>
+            <p class="meta-info">
+                Result ID: dfb1b7f2ad7bc9cd1079c14b &nbsp;&bull;&nbsp; Tone: Alpha
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Identity Narrative</h2>
+            <p><strong>You push into new ideas and spaces fast.</strong> You hold lanes and drive reliable execution. You set tempo and make momentum visible. You build goodwill and convert it into motion.</p>
+            <p>Under strain worry signals fire early, frustration spikes at blockers, overload can freeze progress. Your stance with people is warm power and you pull people in and point the way.</p>
+            <h3>Header Proof</h3>
+            <p class="meta-info">This run is verified (hash 1457056dca6ae703aac8a56cd88307056fe0b53bce9e0c7fcc7d6044068ffac7). This week, 0 people finished; you read yours now.</p>
+        </section>
+
+        <section class="card">
+            <h2>Operational Layer</h2>
+            <h3>Cycles:</h3>
+            <p>You harden the lane and drive it. Reliability creates speed. Cut bureaucracy. Keep essentials and move. Work with intention.</p>
+
+            <h3>Daily actions:</h3>
+            <p>Daily green-tick check. Ship a one-page SOP.</p>
+
+            <h3>Guardrails:</h3>
+            <p>Analyze -> Guardrails. You model, test downside, then commit inside clear boundaries. Strength: precision. Risk: delay. Time-box analysis and publish go/no-go. Strength: Adaptable. Risk: Overthinking. Set time limits.</p>
+            
+            <h3>Stress Response Moves:</h3>
+            <ul>
+                <li><strong>Anxiety:</strong> Worry signals fire early; scanning rises under uncertainty. <strong>Set a floor.</strong></li>
+                <li><strong>Anger:</strong> Irritation spikes at blockers and slow responses. <strong>Name the block.</strong></li>
+                <li><strong>Vulnerability:</strong> Overload can freeze progress; capacity thins under stacked tasks. <strong>Drop scope.</strong></li>
+                <li><strong>Depression:</strong> Mood dips can dim drive and delay starts. <strong>Shrink the first.</strong></li>
+                <li><strong>Self-Consciousness:</strong> Self-judgment gets loud in public work. <strong>Ship privately first, then share.</strong></li>
+                <li><strong>Immoderation:</strong> Quick relief tempts; breaks become detours. <strong>Pre-commit a break length.</strong></li>
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Conflict Patterns</h2>
+            <p>This tension creates interesting dynamics in your behavior patterns.</p>
+            <div class="conflict-pair">
+                <h3>Openness High × Cautiousness High</h3>
+                <p><strong>How can both be true?</strong> You generate, then slam the brakes. This tension helps you catch risks but can hurt you when you need momentum. Tip: set a short time box, then review.</p>
+            </div>
+            <div class="conflict-pair">
+                <h3>Self-Efficacy High × Depression High</h3>
+                <p><strong>How can both be true?</strong> You know you can, but your mood slows the push. This tension helps you get quick, small wins but can hurt you when you face long, fuzzy goals. Tip: give yourself a daily finish line.</p>
+            </div>
+            <div class="conflict-pair">
+                <h3>Achievement-Striving High × Vulnerability High</h3>
+                <p><strong>How can both be true?</strong> Ambition meets overwhelm. This tension helps you set clear sub-goals but can hurt you when you push on big, undefined work. Tip: split the goal into two sub-wins and schedule recovery.</p>
+            </div>
+            <div class="conflict-pair">
+                <h3>Assertiveness High × Anxiety High</h3>
+                <p><strong>How can both be true?</strong> Gas pedal meets brake. This tension helps you make quick crisis moves but can hurt you when uncertainty drags on. Tip: pause for 2 beats, then pick one next step.</p>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Premium Upgrades</h2>
+            <div class="offers-grid">
+                <div class="offer">
+                    <h3>Override Premium</h3>
+                    <p class="price">$7</p>
+                    <p class="subtitle">Turn weak spots into levers. "First card paid for itself on day 2." – Sara, PM</p>
+                </div>
+                <div class="offer">
+                    <h3>Compatibility</h3>
+                    <p class="price">$1.50</p>
+                    <p class="subtitle">See real alignment & friction. "Made sense of our differences instantly." – Omar & Lina</p>
+                </div>
+                <div class="offer">
+                    <h3>You vs Them</h3>
+                    <p class="price">$1.50</p>
+                    <p class="subtitle">Fast side-by-side OCEAN view. "Clear picture in 30 seconds." – Alex, Designer</p>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="card">
+            <h2>Existential Circuits</h2>
+            <p>Scores are not morals. Green bar means "more access" red bar means "less use." Use the "Move" to act.</p>
+
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Energy (Life ↔ Death)</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p><strong>Meaning:</strong> You start fast and talk to solve. <strong>Risk:</strong> Scatter and half-finished work. <strong>Move:</strong> Pick one target and finish it.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Clarity (Silence ↔ Signal)</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p><strong>Meaning:</strong> You hunt patterns and new options. <strong>Risk:</strong> Ideas exceed slots. <strong>Move:</strong> Write the test before you build.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Structure (Space ↔ Time)</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p><strong>Meaning:</strong> You lock plans and follow through. <strong>Risk:</strong> Rigidity blocks useful change. <strong>Move:</strong> Set a start line and a deadline.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Bond (Despair ↔ Love)</span><span class="metric-value">83%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 83%;"></div></div>
+                <p><strong>Meaning:</strong> Safe bonds. You collaborate easily. <strong>Risk:</strong> Over-trust or over-commit. <strong>Move:</strong> Define one boundary and one ask.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Drive (Pain/Avoid ↔ Pursue)</span><span class="metric-value">0%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-red" style="width: 1%;"></div></div><p><strong>Meaning:</strong> Threat feels near. Energy stalls. <strong>Risk:</strong> Avoidance becomes default. <strong>Move:</strong> Name the risk, then take one tiny step.</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>All Life Signals</h2>
+            <p>Complete personality signal analysis.</p>
+
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Bond</span><span class="metric-value">47%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 47%;"></div></div>
+                <p>Moderate bonding; you connect when it matters.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Grit</span><span class="metric-value">45%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 45%;"></div></div>
+                <p>Moderate persistence; you endure when needed.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Rigor</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p>Rigor is obsessive; you follow systems with fanatical precision and can't function without structure.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Vitality</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p>Vitality is overwhelming; you have explosive energy that others find exhausting to keep up with.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Yield</span><span class="metric-value">70%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 70%;"></div></div>
+                <p>Adaptability is extraordinary; you effortlessly morph to fit any situation and actually thrive on chaos.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Leverage</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p>Leverage is extraordinary; you have an almost magical ability to multiply impact with minimal resources.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Fusion</span><span class="metric-value">88%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 88%;"></div></div>
+                <p>Fusion is extraordinary; you have an almost magical ability to bring any group together in perfect harmony.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Unity</span><span class="metric-value">63%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 63%;"></div></div>
+                <p>High unity; you maintain consistent principles.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Momentum</span><span class="metric-value">100%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 100%;"></div></div>
+                <p>Momentum is unstoppable; you build such strong forward progress that nothing can slow you down.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Integration</span><span class="metric-value">50%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 50%;"></div></div>
+                <p>Moderate synthesis; you connect dots when needed.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Kinetic</span><span class="metric-value">83%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-green" style="width: 83%;"></div></div>
+                <p>Kinetic energy is overwhelming; you are constantly in motion and can't sit still for long.</p>
+            </div>
+            <div class="metric">
+                <div class="metric-header"><span class="metric-label">Quality</span><span class="metric-value">45%</span></div>
+                <div class="progress-bar-container"><div class="progress-bar bg-yellow" style="width: 45%;"></div></div>
+                <p>Moderate standards; you refine when important.</p>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Verified run · Hash: 145705 · 2,137 people finished this week</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
