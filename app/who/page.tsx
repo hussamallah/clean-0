@@ -603,6 +603,21 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           </section>
         ) : null}
 
+      {/* Full Narrative removed per request */}
+
+      {/* Narrative debug removed from UI */}
+
+      {/* Interpersonal Style removed per request */}
+
+      {/* Work Style removed per request */}
+
+      {/* Decision Style removed per request */}
+
+      {/* Stress Pattern removed per request */}
+
+        {/* AuthorityBar removed per request */}
+        <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
+        
         {/* Operational Layer */}
         {storyDoc ? (
           <section className="card">
@@ -643,25 +658,11 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           </section>
         ) : null}
 
-      {/* Full Narrative removed per request */}
-
-      {/* Narrative debug removed from UI */}
-
-      {/* Interpersonal Style removed per request */}
-
-      {/* Work Style removed per request */}
-
-      {/* Decision Style removed per request */}
-
-      {/* Stress Pattern removed per request */}
-
-        {/* AuthorityBar removed per request */}
-        <FiveCardResults data={(fullResults as any[]).filter((r:any)=> ['O','C','E','A','N'].includes(r?.domain))} />
         <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
         <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'center'}}>
-          <a href={`/results?rid=${ridUsed}`} className="btn">View Detailed Results →</a>
+        <div style={{marginTop:-50, display:'flex', justifyContent:'center'}}>
+          <a href={`/results?rid=${ridUsed}`} className="btn btn-gold">View Detailed Results →</a>
         </div>
 
         <style jsx>{`
@@ -678,6 +679,16 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .card p { margin: 8px 0; color: var(--secondary-text-color); line-height: 1.7; }
           .card ul { list-style: none; padding-left: 0; }
           .card li { background-color: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-color); }
+
+          .btn-gold {
+            border: 2px solid #d4af37;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+          }
+          .btn-gold:hover {
+            border-color: #f4cf5a;
+            box-shadow: 0 0 20px rgba(244, 207, 90, 0.7), 0 6px 20px rgba(0,0,0,0.4);
+          }
 
           @media (max-width: 768px){
             .gz-theme.container { width: 100%; transform: none !important; }
