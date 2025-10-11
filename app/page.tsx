@@ -159,7 +159,7 @@ export default function LandingPage() {
             <p className="mt-2 max-w-2xl text-sm text-white/80">Take the free assessment and unlock a clear operating playbook you can use today.</p>
             <div className="mt-5">
               <a href="/full" className="inline-flex items-center rounded-2xl bg-indigo-500 px-5 py-3 text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-400">
-                Start full assessment
+                Start assessment
               </a>
             </div>
           </div>
