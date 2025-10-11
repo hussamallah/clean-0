@@ -46,24 +46,65 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* PROBLEM / SOLUTION */}
+      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8 lg:p-12">
+          <h2 className="text-center text-3xl font-semibold">Stop Guessing. Start Operating.</h2>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-base text-white/80">
+            Ever feel like you're fighting against yourself? Why is it so easy to start projects but so hard to finish them? 
+            Why do you thrive in chaos one day and burn out the next?
+          </p>
+          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-indigo-500/30 bg-indigo-950/20 p-6">
+            <p className="text-white/90">
+              Ground Zero goes beyond generic labels to give you a <strong className="text-white">high-fidelity map of your mind</strong>. 
+              We pinpoint your unique tensions, reveal your operational strengths, and give you a practical playbook to navigate your life with intention.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section id="how" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {[
-            {
-              t: 'Phase 1 — Behaviors',
-              d: '30 behavioral statements across OCEAN facets. Answer Yes or rate 1–5 (Very Inaccurate to Very Accurate). Deterministic scoring; no randomness.',
-            },
-            {
-              t: 'Phase 2 — Archetype Resolver',
-              d: 'Quick tie‑breaker matchups (e.g., Guardian vs Navigator) to confirm your best‑fit archetype from rule‑based candidates.',
-            },
-          ].map((c) => (
-            <div key={c.t} className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.03] p-6 shadow-lg shadow-black/20">
-              <h3 className="text-lg font-semibold">{c.t}</h3>
-              <p className="mt-2 text-sm text-white/70">{c.d}</p>
-            </div>
-          ))}
+        <div className="text-center">
+          <h3 className="text-xl font-semibold text-white/90">How It Works</h3>
+          <div className="mx-auto mt-6 grid max-w-4xl gap-6 md:grid-cols-3">
+            {[
+              {n:'1. Input', d:'Take our 7-minute dynamic assessment, designed to measure your core behavioral patterns.'},
+              {n:'2. Analysis', d:'Our system analyzes your responses across 30+ vectors to build your unique operational model.'},
+              {n:'3. Output', d:'Receive your living blueprint—a detailed, actionable guide to your internal world.'},
+            ].map((s) => (
+              <div key={s.n} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-semibold text-indigo-300">{s.n}</div>
+                <p className="mt-2 text-xs text-white/70">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* RESULTS SNEAK PEEK */}
+      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold">Your Personalized Identity Blueprint</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-white/70">Get specific, actionable insights into the core tensions that drive your behavior.</p>
+        </div>
+        <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-900/10 to-orange-900/10 p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-yellow-200">Conflict Pattern: Autonomy vs. Belonging</h3>
+          <p className="mt-3 text-sm text-white/80">
+            You value <strong>independence and self-direction</strong> (Low Agreeableness, High Openness), yet you also crave 
+            <strong> structure and reliable support</strong> (High Conscientiousness). This creates friction: you resist being managed, 
+            but you need clear goals to perform at your best.
+          </p>
+          <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-4">
+            <p className="text-xs font-medium text-white/60">How can both be true?</p>
+            <p className="mt-2 text-sm text-white/90">
+              You're wired for autonomy <em>within</em> a framework. You don't want a micromanager—you want a clear mission, 
+              then freedom to execute. In relationships, you need partners who respect your space but show up consistently.
+            </p>
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-xs text-white/60">
+            <span className="rounded-full bg-green-500/20 px-2 py-1 text-green-300">✓ Real insight from your results</span>
+          </div>
         </div>
       </section>
 
@@ -102,6 +143,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIALS */}
+      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <h2 className="text-center text-2xl font-semibold">What Our Users Are Discovering</h2>
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {[
+            {q:"I've done every personality test out there. This was the first one that gave me an actual playbook for my stress. Game-changing.", a:'Alex D.'},
+            {q:"The 'Conflict Patterns' section was shockingly accurate. It felt like it read my mind and explained a tension I've felt for years but couldn't put into words.", a:'Sarah P.'},
+            {q:"Finally, a system that doesn't just put you in a box. It shows you how all your different parts work together. It's like a user manual for your own brain.", a:'Michael R.'},
+          ].map((t, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <p className="text-sm italic text-white/80">"{t.q}"</p>
+              <p className="mt-4 text-xs font-medium text-indigo-300">— {t.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* PRICING */}
       <section id="pricing" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
