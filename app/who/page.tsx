@@ -363,7 +363,13 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
             const ho = await buildHandoff(results, ridLocal);
             const merged = arch ? { ...whoView, archetype: arch } : whoView;
             setWho(merged); setHandoff(ho);
-            try { const audit = { rid: ridLocal, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+            try {
+              if (process.env.NODE_ENV !== 'production'){
+                const audit = { rid: ridLocal, results, who: whoView, handoff: ho };
+                console.log('[WHO AUDIT]', audit);
+                (globalThis as any).gzAudit = audit;
+              }
+            } catch {}
             return;
           }
         } catch {}
@@ -385,7 +391,13 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           const ho = data?.handoff ?? await buildHandoff(results, rid);
           const merged = arch ? { ...whoView, archetype: arch } : whoView;
           setWho(merged); setHandoff(ho);
-          try { const audit = { rid, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+          try {
+            if (process.env.NODE_ENV !== 'production'){
+              const audit = { rid, results, who: whoView, handoff: ho };
+              console.log('[WHO AUDIT]', audit);
+              (globalThis as any).gzAudit = audit;
+            }
+          } catch {}
           return;
         }
       } catch {}
@@ -403,7 +415,13 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           const ho = await buildHandoff(results, ridLocal);
           const merged = arch ? { ...whoView, archetype: arch } : whoView;
           setWho(merged); setHandoff(ho);
-          try { const audit = { rid: ridLocal, results, who: whoView, handoff: ho }; console.log('[WHO AUDIT]', audit); (globalThis as any).gzAudit = audit; } catch {}
+          try {
+            if (process.env.NODE_ENV !== 'production'){
+              const audit = { rid: ridLocal, results, who: whoView, handoff: ho };
+              console.log('[WHO AUDIT]', audit);
+              (globalThis as any).gzAudit = audit;
+            }
+          } catch {}
           return;
         }
       } catch {}
