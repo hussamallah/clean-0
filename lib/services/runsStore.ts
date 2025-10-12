@@ -50,19 +50,33 @@ async function upstashGet(key: string): Promise<string | null> {
 export async function saveRun(hash: string, results: RunRecord): Promise<void> {
   const key = `gz:run:${hash}`;
   const value = JSON.stringify(results);
+  
   // Try Supabase first
   try {
     const supa = getSupabaseAdmin();
-    if (supa) {
+    if (!supa) {
+      console.warn('⚠️ Supabase client not initialized - check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    } else {
+      console.log(`📤 Attempting to save to Supabase: ${hash}`);
       const { error } = await supa
         .from('gz_runs')
         .upsert({ hash, results })
         .eq('hash', hash);
-      if (!error) return;
+      if (error) {
+        console.error('❌ Supabase error:', error);
+      } else {
+        console.log(`✅ Successfully saved to Supabase: ${hash}`);
+        return;
+      }
     }
-  } catch {}
+  } catch (supaErr: any) {
+    console.error('❌ Supabase exception:', supaErr?.message || supaErr);
+  }
+  
+  // Fallback to Upstash
   const ok = await upstashSet(key, value);
   if (!ok) {
+    console.warn('⚠️ Falling back to memory store');
     memoryStore.set(key, results);
   }
 }
