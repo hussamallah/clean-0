@@ -27,9 +27,9 @@ body{
   color:var(--text);
   font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   letter-spacing:.1px;
-  transform: scale(0.8);
+  transform: scale(1);
   transform-origin: top left;
-  width: 125%; /* Compensate for the scale to prevent horizontal scroll */
+  width: 100%;
 }
 .app{max-width:1200px;margin:0 auto;padding:28px 18px 64px}
 h1{font-size:26px;margin:0 0 8px}
@@ -191,19 +191,19 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
   background: var(--bg);
 }
 .full-center > *{
-  transform:scale(1.25);
+  transform:scale(1.5625);
   transform-origin:center;
   max-width:1200px;
 }
 
 /* Mobile overrides */
 @media (max-width: 768px){
-  body{ transform:none; width:100%; overflow-x:hidden; }
+  body{ transform:scale(1.25); width:80%; overflow-x:hidden; }
   .app{ padding:20px 14px 48px; }
   .row-nowrap{ flex-wrap:wrap; }
   .facet-grid{ grid-template-columns:1fr; }
   .rate.btn{ min-width:140px; padding:10px 14px; font-size:13px; }
-  .full-center > *{ transform:none; max-width:100%; }
+  .full-center > *{ transform:scale(1.5625); max-width:100%; }
   h1{ font-size:22px; }
   h2{ font-size:18px; }
   .card{ padding:18px; }
