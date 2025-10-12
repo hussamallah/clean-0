@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 
 export async function GET() {
+  const url = process.env.SUPABASE_URL || '';
+  const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
   const supa = getSupabaseAdmin();
   
   if (!supa) {
@@ -9,9 +12,10 @@ export async function GET() {
       success: false,
       error: 'Supabase client not initialized',
       env: {
-        hasUrl: !!process.env.SUPABASE_URL,
-        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        url: process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL.slice(0, 30)}...` : 'NOT SET'
+        hasUrl: !!url,
+        hasKey,
+        url: url || 'NOT SET',
+        urlLength: url.length
       }
     });
   }
@@ -26,7 +30,11 @@ export async function GET() {
       return NextResponse.json({
         success: false,
         error: error.message,
-        details: error
+        details: error,
+        env: {
+          url,
+          hasKey
+        }
       });
     }
 
@@ -35,7 +43,7 @@ export async function GET() {
       message: 'Supabase connection working!',
       rowCount: count,
       env: {
-        hasUrl: true,
+        url,
         hasKey: true
       }
     });
@@ -43,7 +51,12 @@ export async function GET() {
     return NextResponse.json({
       success: false,
       error: err.message || 'Unknown error',
-      stack: err.stack
+      cause: err.cause?.message || err.cause,
+      stack: err.stack,
+      env: {
+        url,
+        hasKey
+      }
     });
   }
 }
