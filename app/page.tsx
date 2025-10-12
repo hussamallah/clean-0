@@ -6,10 +6,31 @@ export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRetrieve, setShowRetrieve] = useState(false);
   const [resultCode, setResultCode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRetrieve = () => {
-    if (resultCode.trim()) {
-      window.location.href = `/who?rid=${encodeURIComponent(resultCode.trim())}`;
+  const handleRetrieve = async () => {
+    if (!resultCode.trim()) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Test if the result exists first
+      const response = await fetch(`/api/who/${encodeURIComponent(resultCode.trim())}`);
+      
+      if (response.ok) {
+        // Result found, navigate
+        window.location.href = `/who?rid=${encodeURIComponent(resultCode.trim())}`;
+      } else {
+        // Show error message from server
+        const data = await response.json();
+        setError(data.message || 'Result not found. Please check your code and try again.');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Unable to retrieve results. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -131,25 +152,36 @@ export default function LandingPage() {
                   <input
                     type="text"
                     value={resultCode}
-                    onChange={(e) => setResultCode(e.target.value)}
+                    onChange={(e) => {
+                      setResultCode(e.target.value);
+                      setError(''); // Clear error when typing
+                    }}
                     onKeyDown={(e) => e.key === 'Enter' && handleRetrieve()}
                     placeholder="Paste your result code here..."
-                    className="w-full px-4 py-3 bg-black/60 border-2 border-yellow-500/30 rounded-xl text-yellow-100 placeholder-yellow-300/30 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 font-mono text-sm shadow-inner"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-black/60 border-2 border-yellow-500/30 rounded-xl text-yellow-100 placeholder-yellow-300/30 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 font-mono text-sm shadow-inner disabled:opacity-50"
                     style={{
                       boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3), 0 0 10px rgba(234, 179, 8, 0.1)'
                     }}
                   />
+                  
+                  {error && (
+                    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                      <p className="text-sm text-red-300">{error}</p>
+                    </div>
+                  )}
+                  
                   <button
                     onClick={handleRetrieve}
-                    disabled={!resultCode.trim()}
+                    disabled={!resultCode.trim() || loading}
                     className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 disabled:from-gray-700 disabled:to-gray-800 disabled:text-white/40 disabled:cursor-not-allowed rounded-xl font-bold transition-all text-black shadow-lg"
                     style={{
-                      boxShadow: resultCode.trim() 
+                      boxShadow: (resultCode.trim() && !loading)
                         ? '0 0 20px rgba(234, 179, 8, 0.5), 0 4px 15px rgba(0,0,0,0.3)' 
                         : 'none'
                     }}
                   >
-                    View Results
+                    {loading ? 'Retrieving...' : 'View Results'}
                   </button>
                 </div>
                 <div className="mt-4 pt-4 border-t border-yellow-500/20">
