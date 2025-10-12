@@ -191,7 +191,7 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
   background: var(--bg);
 }
 .full-center > *{
-  transform:scale(1.5625);
+  transform:scale(1.40);
   transform-origin:center;
   max-width:1200px;
 }
@@ -203,7 +203,7 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
   .row-nowrap{ flex-wrap:wrap; }
   .facet-grid{ grid-template-columns:1fr; }
   .rate.btn{ min-width:140px; padding:10px 14px; font-size:13px; }
-  .full-center > *{ transform:scale(1.5625); max-width:100%; }
+  .full-center > *{ transform:scale(1.40); max-width:100%; }
   h1{ font-size:22px; }
   h2{ font-size:18px; }
   .card{ padding:18px; }
