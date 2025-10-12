@@ -187,12 +187,16 @@ export default function GZFinalAssessment(){
         </div>
         <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.binQ}</div>
         <div className="row mt16">
-          <button className="rate btn" onClick={()=>{
+          <button key={`yes-${idx}`} className="rate btn" 
+            onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+            onClick={()=>{
             // Yes → Final Score = 5, go next facet
             setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
             if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
           }}>Yes</button>
-          <button className="rate btn" onClick={()=> setStep('likert')}>No</button>
+          <button key={`no-${idx}`} className="rate btn"
+            onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+            onClick={()=> setStep('likert')}>No</button>
         </div>
       </div>
     );
@@ -219,7 +223,9 @@ export default function GZFinalAssessment(){
         <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.likQ}</div>
         <div className="row mt16">
           {ratings.map(r=> (
-            <button key={r.val} className="rate btn" onClick={()=>{
+            <button key={`${r.val}-${idx}`} className="rate btn"
+              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+              onClick={()=>{
               // No → Likert reverse-scored mapping per spec
               // Likert 1→5, 2→4, 3→3, 4→2, 5→1
               const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
@@ -377,9 +383,9 @@ export default function GZFinalAssessment(){
       const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
       return (
         <div className="card">
-          <div className="row mt16" style={{gap:24, alignItems:'center', justifyContent:'center', flexWrap:'wrap' as any}}>
-            <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(L)}>
-              <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
+          <div className="archetype-dual-container">
+            <button className="btn archetype-dual-btn" onClick={()=> archResolveRef.current?.(L)}>
+              <div className="card" style={{background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
                   <img src={assetUrl(leftMeta.img)} alt={leftMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
@@ -390,9 +396,9 @@ export default function GZFinalAssessment(){
                 </div>
               </div>
             </button>
-            <div style={{width:48,height:48,borderRadius:24,background:'#b81f1f',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>VS</div>
-            <button className="btn" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(R)}>
-              <div className="card" style={{width:260, background:'#111', border:'1px solid #333'}}>
+            <div className="vs-badge">VS</div>
+            <button className="btn archetype-dual-btn" onClick={()=> archResolveRef.current?.(R)}>
+              <div className="card" style={{background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{rightMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
                   <img src={assetUrl(rightMeta.img)} alt={rightMeta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}

@@ -573,9 +573,9 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         ['--progress-green' as any]: '#2ecc71',
         ['--progress-yellow' as any]: '#f1c40f',
         ['--progress-red' as any]: '#e74c3c',
-        transform: 'scale(1.25)',
-        transformOrigin: 'top center',
-        width: '80%'
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '20px'
       }}>
         <header className="header">
           <h1>Who You Are</h1>
@@ -665,6 +665,55 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           <a href={`/results?rid=${ridUsed}`} className="btn btn-gold">View Detailed Results →</a>
         </div>
 
+        {/* Result Code Section */}
+        <section className="card result-code-section">
+          <h2>Your Result Code</h2>
+          <p style={{marginBottom:16}}>Save this code to retrieve your results anytime. You can also share it with coaches or teammates.</p>
+          
+          <div className="code-display">
+            <code className="result-code">{ridUsed}</code>
+            <button 
+              className="copy-btn"
+              onClick={() => {
+                navigator.clipboard.writeText(ridUsed);
+                const btn = document.querySelector('.copy-btn');
+                if (btn) {
+                  const orig = btn.textContent;
+                  btn.textContent = 'Copied!';
+                  setTimeout(() => { btn.textContent = orig; }, 2000);
+                }
+              }}
+            >
+              Copy Code
+            </button>
+          </div>
+
+          <div style={{marginTop:24, paddingTop:24, borderTop:'1px solid var(--border-color)'}}>
+            <h3>Retrieve Results by Code</h3>
+            <p style={{fontSize:'0.9rem', marginBottom:12}}>Enter a result code to view those results:</p>
+            <div className="code-input-row">
+              <input 
+                type="text" 
+                className="code-input"
+                placeholder="Paste result code here..."
+                id="rid-input"
+              />
+              <button 
+                className="lookup-btn"
+                onClick={() => {
+                  const input = document.getElementById('rid-input') as HTMLInputElement;
+                  const code = input?.value?.trim();
+                  if (code) {
+                    window.location.href = `/who?rid=${encodeURIComponent(code)}`;
+                  }
+                }}
+              >
+                View Results
+              </button>
+            </div>
+          </div>
+        </section>
+
         <style jsx>{`
           .gz-theme.container { max-width: 800px; margin: 0 auto; display: grid; gap: 24px; }
           .header { text-align: center; padding: 20px; border-bottom: 1px solid var(--border-color); }
@@ -679,6 +728,21 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .card p { margin: 8px 0; color: var(--secondary-text-color); line-height: 1.7; }
           .card ul { list-style: none; padding-left: 0; }
           .card li { background-color: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent-color); }
+
+          .result-code-section { margin-top: 24px; }
+          .code-display { display: flex; align-items: center; gap: 12px; padding: 16px; background-color: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--border-color); }
+          .result-code { flex: 1; font-family: 'Courier New', monospace; font-size: 1.1rem; color: var(--accent-color); background-color: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; display: block; word-break: break-all; }
+          .copy-btn { padding: 8px 16px; background-color: var(--accent-color); color: #121212; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+          .copy-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+          .copy-btn:active { transform: translateY(0); }
+
+          .code-input-row { display: flex; gap: 12px; }
+          .code-input { flex: 1; padding: 12px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: var(--primary-text-color); font-family: 'Courier New', monospace; font-size: 1rem; }
+          .code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(76, 175, 239, 0.2); }
+          .code-input::placeholder { color: var(--secondary-text-color); opacity: 0.5; }
+          .lookup-btn { padding: 12px 24px; background-color: var(--accent-color); color: #121212; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+          .lookup-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+          .lookup-btn:active { transform: translateY(0); }
 
           .btn-gold {
             border: 2px solid #d4af37;

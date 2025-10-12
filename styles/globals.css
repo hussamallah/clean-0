@@ -198,12 +198,13 @@ a.link{color:#a7c8ff;text-decoration:none;border-bottom:1px dashed #334a70}
 
 /* Mobile overrides */
 @media (max-width: 768px){
-  body{ transform:scale(1.25); width:80%; overflow-x:hidden; }
+  body{ transform:none; width:100%; overflow-x:hidden; }
   .app{ padding:20px 14px 48px; }
   .row-nowrap{ flex-wrap:wrap; }
   .facet-grid{ grid-template-columns:1fr; }
-  .rate.btn{ min-width:140px; padding:10px 14px; font-size:13px; }
-  .full-center > *{ transform:scale(1.40); max-width:100%; }
+  .rate.btn{ min-width:unset; width:100%; padding:12px 16px; font-size:14px; }
+  .row:has(.rate.btn){ flex-direction:column; gap:8px; }
+  .full-center > *{ transform:scale(1.1); max-width:100%; }
   h1{ font-size:22px; }
   h2{ font-size:18px; }
   .card{ padding:18px; }
@@ -236,17 +237,33 @@ button:focus-visible,
   justify-content: center;
   font-weight: 600;
   letter-spacing: .2px;
+  -webkit-tap-highlight-color: rgba(91, 141, 239, 0.5);
 }
 .rate.btn:hover{
-  border-color: var(--accent);
+  border-color: var(--focus);
   background: linear-gradient(135deg, var(--panel-2) 0%, var(--accent) 100%);
   color: #fff;
+  box-shadow: 0 4px 16px rgba(91, 141, 239, 0.3);
+}
+.rate.btn:focus{
+  outline: none;
+  border-color: var(--focus);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--focus) 100%);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(122, 163, 255, 0.4), 0 8px 24px rgba(91, 141, 239, 0.5);
+}
+.rate.btn:active{
+  border-color: var(--focus);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--focus) 100%);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(122, 163, 255, 0.4), 0 8px 24px rgba(91, 141, 239, 0.5);
+  transform: scale(0.98);
 }
 .rate.btn.selected{
-  border-color: var(--accent);
-  background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
+  border-color: var(--focus);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--focus) 100%);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+  box-shadow: 0 0 0 3px rgba(122, 163, 255, 0.4), 0 8px 24px rgba(91, 141, 239, 0.5);
 }
 
 /* Subtle transitions globally */
@@ -254,4 +271,41 @@ a, button, .btn, .btn-chip, .pill, .count-pill { transition: all .25s ease; }
 
 /* Premium dividers */
 .divider { background: linear-gradient(90deg, transparent, #273244, transparent); }
+
+/* Archetype dual layout */
+.archetype-dual-container{
+  display:flex;
+  gap:24px;
+  align-items:center;
+  justify-content:center;
+  margin-top:16px;
+}
+.archetype-dual-btn{
+  padding:0;
+  background:transparent;
+  flex-shrink:0;
+}
+.vs-badge{
+  width:48px;
+  height:48px;
+  border-radius:24px;
+  background:#b81f1f;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  flex-shrink:0;
+}
+
+@media (max-width: 768px){
+  .archetype-dual-container{
+    flex-direction:column;
+    gap:16px;
+  }
+  .archetype-dual-btn .card{
+    width:100% !important;
+    max-width:300px;
+  }
+}
 
