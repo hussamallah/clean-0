@@ -1,8 +1,5 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/full/page": "app/full/page.js",
   "/who/page": "app/who/page.js",
-  "/api/who/[rid]/route": "app/api/who/[rid]/route.js",
-  "/api/runs/route": "app/api/runs/route.js",
+  "/full/page": "app/full/page.js",
   "/page": "app/page.js"
 }

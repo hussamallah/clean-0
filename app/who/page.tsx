@@ -732,7 +732,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .result-code-section { margin-top: 24px; }
           .code-display { display: flex; align-items: center; gap: 12px; padding: 16px; background-color: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--border-color); }
           .result-code { flex: 1; font-family: 'Courier New', monospace; font-size: 1.1rem; color: var(--accent-color); background-color: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; display: block; word-break: break-all; }
-          .copy-btn { padding: 8px 16px; background-color: var(--accent-color); color: #121212; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+          .copy-btn { padding: 8px 16px; background-color: #ffffff !important; color: #000000 !important; border: 2px solid #ffffff; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
           .copy-btn:hover { opacity: 0.9; transform: translateY(-1px); }
           .copy-btn:active { transform: translateY(0); }
 
@@ -740,7 +740,7 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
           .code-input { flex: 1; padding: 12px; background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: var(--primary-text-color); font-family: 'Courier New', monospace; font-size: 1rem; }
           .code-input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(76, 175, 239, 0.2); }
           .code-input::placeholder { color: var(--secondary-text-color); opacity: 0.5; }
-          .lookup-btn { padding: 12px 24px; background-color: var(--accent-color); color: #121212; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+          .lookup-btn { padding: 12px 24px; background-color: white; color: black; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
           .lookup-btn:hover { opacity: 0.9; transform: translateY(-1px); }
           .lookup-btn:active { transform: translateY(0); }
 

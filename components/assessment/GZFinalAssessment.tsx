@@ -415,7 +415,6 @@ export default function GZFinalAssessment(){
     }
     return (
       <div className="card">
-        <h2>Quick mini-quiz</h2>
         <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
         <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
           <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.left.id)}>
