@@ -95,159 +95,8 @@ export default function GZFinalAssessment(){
   const archTrace = useRef<Array<{ q:string; type:'triad'|'binary'; options:string[]; pick:string }>>([]);
   // no error/bank blocking; we rely on bank for flow
 
-  async function finalizeAndSave(){
-    // Build legacy-compatible results array expected by results/who pages
-    const results: Array<{ domain: DomainKey; payload: any }> = [];
-    for (const d of domainOrder){
-      const facets = canonicalFacets(d);
-      const A_raw: Record<string, number> = {};
-      for (const f of facets){ A_raw[f] = Math.max(1, Math.min(5, finalScores[d]?.[f] ?? 3)); }
-      const A_pct: Record<string, number> = Object.fromEntries(facets.map(f=> [f, toPercentFromRaw(A_raw[f])])) as any;
-      const bucket: Record<string, 'High'|'Medium'|'Low'> = Object.fromEntries(facets.map(f=> {
-        const raw = A_raw[f];
-        if (raw >= 5) return [f, 'High' as 'High'|'Medium'|'Low'];
-        if (raw <= 2) return [f, 'Low' as 'High'|'Medium'|'Low'];
-        return [f, 'Medium' as 'High'|'Medium'|'Low'];
-      })) as any;
-      const order = facets.slice().sort((a,b)=>{
-        const rank = { High:3, Medium:2, Low:1 } as const;
-        if (rank[bucket[a]] !== rank[bucket[b]]) return rank[bucket[a]] - rank[bucket[b]];
-        if (A_raw[b] !== A_raw[a]) return A_raw[b] - A_raw[a];
-        return facets.indexOf(a) - facets.indexOf(b);
-      });
-      const domain_mean_raw = Math.round((facets.reduce((s,f)=> s + (A_raw[f]||3), 0)/facets.length)*100)/100;
-      const domain_mean_pct = Math.round((toPercentFromRaw(domain_mean_raw))*10)/10;
-
-      const payload = {
-        version: (bank as any).version,
-        domain: d,
-        phase1: { p: Object.fromEntries(facets.map(f=> [f,0])), m: Object.fromEntries(facets.map(f=> [f,0])), t: Object.fromEntries(facets.map(f=> [f,0])), P: Object.fromEntries(facets.map(f=> [f,0])) },
-        phase2: { answers: [], A_raw },
-        phase3: { asked: [] },
-        final: { A_pct, bucket, order, domain_mean_raw, domain_mean_pct },
-        audit: { personalization: personalization.current }
-      };
-      results.push({ domain: d, payload });
-    }
-    // Append Archetype result if present
-    if (archWinner){
-      (results as any).push({
-        domain: 'ARCH',
-        payload: { winner: archWinner, trace: archTrace.current }
-      });
-    }
-
-    try{
-      const res = await fetch('/api/runs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ results }) });
-      if (res.ok){
-        const data = await res.json();
-        const rid = data?.rid;
-        if (typeof rid === 'string' && rid.length){
-          router.push(`/who?rid=${rid}`);
-          return;
-        }
-      }
-      // fallback: compute client rid deterministically and route to who page
-      try {
-        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
-        localStorage.setItem('gz_full_results', JSON.stringify(results));
-        router.push(`/who?rid=${rid}`);
-        return;
-      } catch {}
-      // last resort: route to results
-      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
-      router.push('/results');
-    } catch {
-      try {
-        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
-        localStorage.setItem('gz_full_results', JSON.stringify(results));
-        router.push(`/who?rid=${rid}`);
-        return;
-      } catch {}
-      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
-      router.push('/results');
-    }
-  }
-
-  // Render
-  const total = facetList.length;
-  const current = facetList[idx];
-
-  if (!current && step !== 'done') return <div className="card">Loading…</div>;
-
-  if (step === 'bin' && current){
-    const d = current.domain;
-    return (
-      <div className="card">
-        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-          <div>
-            <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
-          </div>
-          <div className="pill">{idx+1}/{total}</div>
-        </div>
-        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.binQ}</div>
-        <div className="row mt16">
-          <button key={`yes-${idx}`} className="rate btn" 
-            onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
-            onClick={()=>{
-            // Yes → Final Score = 5, go next facet
-            setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
-            if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
-          }}>Yes</button>
-          <button key={`no-${idx}`} className="rate btn"
-            onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
-            onClick={()=> setStep('likert')}>No</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'likert' && current){
-    const d = current.domain;
-    const ratings = [
-      { text: 'Very Inaccurate', val: 1 },
-      { text: 'Moderately Inaccurate', val: 2 },
-      { text: 'Neutral', val: 3 },
-      { text: 'Moderately Accurate', val: 4 },
-      { text: 'Very Accurate', val: 5 }
-    ] as const;
-    return (
-      <div className="card">
-        <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-          <div>
-            <h2>{DOMAINS[d].label} — {toCanonicalFacet(d, current.facet)}</h2>
-            <p className="muted">Scale: Very Inaccurate → Very Accurate</p>
-          </div>
-          <div className="pill">{idx+1}/{total}</div>
-        </div>
-        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.likQ}</div>
-        <div className="row mt16">
-          {ratings.map(r=> (
-            <button key={`${r.val}-${idx}`} className="rate btn"
-              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
-              onClick={()=>{
-              // No → Likert reverse-scored mapping per spec
-              // Likert 1→5, 2→4, 3→3, 4→2, 5→1
-              const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
-              const final = map[r.val as number] ?? 3;
-              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
-              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
-            }}>{r.text}</button>
-          ))}
-        </div>
-        <div className="row mt16" style={{justifyContent:'flex-start'}}>
-          <button className="ghost" onClick={()=> setStep('bin')}>Back</button>
-        </div>
-      </div>
-    );
-  }
-
-  // personalization step removed
-
-  // Archetype mini-quiz driver
-  if (step === 'arch'){
-    // Start the resolver once
-    if (!archStarted.current){
+  useEffect(() => {
+    if (step === 'arch' && !archStarted.current) {
       archStarted.current = true;
       (async () => {
         const ask = async (probe: AnyProbe): Promise<string> => {
@@ -326,63 +175,221 @@ export default function GZFinalAssessment(){
         }
       })();
     }
-    // Render current probe UI
-    if (!archProbe){
-      return (
-        <div className="card">
-          <h2>Finding your archetype…</h2>
-          <p className="muted">Setting up a quick 2–3 question tie-breaker.</p>
+  }, [step]);
+
+  async function finalizeAndSave(){
+    // Build legacy-compatible results array expected by results/who pages
+    const results: Array<{ domain: DomainKey; payload: any }> = [];
+    for (const d of domainOrder){
+      const facets = canonicalFacets(d);
+      const A_raw: Record<string, number> = {};
+      for (const f of facets){ A_raw[f] = Math.max(1, Math.min(5, finalScores[d]?.[toCanonicalFacet(d,f)] ?? 3)); }
+      const A_pct: Record<string, number> = Object.fromEntries(facets.map(f=> [f, toPercentFromRaw(A_raw[f])])) as any;
+      const bucket: Record<string, 'High'|'Medium'|'Low'> = Object.fromEntries(facets.map(f=> {
+        const raw = A_raw[f];
+        if (raw >= 5) return [f, 'High' as 'High'|'Medium'|'Low'];
+        if (raw <= 2) return [f, 'Low' as 'High'|'Medium'|'Low'];
+        return [f, 'Medium' as 'High'|'Medium'|'Low'];
+      })) as any;
+      const order = facets.slice().sort((a,b)=>{
+        const rank = { High:3, Medium:2, Low:1 } as const;
+        if (rank[bucket[a]] !== rank[bucket[b]]) return rank[bucket[a]] - rank[bucket[b]];
+        if (A_raw[b] !== A_raw[a]) return A_raw[b] - A_raw[a];
+        return facets.indexOf(a) - facets.indexOf(b);
+      });
+      const domain_mean_raw = Math.round((facets.reduce((s,f)=> s + (A_raw[f]||3), 0)/facets.length)*100)/100;
+      const domain_mean_pct = Math.round((toPercentFromRaw(domain_mean_raw))*10)/10;
+
+      const payload = {
+        version: (bank as any).version,
+        domain: d,
+        phase1: { p: Object.fromEntries(facets.map(f=> [f,0])), m: Object.fromEntries(facets.map(f=> [f,0])), t: Object.fromEntries(facets.map(f=> [f,0])), P: Object.fromEntries(facets.map(f=> [f,0])) },
+        phase2: { answers: [], A_raw },
+        phase3: { asked: [] },
+        final: { A_pct, bucket, order, domain_mean_raw, domain_mean_pct },
+        audit: { personalization: personalization.current }
+      };
+      results.push({ domain: d, payload });
+    }
+    // Append Archetype result if present
+    if (archWinner){
+      (results as any).push({
+        domain: 'ARCH',
+        payload: { winner: archWinner, trace: archTrace.current }
+      });
+    }
+
+    try{
+      const res = await fetch('/api/runs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ results }) });
+      if (res.ok){
+        const data = await res.json();
+        const rid = data?.rid;
+        if (typeof rid === 'string' && rid.length){
+          router.push(`/who?rid=${rid}`);
+          return;
+        }
+      }
+      // fallback: compute client rid deterministically and route to who page
+      try {
+        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
+        localStorage.setItem('gz_full_results', JSON.stringify(results));
+        router.push(`/who?rid=${rid}`);
+        return;
+      } catch {}
+      // last resort: route to results
+      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
+      router.push('/results');
+    } catch {
+      try {
+        const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
+        localStorage.setItem('gz_full_results', JSON.stringify(results));
+        router.push(`/who?rid=${rid}`);
+        return;
+      } catch {}
+      try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
+      router.push('/results');
+    }
+  }
+
+  // Render
+  const total = facetList.length;
+  const current = facetList[idx];
+  
+  // Calculate progress including archetype questions
+  const getProgress = () => {
+    if (step === 'done') return total + 3; // Total main questions + estimated archetype questions
+    if (step === 'arch') {
+      // During archetype step, show progress based on archetype questions completed
+      const archQuestionsCompleted = archTrace.current.length;
+      return total + archQuestionsCompleted;
+    }
+    return idx;
+  };
+  
+  const progress = getProgress();
+  const totalWithArchetype = total + 3; // Estimate 3 archetype questions
+  const progressPercentage = (progress / totalWithArchetype) * 100;
+
+  if (!current && step !== 'done') {
+    return (
+      <div className="fullscreen-card card">
+        <div className="card-content">
+          Loading…
         </div>
+      </div>
+    );
+  }
+
+  const renderStepContent = () => {
+    if (step === 'bin' && current){
+      const d = current.domain;
+      return (
+        <>
+          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.binQ}</div>
+          <div className="row mt16">
+            <button key={`yes-${idx}`} className="rate btn" 
+              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+              onClick={()=>{
+              // Yes → Final Score = 5, go next facet
+              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
+              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
+            }}>Yes</button>
+            <button key={`no-${idx}`} className="rate btn"
+              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+              onClick={()=> setStep('likert')}>No</button>
+          </div>
+        </>
       );
     }
-    if (archProbe.type === 'single_choice'){
-      const fallbackTriadQ = (archRules as any)?.tie_layer?.fallbacks?.triad_question as string | undefined;
-      const isFallbackTriad = fallbackTriadQ && archProbe.question === fallbackTriadQ;
-      return (
-        <div className="card">
-          <h2>Quick mini-quiz</h2>
-          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
-          {isFallbackTriad ? (
-            <div className="facet-grid mt8" style={{gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))'}}>
-              {archProbe.options.map(o=> {
-                const meta = ARCHETYPE_META[o.id] || { title:o.id, img:'/equalizer.png', desc:o.label };
-                return (
-                  <button key={o.id} className="btn-chip" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(o.id)}>
-                    <div className="card" style={{background:'#111', border:'1px solid #333'}}>
-                      <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}>
-                        <strong>{meta.title}</strong>
+  
+    if (step === 'likert' && current){
+      const d = current.domain;
+      const ratings = [
+        { text: 'Very Inaccurate', val: 1 },
+        { text: 'Moderately Inaccurate', val: 2 },
+        { text: 'Neutral', val: 3 },
+        { text: 'Moderately Accurate', val: 4 },
+        { text: 'Very Accurate', val: 5 }
+      ] as const;
+       return (
+         <>
+           <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.likQ}</div>
+          <div className="row mt16">
+            {ratings.map(r=> (
+              <button key={`${r.val}-${idx}`} className="rate btn"
+                onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+                onClick={()=>{
+                // No → Likert reverse-scored mapping per spec
+                // Likert 1→5, 2→4, 3→3, 4→2, 5→1
+                const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
+                const final = map[r.val as number] ?? 3;
+                setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
+                if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
+              }}>{r.text}</button>
+            ))}
+          </div>
+          <div className="row mt16" style={{justifyContent:'flex-start'}}>
+            <button className="ghost" onClick={()=> setStep('bin')}>Back</button>
+          </div>
+        </>
+      );
+    }
+
+    if (step === 'arch'){
+      if (!archProbe){
+        return (
+          <>
+            <h2>Finding your archetype…</h2>
+            <p className="muted">Setting up a quick 2–3 question tie-breaker.</p>
+          </>
+        );
+      }
+      if (archProbe.type === 'single_choice'){
+        const fallbackTriadQ = (archRules as any)?.tie_layer?.fallbacks?.triad_question as string | undefined;
+        const isFallbackTriad = fallbackTriadQ && archProbe.question === fallbackTriadQ;
+        return (
+          <>
+            <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
+            {isFallbackTriad ? (
+              <div className="facet-grid mt8" style={{gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))'}}>
+                {archProbe.options.map(o=> {
+                  const meta = ARCHETYPE_META[o.id] || { title:o.id, img:'/equalizer.png', desc:o.label };
+                  return (
+                    <button key={o.id} className="btn-chip" style={{padding:0, background:'transparent'}} onClick={()=> archResolveRef.current?.(o.id)}>
+                      <div className="card" style={{background:'#111', border:'1px solid #333'}}>
+                        <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}>
+                          <strong>{meta.title}</strong>
+                        </div>
+              <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
+                <img src={assetUrl(meta.img)} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
+                  onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src=assetUrl('/equalizer.png'); }} />
+              </div>
+                        <div style={{padding:'0 12px 12px 12px'}}>
+                          <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{meta.desc}</p>
+                        </div>
                       </div>
-            <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
-              <img src={assetUrl(meta.img)} alt={meta.title} style={{maxWidth:'100%', height:140, objectFit:'contain', borderRadius:8}}
-                onError={(e)=>{ e.currentTarget.onerror=null as any; e.currentTarget.src=assetUrl('/equalizer.png'); }} />
-            </div>
-                      <div style={{padding:'0 12px 12px 12px'}}>
-                        <p className="muted" style={{fontSize:12, lineHeight:1.4}}>{meta.desc}</p>
-                      </div>
-                    </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="facet-grid mt8">
+                {archProbe.options.map(o=> (
+                  <button key={o.id} className="btn-chip" onClick={()=> archResolveRef.current?.(o.id)}>
+                    <b>{o.label}</b>
                   </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="facet-grid mt8">
-              {archProbe.options.map(o=> (
-                <button key={o.id} className="btn-chip" onClick={()=> archResolveRef.current?.(o.id)}>
-                  <b>{o.label}</b>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-    const isImagePair = (archProbe as any)?.meta?.present === 'image_pair';
-    if (isImagePair){
-      const L = archProbe.left.id; const R = archProbe.right.id;
-      const leftMeta  = ARCHETYPE_META[L] || { title: L, img:'/equalizer.png', desc: L };
-      const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
-      return (
-        <div className="card">
+                ))}
+              </div>
+            )}
+          </>
+        );
+      }
+      const isImagePair = (archProbe as any)?.meta?.present === 'image_pair';
+      if (isImagePair){
+        const L = archProbe.left.id; const R = archProbe.right.id;
+        const leftMeta  = ARCHETYPE_META[L] || { title: L, img:'/equalizer.png', desc: L };
+        const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
+        return (
           <div className="archetype-dual-container">
             <button className="btn archetype-dual-btn" onClick={()=> archResolveRef.current?.(L)}>
               <div className="card" style={{background:'#111', border:'1px solid #333'}}>
@@ -410,38 +417,83 @@ export default function GZFinalAssessment(){
               </div>
             </button>
           </div>
-        </div>
+        );
+      }
+      return (
+        <>
+          <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
+          <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
+            <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.left.id)}>
+              <span className="muted" style={{fontSize:12}}>
+                {ARCHETYPE_HINTS[archProbe.left.id]}
+              </span>
+            </button>
+            <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.right.id)}>
+              <span className="muted" style={{fontSize:12}}>
+                {ARCHETYPE_HINTS[archProbe.right.id]}
+              </span>
+            </button>
+          </div>
+        </>
       );
     }
-    return (
-      <div className="card">
-        <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{archProbe.question}</div>
-        <div className="row mt16" style={{gap:12, flexWrap:'wrap' as any}}>
-          <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.left.id)}>
-            <span className="muted" style={{fontSize:12}}>
-              {ARCHETYPE_HINTS[archProbe.left.id]}
-            </span>
-          </button>
-          <button className="btn" onClick={()=> archResolveRef.current?.(archProbe.right.id)}>
-            <span className="muted" style={{fontSize:12}}>
-              {ARCHETYPE_HINTS[archProbe.right.id]}
-            </span>
-          </button>
-        </div>
-      </div>
-    );
+  
+    if (step === 'done') {
+      return (
+        <>
+          <h2>All set</h2>
+          <p>We will save your run and take you to your insights.</p>
+          <div className="row mt16" style={{justifyContent:'flex-end'}}>
+            <button className="primary" onClick={finalizeAndSave}>Continue →</button>
+          </div>
+        </>
+      )
+    }
+
+    return null;
   }
 
-  // done
-  return (
-    <div className="card">
-      <h2>All set</h2>
-      <p>We will save your run and take you to your insights.</p>
-      <div className="row mt16" style={{justifyContent:'flex-end'}}>
-        <button className="primary" onClick={finalizeAndSave}>Continue →</button>
+  // Header with owl image only
+  const AssessmentHeader = () => (
+    <div className="mb-4">
+      {/* Owl Image */}
+      <div className="flex justify-center relative">
+        {/* Glowing background effect */}
+        <div className="absolute inset-0 flex justify-center items-center">
+          <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full blur-xl" style={{
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.36) 0%, rgba(245, 158, 11, 0.24) 50%, transparent 100%)'
+          }}></div>
+        </div>
+        <img 
+          src={assetUrl("/the-axis.png")} 
+          alt="The Axis" 
+          className="h-24 w-24 sm:h-32 sm:w-32 object-contain relative z-10"
+        />
       </div>
     </div>
   );
+
+  return (
+    <div className="fullscreen-card card">
+      <div className="card-content">
+        <AssessmentHeader />
+        {/* Progress Bar */}
+        <div className="w-full mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-white/70">Progress</span>
+            <span className="text-sm text-white/70">{progress}/{totalWithArchetype}</span>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-yellow-500 to-amber-600 h-2 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+        {renderStepContent()}
+      </div>
+    </div>
+  )
 }
 
 

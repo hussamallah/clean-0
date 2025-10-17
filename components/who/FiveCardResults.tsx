@@ -82,10 +82,26 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
         {selectedCards.filter(card => card.type === 'conflict').map((card, i) => {
-          const stars = card.bucket === 'High' ? 4 : card.bucket === 'Medium' ? 3 : 2;
+          // Debug logging for conflict cards
+          console.log('Conflict Card Debug:', {
+            cardType: card.type,
+            facet: card.facet,
+            bucket: card.bucket,
+            leftPct: card.leftPct,
+            rightPct: card.rightPct,
+            description: card.description,
+            explanation: card.explanation,
+            friction: card.friction,
+            how_can_both_be_true: card.how_can_both_be_true,
+            conflict: card.conflict
+          });
+          
+          // For conflict cards, calculate stars based on the average of leftPct and rightPct
+          const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct) / 2 : 50;
+          const stars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
           const full = Array.from({length: Math.max(0, Math.min(5, stars))});
           const empty = Array.from({length: Math.max(0, 5 - stars)});
-          const cls = card.bucket?.toLowerCase() || 'medium';
+          const cls = 'conflict'; // Use a specific class for conflict cards
           const [isOpen, setIsOpen] = useState(card.type === 'conflict'); // Auto-expand only conflict cards, no collapse for them
           
           // Find the domain and payload for this facet to get interpretation
@@ -168,16 +184,35 @@ export default function FiveCardResults({ data, onCardOpen, onOfferSeen }: Props
               ) : null}
               
               {isOpen && (
-                <p style={{ 
-                  margin: isOpen ? '6px 0 0 0' : 0, 
-                  fontSize: '13px', 
-                  lineHeight: 1.4, 
-                  color: '#d6e5ff',
-                  fontStyle: card.type === 'conflict' ? 'italic' : 'normal'
-                }}>
-                  {card.type === 'conflict' && <strong>How can both be true? </strong>}
-                  {interpretation}
-                </p>
+                <div>
+                  <p style={{ 
+                    margin: '6px 0 0 0', 
+                    fontSize: '13px', 
+                    lineHeight: 1.4, 
+                    color: '#d6e5ff',
+                    fontStyle: 'normal'
+                  }}>
+                    {card.description}
+                  </p>
+                  <p style={{
+                    margin: '12px 0 0 0',
+                    fontSize: '13px',
+                    lineHeight: 1.4,
+                    color: '#f39c12', // Placeholder color
+                    fontWeight: 'bold'
+                  }}>
+                    How can both be true?
+                  </p>
+                  <p style={{
+                    margin: '6px 0 0 0',
+                    fontSize: '13px',
+                    lineHeight: 1.4,
+                    color: '#d6e5ff',
+                    fontStyle: 'italic'
+                  }}>
+                    {card.how_can_both_be_true}
+                  </p>
+                </div>
               )}
               
             </div>

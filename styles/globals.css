@@ -46,6 +46,7 @@ small{color:var(--muted)}
   backdrop-filter: blur(10px);
 }
 .row{display:flex; gap:12px; flex-wrap:wrap}
+.row:has(.rate.btn){ flex-wrap: nowrap; width:100%; }
 .row-nowrap{display:flex; gap:8px; flex-wrap:nowrap; align-items:center}
 .grow{flex:1}
 .center{display:flex;align-items:center;justify-content:center}
@@ -233,11 +234,18 @@ button:focus-visible,
 
 /* Premium rate buttons (quiz choices) */
 .rate.btn{
-  min-width: 180px;
+  display:flex;
+  align-items:center;
   justify-content: center;
+  flex: 1 1 0; /* share row evenly */
+  min-width: 0; /* allow shrinking */
+  padding: 12px 14px; /* slightly tighter to fit 5 */
+  text-align:center;
   font-weight: 600;
   letter-spacing: .2px;
   -webkit-tap-highlight-color: rgba(91, 141, 239, 0.5);
+  white-space: normal; /* allow label to wrap if needed */
+  line-height: 1.2;
 }
 .rate.btn:hover{
   border-color: var(--focus);
@@ -301,6 +309,26 @@ a, button, .btn, .btn-chip, .pill, .count-pill { transition: all .25s ease; }
   font-weight:700;
   flex-shrink:0;
   align-self:center;
+}
+
+.fullscreen-card {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  border-radius: 0;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px){

@@ -103,7 +103,8 @@ function ResultsContent(){
             </div>
           </div>
           <div className="divider"></div>
-          <div className="row-nowrap" style={{justifyContent:'flex-end'}}>
+          <div className="row-nowrap" style={{justifyContent:'flex-end', gap: '1rem'}}>
+            <button className="btn" onClick={()=> router.push(`/your-id?rid=${rid}`)}>View Your ID →</button>
             <button className="btn" onClick={()=> router.push('/who' + (rid?`?rid=${rid}`:''))}>← Back to Personality Insights</button>
           </div>
         </div>
@@ -115,7 +116,8 @@ function ResultsContent(){
             setVerifyStatus(hash === suiteHash ? 'ok' : 'fail');
           }} />
           <div className="divider"></div>
-          <div className="row-nowrap" style={{justifyContent:'flex-end'}}>
+          <div className="row-nowrap" style={{justifyContent:'flex-end', gap: '1rem'}}>
+            <button className="btn" onClick={()=> router.push(`/your-id?rid=${rid}`)}>View Your ID →</button>
             <button className="btn" onClick={()=> router.push('/who' + (rid?`?rid=${rid}`:''))}>← Back to Personality Insights</button>
           </div>
         </div>

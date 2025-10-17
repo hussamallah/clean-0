@@ -35,7 +35,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0f17] text-white antialiased">
+    <main className="min-h-screen bg-black text-white antialiased">
       {/* MENU BUTTON */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
@@ -200,21 +200,31 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-600/20 via-violet-500/10 to-transparent pointer-events-none" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 sm:pt-24 sm:pb-20 lg:px-8 lg:pt-28">
+        <div className="absolute inset-0 bg-gradient-to-b from-yellow-300/5 to-transparent pointer-events-none" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-8 pb-12 sm:px-6 sm:pt-16 sm:pb-20 lg:px-8 lg:pt-20">
+          {/* Owl Image */}
+          <div className="flex justify-center mb-8 relative">
+            {/* Glowing background effect */}
+            <div className="absolute inset-0 flex justify-center items-center">
+              <div className="h-32 w-32 sm:h-40 sm:w-40 rounded-full blur-xl" style={{
+                background: 'radial-gradient(circle, rgba(251, 191, 36, 0.36) 0%, rgba(245, 158, 11, 0.24) 50%, transparent 100%)'
+              }}></div>
+            </div>
+            <img 
+              src="/the-axis.png" 
+              alt="The Axis" 
+              className="h-32 w-32 sm:h-40 sm:w-40 object-contain relative z-10"
+            />
+          </div>
           <div className="flex flex-col items-center text-center">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Deterministic · Audit‑Ready · Big Five
-            </span>
-            <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
               Ground Zero — Your Deterministic Identity Blueprint
             </h1>
-            <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/70 px-2">
-              A transparent Big Five assessment that turns your signals into an archetype, an operating playbook, and
-              existential circuits. No randomness. No hidden weights. Hash‑verified.
+            <p className="mt-4 max-w-2xl text-sm sm:text-base text-yellow-200/90 px-2 font-medium">
+              Ground Zero is not just a test—it's an identity engine. By blending psychology, determinism, and design, it delivers a reproducible way to see who you are, how you operate, and what tensions shape your life. With its dual-results approach, it offers both traditional psychometric clarity and practical identity blueprints.
             </p>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0">
-              <Link href="/full" className="group inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-400 w-full sm:w-auto">
+              <Link href="/full" className="group inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-base font-semibold text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
                 Start assessment
                 <svg className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M13 5l7 7-7 7"/>
@@ -241,22 +251,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PROBLEM / SOLUTION */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6 sm:p-8 lg:p-12">
-          <h2 className="text-center text-2xl sm:text-3xl font-semibold">Stop Guessing. Start Operating.</h2>
-          <p className="mx-auto mt-3 sm:mt-4 max-w-3xl text-center text-sm sm:text-base text-white/80 px-2">
-            Ever feel like you're fighting against yourself? Why is it so easy to start projects but so hard to finish them? 
-            Why do you thrive in chaos one day and burn out the next?
-          </p>
-          <div className="mx-auto mt-6 sm:mt-8 max-w-3xl rounded-xl sm:rounded-2xl border border-indigo-500/30 bg-indigo-950/20 p-4 sm:p-6">
-            <p className="text-sm sm:text-base text-white/90">
-              Ground Zero goes beyond generic labels to give you a <strong className="text-white">high-fidelity map of your mind</strong>. 
-              We pinpoint your unique tensions, reveal your operational strengths, and give you a practical playbook to navigate your life with intention.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* HOW IT WORKS */}
       <section id="how" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -355,29 +349,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <h2 className="text-center text-xl sm:text-2xl font-semibold px-2">Simple, honest pricing</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-xs sm:text-sm text-white/70 px-2">Start free. Unlock deeper guidance or comparisons when you're ready.</p>
-        <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {n:'Core Assessment', p:'Free', b:['30 items · OCEAN facets','Archetype + narrative','Hash verification'], c:'/full'},
-            {n:'Override Premium', p:'$7', b:['Behavior change kit','Daily moves & cycles','Stress‑move library'], c:'#'},
-            {n:'Compare Pack', p:'$1.50', b:['You vs Them (1 card)','Compatibility (2 cards)','Side‑by‑side OCEAN view'], c:'#'},
-          ].map((x, i) => (
-            <div key={x.n} className={`rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 ${i===1?'ring-2 ring-indigo-400/50':''}`}>
-              <div className="flex items-baseline justify-between">
-                <h3 className="text-base sm:text-lg font-semibold">{x.n}</h3>
-                <div className="text-lg sm:text-xl font-semibold">{x.p}</div>
-              </div>
-              <ul className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-white/70">
-                {x.b.map((l)=> <li key={l}>• {l}</li>)}
-              </ul>
-              <a href={x.c} className="mt-4 sm:mt-6 inline-flex rounded-xl bg-white/10 px-4 py-2 text-xs sm:text-sm font-medium hover:bg-white/15">{i===0?'Start free':'Get it'}</a>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -406,17 +377,10 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 sm:pb-20 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/20 via-violet-600/20 to-sky-500/20 p-6 sm:p-8">
-          <div className="absolute -inset-1 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-indigo-500/10 via-fuchsia-500/10 to-emerald-500/10 blur-2xl" />
-          <div className="relative">
-            <h3 className="text-xl sm:text-2xl font-semibold">Start your deterministic run</h3>
-            <p className="mt-2 max-w-2xl text-xs sm:text-sm text-white/80">Take the free assessment and unlock a clear operating playbook you can use today.</p>
-            <div className="mt-4 sm:mt-5">
-              <Link href="/full" className="inline-flex items-center justify-center rounded-2xl bg-indigo-500 px-5 py-3 text-sm sm:text-base text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-400 w-full sm:w-auto">
-                Start assessment
-              </Link>
-            </div>
-          </div>
+        <div className="flex justify-center">
+          <Link href="/full" className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-sm sm:text-base text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
+            Start assessment
+          </Link>
         </div>
       </section>
 

@@ -661,8 +661,9 @@ export default function WhoPage({ searchParams }:{ searchParams:{ rid?:string, t
         <ExistentialCircuits domainMeans={who.derived.domainMeans} fullResults={fullResults} />
         <AllLifeSignals domainMeans={who.derived.domainMeans} tone={who.tone} hideKeys={['T','P','S','D']} />
 
-        <div style={{marginTop:-50, display:'flex', justifyContent:'center'}}>
+        <div style={{marginTop:-50, display:'flex', justifyContent:'center', gap: '1rem'}}>
           <a href={`/results?rid=${ridUsed}`} className="btn btn-gold">View Detailed Results →</a>
+          <a href={`/your-id?rid=${ridUsed}`} className="btn btn-gold">View Your ID →</a>
         </div>
 
         {/* Result Code Section */}
