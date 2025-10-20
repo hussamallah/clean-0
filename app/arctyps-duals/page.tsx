@@ -1,8 +1,9 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function ArctypsDualsPage(){
+function ArctypsDualsContent(){
   const search = useSearchParams();
   const rid = search?.get('rid') || '';
   return (
@@ -60,6 +61,14 @@ export default function ArctypsDualsPage(){
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ArctypsDualsPage(){
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>}>
+      <ArctypsDualsContent />
+    </Suspense>
   );
 }
 

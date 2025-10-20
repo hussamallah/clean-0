@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
-export default function LandingPage() {
+function LandingPageContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRetrieve, setShowRetrieve] = useState(false);
   const [resultCode, setResultCode] = useState('');
@@ -388,5 +388,13 @@ export default function LandingPage() {
         © {new Date().getFullYear()} Ground Zero. Deterministic Identity Engine.
       </footer>
     </main>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>}>
+      <LandingPageContent />
+    </Suspense>
   );
 }
