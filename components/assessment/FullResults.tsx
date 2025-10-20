@@ -66,27 +66,7 @@ export default function FullResults({ data, suiteHash, verifyStatus, onVerify }:
           <p className="muted">No results captured yet for {DOMAINS[tab].label}.</p>
         )}
       </div>
-      <div className="divider"></div>
-      <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-        <small className="muted">Suite hash (SHA-256): <span className="kbd">{suiteHash || '...'}</span></small>
-        <div className="row-nowrap" style={{gap:8}}>
-          <button className="btn" onClick={()=>{
-            try{
-              const normalized = data.map((r:any)=>({domain:r.domain, payload:r.payload}));
-              const payload = { suiteHash, results: normalized };
-              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = 'gz-full-results.json';
-              document.body.appendChild(a); a.click();
-              setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-            } catch {}
-          }}>Download JSON</button>
-          <button className="btn" onClick={onVerify}>Verify hash</button>
-          {verifyStatus==='ok' ? <span className="badge high">Verified</span> : null}
-          {verifyStatus==='fail' ? <span className="badge low">Mismatch</span> : null}
-        </div>
-      </div>
+      
     </div>
   );
 }
@@ -189,62 +169,6 @@ export function ResultsPanel({ payload }:{ payload:any }){
   }
   return (
     <div>
-      <div style={{marginTop:8,fontSize:13,lineHeight:1.5,color:'#b6c2d1', textAlign: 'center'}}>{firstNSentences((DOMAIN_DESCRIPTIONS as any)[d].fullDescription, 4)}</div>
-      <div className="mt16" style={{display: 'flex', justifyContent: 'center'}}>
-        <details style={{cursor: 'pointer', position: 'relative'}}>
-          <summary style={{
-            background: '#1a212a',
-            border: '1px solid #2a3240',
-            borderRadius: '20px',
-            padding: '8px 16px',
-            fontSize: '12px',
-            color: '#a7c8ff',
-            fontWeight: '500',
-            listStyle: 'none',
-            display: 'inline-block',
-            transition: 'all 0.2s ease',
-            cursor: 'pointer'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#2a3240';
-            e.currentTarget.style.borderColor = '#3a424a';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#1a212a';
-            e.currentTarget.style.borderColor = '#2a3240';
-          }}>
-            📊 Legend
-          </summary>
-          <div style={{
-            background: '#0f141a',
-            border: '1px solid #2a3240',
-            borderRadius: '12px',
-            padding: '16px',
-            marginTop: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            minWidth: '400px',
-            maxWidth: '600px'
-          }}>
-            <div className="grid" style={{gap:16}}>
-              <div>
-                <div style={{fontWeight:600, fontSize:13, color:'#d6e5ff'}}>What the badges mean</div>
-                <ul style={{margin:'6px 0', paddingLeft:18, color:'#b6c2d1', fontSize:13, lineHeight:1.5}}>
-                  <li><b>High</b>: Strong, reliable part of your behavior. Easy to access; others notice it.</li>
-                  <li><b>Medium</b>: Situational. You can use it when needed but it's not your default move.</li>
-                  <li><b>Low</b>: De‑emphasized. You rarely use this lever unless context forces it.</li>
-                </ul>
-              </div>
-              <div>
-                <div style={{fontWeight:600, fontSize:13, color:'#d6e5ff'}}>What the stars mean</div>
-                <ul style={{margin:'6px 0', paddingLeft:18, color:'#b6c2d1', fontSize:13, lineHeight:1.5}}>
-                  <li><b>Stars</b> show your average agreement on the direct behavior statements for that lever (1 = Very Inaccurate … 5 = Very Accurate).</li>
-                  <li>Quick read: <b>4–5</b> strong fuel source; <b>≈3</b> workable/context‑dependent; <b>1–2</b> weak fuel source.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </details>
-      </div>
       <div className="grid cols-2 mt16">
         {order.map(f=>{
           const b = (bucket as any)[f] as 'High'|'Medium'|'Low';
@@ -306,12 +230,7 @@ export function ResultsPanel({ payload }:{ payload:any }){
       </div>
       
 
-      <div className="card mt16">
-        <h3>Your {DOMAINS[d].label} Summary</h3>
-        <div style={{background:'#0f141a',border:'1px solid #1a212a',borderRadius:10,padding:16,margin:'12px 0',fontSize:14,lineHeight:1.6,color:'#d6e5ff'}}>
-          {buildSummary()}
-        </div>
-      </div>
+      
     </div>
   );
 }

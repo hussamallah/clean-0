@@ -48,7 +48,7 @@ function ResultsContent(){
             const payload = await res.json();
             const results = Array.isArray(payload?.results) ? payload.results : [];
             setData(results);
-            setSuiteHash(ridParam);
+            setSuiteHash(null);
             setMode('full');
             return;
           }
@@ -57,7 +57,7 @@ function ResultsContent(){
         const raw = localStorage.getItem('gz_full_results');
         const hash = localStorage.getItem('gz_full_hash');
         if (raw){ setData(JSON.parse(raw)); }
-        if (hash){ setSuiteHash(hash); }
+        setSuiteHash(null);
         setMode('full');
       } catch {}
     })();
@@ -73,52 +73,56 @@ function ResultsContent(){
           <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
             <div>
               <h2>Results — {DOMAINS[(single as any)?.domain as keyof typeof DOMAINS]?.label || 'Domain'}</h2>
-              <p className="muted">Review and verify the hash for this domain run.</p>
+              
             </div>
           </div>
           <ResultsPanel payload={single} />
-          <div className="divider"></div>
-          <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
-            <small className="muted">Session hash (SHA-256): <span className="kbd">{(single as any)?.audit?.nonce || '...'}</span></small>
-            <div className="row-nowrap" style={{gap:8, alignItems:'center'}}>
-              <button className="btn" onClick={async ()=>{
-                try{
-                  const s:any = single;
-                  if (!s) return;
-                  const auditPayload = {
-                    version: s.version,
-                    domain: s.domain,
-                    phase1: s.phase1,
-                    phase2: s.phase2,
-                    phase3: s.phase3,
-                    final: s.final
-                  };
-                  const hash = await sha256(stableStringify(auditPayload));
-                  setVerifyStatus(hash === s?.audit?.nonce ? 'ok' : 'fail');
-                } catch {}
-              }}>Verify hash</button>
-              {verifyStatus==='ok' ? <span className="badge high">Verified</span> : null}
-              {verifyStatus==='fail' ? <span className="badge low">Mismatch</span> : null}
-              <small className="muted">Tie-breaks use canonical facet order.</small>
-            </div>
-          </div>
-          <div className="divider"></div>
-          <div className="row-nowrap" style={{justifyContent:'flex-end', gap: '1rem'}}>
-            <button className="btn" onClick={()=> router.push(`/your-id?rid=${rid}`)}>View Your ID →</button>
-            <button className="btn" onClick={()=> router.push('/who' + (rid?`?rid=${rid}`:''))}>← Back to Personality Insights</button>
+          <div style={{display:'flex', justifyContent:'center', marginTop:16, gap:12, flexWrap:'wrap'}}>
+            <button
+              className="btn btn-gold"
+              style={{
+                border: '2px solid #d4af37',
+                boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
+                padding: '12px 22px',
+                borderRadius: 10,
+                color: 'white',
+                fontSize: 16,
+                fontWeight: 600
+              }}
+              onClick={()=> router.push(`/your-id?rid=${rid}`)}
+            >View Your ID →</button>
+            <button
+              className="btn btn-gold"
+              style={{
+                border: '2px solid #d4af37',
+                boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
+                padding: '12px 22px',
+                borderRadius: 10,
+                color: 'white',
+                fontSize: 16,
+                fontWeight: 600
+              }}
+              onClick={()=> router.push(`/arctyps-duals${rid?`?rid=${rid}`:''}`)}
+            >Arctyps Duals →</button>
           </div>
         </div>
       ) : (
         <div className="card">
-          <FullResults data={data} suiteHash={suiteHash} verifyStatus={verifyStatus} onVerify={async ()=>{
-            const normalized = data.map((r:any)=>({domain:r.domain, payload:r.payload}));
-            const hash = await sha256(stableStringify(normalized));
-            setVerifyStatus(hash === suiteHash ? 'ok' : 'fail');
-          }} />
-          <div className="divider"></div>
-          <div className="row-nowrap" style={{justifyContent:'flex-end', gap: '1rem'}}>
-            <button className="btn" onClick={()=> router.push(`/your-id?rid=${rid}`)}>View Your ID →</button>
-            <button className="btn" onClick={()=> router.push('/who' + (rid?`?rid=${rid}`:''))}>← Back to Personality Insights</button>
+          <FullResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
+          <div style={{display:'flex', justifyContent:'center', marginTop:16}}>
+            <button
+              className="btn btn-gold"
+              style={{
+                border: '2px solid #d4af37',
+                boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
+                padding: '12px 22px',
+                borderRadius: 10,
+                color: 'white',
+                fontSize: 16,
+                fontWeight: 600
+              }}
+              onClick={()=> router.push(`/your-id?rid=${rid}`)}
+            >View Your ID →</button>
           </div>
         </div>
       )}

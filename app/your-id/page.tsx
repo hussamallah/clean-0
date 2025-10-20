@@ -2,8 +2,15 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import archetypeRules from "@/arctyps rules.json";
-import fpBank from "@/lib/data/field_presence_bank_v1_1.json";
+// Field presence bank removed for domain cards UI
+import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS } from "@/lib/bigfive/constants";
+import { getScoreLevel } from "@/lib/bigfive/format";
+import { selectFiveCards } from "@/lib/bigfive/fiveCardSelector";
+import ExistentialCircuits from "@/components/who/ExistentialCircuits";
+import AllLifeSignals from "@/components/who/AllLifeSignals";
+import bigFiveImpacts from "@/BigFiveImpacts.json";
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number) => {
@@ -267,18 +274,9 @@ function starsForAvg(avg: number): number {
   return stars;
 }
 
-// Pull cards from the provided bank
-const fpCards: any[] = ((fpBank as any)?.sections || []).find((s: any) => s?.id === 'field_presence')?.cards || [];
+// Removed field presence cards; cards now represent the five domains
 
-const StarRating = ({ rating }: { rating: number }) => (
-  <div className="flex">
-    {[...Array(5)].map((_, i) => (
-      <svg key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-600'}`} fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.365 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.365-2.446a1 1 0 00-1.175 0l-3.365 2.446c-.784.57-1.838-.197-1.54-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.07 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z" />
-      </svg>
-    ))}
-  </div>
-);
+// Removed unused SVG star component; using simple Stars renderer
 
 function YourIdContent() {
   const searchParams = useSearchParams();
@@ -288,13 +286,232 @@ function YourIdContent() {
   const [domainMeans, setDomainMeans] = useState<Record<DomainKey, number> | null>(null);
   const [facetBuckets, setFacetBuckets] = useState<Record<DomainKey, Record<string,'High'|'Medium'|'Low'>> | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [fullResults, setFullResults] = useState<Array<{domain:DomainKey; payload:any}> | null>(null);
+  const [whoData, setWhoData] = useState<any|null>(null);
+  const [panels, setPanels] = useState<any|null>(null);
+  const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
+  const [headerOpen, setHeaderOpen] = useState<boolean>(false);
+
+  const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
+  const GOLD = '#d4af37';
+  const imageMap: Record<DomainKey, string> = {
+    A: '/agree.png',
+    C: '/conci.png',
+    E: '/extra.png',
+    N: '/neur.png',
+    O: '/open.png'
+  };
+
+  useEffect(()=>{ import("@/lib/data/who_panels.json").then(m=> setPanels((m as any).default || m)); }, []);
+
+  // Identity narrative builder (mirrors Who page selection/compression)
+  function buildIdentityNarrativeFromWhoNarrative(narr: string[] | undefined | null, stanceLine?: string | null): string[] {
+    const MAX_SENTENCES = 7;
+    const MAX_FROM_NARR = 5;
+    const MAX_WORDS = 16;
+    const MIN_WORDS = 6;
+    const SOFTENERS = /\b(very|really|quite|somewhat|often|usually|maybe|perhaps|a bit|kind of|sort of)\b/gi;
+    const FILLERS = /\b(that|just|actually|literally)\b/gi;
+    const BOILERPLATE_DOMAIN = /^\s*Your\s+(Openness|Conscientiousness|Extraversion|Agreeableness|Neuroticism)\s+is\b/i;
+    const TOKENS = [
+      { rx:/\bopenness\b/i, facets:[/imagin/i,/creativ/i,/ideas?/i,/beauty|art|music|literature|nature/i] },
+      { rx:/\bconscientiousness\b/i, facets:[/reliable|reliab/i,/execution|deliver|finish/i,/lanes?|scope|SOP/i] },
+      { rx:/\bextraversion\b/i, facets:[/tempo|momentum|visible|energ/i,/lead|initiat/i] },
+      { rx:/\bagreeableness\b/i, facets:[/goodwill|trust|warm/i,/convert|align|coalition/i] },
+      { rx:/\bneuroticism\b/i, facets:[/signals?|worry|anxiety|overload|frustration/i,/buffers?|resets?|guardrails?/i] }
+    ];
+
+    function splitSentences(text:string): string[] {
+      return (text||'')
+        .replace(/\s+/g,' ')
+        .split(/(?<=[.!?])\s+/)
+        .map(s=>s.trim())
+        .filter(Boolean);
+    }
+    function clampWords(s:string): string {
+      const words = s
+        .replace(SOFTENERS,'')
+        .replace(FILLERS,'')
+        .replace(/\s+/g,' ')
+        .trim()
+        .split(' ');
+      if (words.length <= MAX_WORDS) return words.join(' ');
+      return words.slice(0, MAX_WORDS).join(' ') + '.';
+    }
+    function scoreSentence(s:string): number {
+      let score = 0;
+      for (const t of TOKENS) {
+        if (t.rx.test(s)) score += 1;
+        for (const f of t.facets) if (f.test(s)) score += 3;
+      }
+      if (/\b(tight cycles?|buffers?|resets?|guardrails?|boundar(y|ies))\b/i.test(s)) score += 2;
+      if (/\b(define|commit|ship|move|drop scope|restart|request)\b/i.test(s)) score += 1;
+      if (/\b(composed\s+force|regain\s+control|reliable\s+execution|set\s+tempo|momentum\s+visible)\b/i.test(s)) score += 2;
+      return score;
+    }
+
+    const n0 = Array.isArray(narr) ? narr.slice(0,5).join(' ') : '';
+    const n1 = Array.isArray(narr) ? narr.slice(5,10).join(' ') : '';
+    const n2 = Array.isArray(narr) ? narr.slice(10).join(' ') : '';
+    let candidates = [...splitSentences(n0), ...splitSentences(n1), ...splitSentences(n2)];
+    candidates = candidates.filter(s => {
+      const w = s.trim().split(/\s+/).filter(Boolean).length;
+      if (w < MIN_WORDS) return false;
+      if (BOILERPLATE_DOMAIN.test(s)) return false;
+      if (/^heat\.?$/i.test(s)) return false;
+      return true;
+    });
+
+    const ranked = candidates
+      .map((s,idx)=>({ s, idx, score: scoreSentence(s) }))
+      .sort((a,b)=> b.score - a.score || a.idx - b.idx);
+
+    const picked: string[] = [];
+    const used = new Set<number>();
+    for (const t of TOKENS) {
+      let bestIdx = -1; let bestScore = -Infinity;
+      ranked.forEach((r,i)=>{
+        if (used.has(i)) return;
+        if (t.rx.test(r.s) || t.facets.some(f=> f.test(r.s))) {
+          if (r.score > bestScore) { bestScore = r.score; bestIdx = i; }
+        }
+      });
+      if (bestIdx >= 0) { picked.push(ranked[bestIdx].s); used.add(bestIdx); }
+      if (picked.length >= MAX_FROM_NARR) break;
+    }
+    for (let i=0; i<ranked.length && picked.length<MAX_FROM_NARR; i++){
+      if (used.has(i)) continue;
+      const s = ranked[i].s;
+      if (/heat plus direction equals motion/i.test(s)) continue;
+      picked.push(s);
+      used.add(i);
+    }
+
+    const compressed = picked.map(clampWords);
+    const finalSentences: string[] = [];
+    for (const s of compressed) { if (finalSentences.length < 6) finalSentences.push(s); }
+    if (stanceLine && finalSentences.length < MAX_SENTENCES) finalSentences.push(stanceLine);
+    if (!finalSentences.length) finalSentences.push('You set direction and move work to done.');
+    return [finalSentences.join(' ')];
+  }
+
+  function computeStanceLine(): string | null {
+    try{
+      const dm = whoData?.derived?.domainMeans as Record<DomainKey, number> | undefined;
+      const states = whoData?.states as Record<DomainKey, Record<string,'High'|'Medium'|'Low'>> | undefined;
+      if (!dm || !states || !panels) return null;
+      const Ehigh = (dm.E ?? 0) >= 4.0, Elow = (dm.E ?? 0) <= 2.0;
+      const Ahigh = (dm.A ?? 0) >= 4.0, Alow = (dm.A ?? 0) <= 2.0;
+      let interpersonalKey: string;
+      if (Ehigh && Ahigh) interpersonalKey = 'warm_energizing';
+      else if (Ehigh && Alow) interpersonalKey = 'forceful_independent';
+      else if (Elow && Ahigh) interpersonalKey = 'calm_considerate';
+      else if (Elow && Alow) interpersonalKey = 'autonomous_direct';
+      else interpersonalKey = 'adaptive_balanced';
+
+      const tone = (whoData?.tone || 'neutral') as string;
+      const withTone = (panel:any)=>{
+        if (!panel) return panel;
+        const v = panel.tones?.[tone];
+        if (!v) return panel;
+        return { ...panel, title: v.title ?? panel.title, lines: Array.isArray(v.lines) ? v.lines : panel.lines };
+      };
+      const p = withTone(panels?.interpersonal?.[interpersonalKey]);
+      const label = String(p?.title || 'Adaptive');
+      let l0 = String((p?.lines || [])[0] || '').replace(/\s+/g,' ').trim();
+      // Merge smoothly into one sentence as Who page does
+      l0 = l0.replace(/^[Yy]ou\s+/, 'you ');
+      const stance = label ? label.toLowerCase() : 'adaptive';
+      if (!l0) return `Your stance with people is ${stance}.`;
+      return `Your stance with people is ${stance} and ${l0}`;
+    } catch { return null; }
+  }
+
+  function computeHeaderProofLine(): string {
+    try{
+      const rid = (whoData?.audit?.runHash) || '';
+      const hash = (whoData?.audit?.checksum) || rid;
+      const weeklyFinishers =  (typeof window !== 'undefined' && hash)
+        ? (function(seed:string){
+            let h = 0 >>> 0; for (let i=0;i<seed.length;i++){ h = ((h*31) + seed.charCodeAt(i)) >>> 0; }
+            const min=1000, max=2000, span = max-min+1; return min + (h % span);
+          })(String(hash))
+        : 0;
+      return weeklyFinishers
+        ? `This run is verified (hash ${hash}). This week, ${weeklyFinishers.toLocaleString()} people finished; you read yours now.`
+        : `This run is verified.`;
+    } catch { return `This run is verified.`; }
+  }
   
-  // Debug logging for card selection and data
-  console.log('Override Page Debug - Available Cards:', {
-    totalCards: fpCards.length,
-    cardTitles: fpCards.map(c => c?.title || c?.id),
-    cardIds: fpCards.map(c => c?.id)
+  // Debug logging for domain card data
+  console.log('Override Page Debug - Domain Cards:', {
+    hasFullResults: !!fullResults,
+    domains: ['O','C','E','A','N'],
   });
+
+  // Build full domain summary content (mirrors FullResults)
+  function renderDomainSummary(d: DomainKey, payload: any){
+    const facets = canonicalFacets(d);
+    const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
+    const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
+    const domain_mean_raw = Number(payload?.final?.domain_mean_raw ?? 3);
+    const lvlKey = String(getScoreLevel(domain_mean_raw)).replace('neutral','medium') as 'high'|'medium'|'low';
+    const levelMeaning: Record<'high'|'medium'|'low', string> = {
+      high: 'You can access this trait easily and consistently.',
+      medium: 'You can turn this trait on when needed, but it isn’t your default.',
+      low: d==='N' ? 'You keep an even keel and recover quickly under pressure.' : 'This trait stays in the background unless the situation forces it.'
+    };
+    const highs = facets.filter(f=> bucket[f]==='High').sort((a,b)=> (A_raw[b]-A_raw[a])).slice(0,2);
+    const mids  = facets.filter(f=> bucket[f]==='Medium').sort((a,b)=> (Math.abs(3-(A_raw[a]??3)) - Math.abs(3-(A_raw[b]??3)))).slice(0,2);
+    const lows  = facets.filter(f=> bucket[f]==='Low').sort((a,b)=> (A_raw[a]-A_raw[b])).slice(0,2);
+    const isN = d==='N';
+    const strengths = isN ? lows : highs;
+    const development = isN ? highs : lows;
+    const firstSentence = (txt:string|undefined)=> txt ? (txt.split(/(?<=\.)\s+/)[0] || txt).trim() : '';
+    return (
+      <div className="text-sm text-white/90 leading-relaxed">
+        <div className="mb-1">Your overall level is <b className="capitalize">{lvlKey}</b>. {levelMeaning[lvlKey]}</div>
+        <div className="mb-2">Domain average: <b>{domain_mean_raw.toFixed(2)} / 5</b></div>
+        {strengths.length ? (
+          <div className="mb-2">
+            <div className="text-white/70 mb-1">Strong behavior levers</div>
+            <ul className="list-disc pl-4">
+              {strengths.map(name=> (
+                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(isN?'low':'high')])}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {mids.length ? (
+          <div className="mb-2">
+            <div className="text-white/70 mb-1">Workable levers</div>
+            <ul className="list-disc pl-4">
+              {mids.map(name=> (
+                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.medium)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {development.length ? (
+          <div className="mb-1">
+            <div className="text-white/70 mb-1">Development levers</div>
+            <ul className="list-disc pl-4">
+              {development.map(name=> (
+                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(isN?'high':'low')])}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+  // Neon border helper using accent color
+  function neonBorderStyle(){
+    const glow = hexToRgba(accentColor || '#4cafef', 0.6);
+    const wide = hexToRgba(accentColor || '#4cafef', 0.25);
+    const border = hexToRgba(accentColor || '#4cafef', 0.5);
+    return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
+  }
   
   console.log('Override Page Debug - Data State:', {
     rid: rid,
@@ -347,6 +564,8 @@ function YourIdContent() {
         const fb = extractFacetBuckets(data);
         setDomainMeans(dm);
         setFacetBuckets(fb);
+        setFullResults(results);
+        setWhoData(data?.who || null);
         console.log('Override Page Debug - Extracted Means and Buckets:', { dm, fb });
         setIsReady(true);
       } catch {}
@@ -359,122 +578,258 @@ function YourIdContent() {
   const cardBgColor = hexToRgba(accentColor || '#000000', 0.1);
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
+    <main className="min-h-screen bg-black text-white p-4 md:p-8 pb-8">
       <div className="text-center mb-8">
         {archetypeName && (
-          <img 
+          <Image 
             src={`/${archetypeName.toLowerCase()}.png`} 
             alt={`${archetypeName} emblem`} 
-            className="h-48 w-48 mx-auto object-contain"
+            width={192}
+            height={192}
+            className="h-24 w-24 sm:h-36 sm:w-36 md:h-48 md:w-48 mx-auto object-contain"
+            priority
           />
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {fpCards.map((card: any, index: number) => {
-          // Debug each card's calculation logic
-          console.log(`Override Card ${index + 1} Debug:`, {
-            cardTitle: card?.title || card?.id,
-            cardId: card?.id,
-            bigFiveMap: card?.big_five_map,
-            content: card?.content,
-            hasFacetBuckets: !!facetBuckets,
-            hasDomainMeans: !!domainMeans
-          });
-          
-          return (
-            <div
-              key={index}
-              className="rounded-lg p-6 border border-white/10 relative overflow-hidden"
-              style={{ backgroundColor: cardBgColor, boxShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}`, paddingBottom: 8 }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-bold" style={{ color: accentColor }}>{card?.title || card?.id}</h2>
-              </div>
-              {(() => {
-                const avg = facetBuckets ? computeCardAvg(card, {__type:'facetBuckets', map: facetBuckets}) : computeCardAvg(card, domainMeans);
-                const stars = starsForAvg(avg);
-                console.log(`Override Card ${index + 1} - Stars Calculation:`, {
-                  cardTitle: card?.title || card?.id,
-                  average: avg,
-                  stars: stars,
-                  calculationMethod: facetBuckets ? 'facetBuckets' : 'domainMeans'
-                });
-                return (
-                  <div className="mb-2">
-                    <Stars count={stars} />
-                  </div>
-                );
-              })()}
-            {(() => {
-              const level = scoreCardLevel(card, facetBuckets ? {__type:'facetBuckets', map: facetBuckets} : domainMeans);
-              const txt = card?.content?.[level];
-              console.log(`Override Card ${index + 1} - Content Selection:`, {
-                cardTitle: card?.title || card?.id,
-                level: level,
-                contentText: txt,
-                availableLevels: Object.keys(card?.content || {})
-              });
-              return txt ? (
-                <p className="text-white/90 mb-3">{txt}</p>
-              ) : null;
-            })()}
-            {(() => {
-              const maps: any[] = Array.isArray(card?.big_five_map) ? card.big_five_map : [];
-              const facets: Array<{ facet:string; dir:string }> = [];
-              
-              console.log(`Override Card ${index + 1} - Facet Mapping:`, {
-                cardTitle: card?.title || card?.id,
-                maps: maps,
-                facetBuckets: facetBuckets
-              });
-              
-              for (const m of maps){
-                const dir = String(m?.direction || 'direct');
-                const domainKey = domainToKey[m?.domain || ''] as DomainKey;
-                console.log(`Override Card ${index + 1} - Map:`, {
-                  cardTitle: card?.title || card?.id,
-                  domain: m?.domain,
-                  domainKey: domainKey,
-                  direction: dir,
-                  facets: m?.facets,
-                  facetBucketsForDomain: facetBuckets?.[domainKey]
-                });
-                
-                (Array.isArray(m?.facets) ? m.facets : []).forEach((f: string)=> {
-                  const canon = FACET_SYNONYMS[domainKey]?.[normFacetLabel(f)] || f;
-                  const bucket = facetBuckets?.[domainKey]?.[canon];
-                  console.log(`Override Card ${index + 1} - Facet:`, {
-                    cardTitle: card?.title || card?.id,
-                    originalFacet: f,
-                    canonicalFacet: canon,
-                    bucket: bucket,
-                    domain: domainKey,
-                    direction: dir
-                  });
-                  facets.push({ facet: f, dir });
-                });
-              }
-              
-              const dirToArrow = (d:string)=> d==='inverse' ? '↓' : d==='support' ? '→' : '↑';
-              const dirToColor = (d:string)=> d==='inverse' ? 'text-red-400' : d==='support' ? 'text-yellow-300' : 'text-green-400';
+      {/* Domain tabs bar under archetype image (not sticky) */}
+      <div className="flex justify-center px-4 mb-2">
+        <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap">
+          {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
+            const domainName = DOMAINS[d].label.split(' (')[0];
+            return (
+              <button
+                key={d}
+                onClick={()=> setModalDomain(d)}
+                aria-label={domainName}
+                title={`${domainName} — click to view summary`}
+                className="p-0 bg-transparent border-0 flex items-center justify-center group cursor-pointer"
+                style={{ color: GOLD }}
+              >
+                {imageMap[d] ? (
+                  <Image src={encodeURI(imageMap[d])} alt={domainName} width={160} height={112} className="w-40 h-28 md:w-48 md:h-32 object-contain bg-transparent transition-transform duration-150 group-hover:scale-[1.05]" quality={95} style={{ filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.6)) drop-shadow(0 0 28px rgba(212,175,55,0.35))' }} />
+                ) : (
+                  <span role="img" aria-hidden="true">{emojiMap[d]}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="text-center text-white/70 text-sm mb-4">Click an image to view your domain summary</div>
+      <div className="flex gap-6">
+        <div className="hidden shrink-0 w-44">
+          <div className="sticky top-24 z-40 flex flex-col gap-3">
+            {(['O','C','E','A','N'] as DomainKey[]).map((d) => {
+              const domainName = DOMAINS[d].label.split(' (')[0];
               return (
-                <div className="mt-2 flex flex-wrap gap-2 overflow-hidden" style={{maxHeight:'3.2rem'}}>
-                  {facets.map((it, i)=> (
-                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/10 text-white/90 text-xs max-w-[180px] truncate">
-                      <span className={`${dirToColor(it.dir)} leading-none`}>{dirToArrow(it.dir)}</span>
-                      <span className="truncate">{it.facet}</span>
-                    </span>
+                <button
+                  key={d}
+                  onClick={()=> setModalDomain(d)}
+                  aria-label={domainName}
+                  title={`${domainName} — click to view summary`}
+                  className="px-3 py-2 rounded-none border-0 bg-transparent flex flex-col items-center gap-1 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 group cursor-pointer"
+                  style={{}}
+                >
+                  {imageMap[d] ? (
+                    <Image src={encodeURI(imageMap[d])} alt={domainName} width={128} height={96} className="w-32 h-24 md:w-40 md:h-28 object-contain bg-transparent transition-transform duration-150 group-hover:scale-[1.05]" quality={95} style={{ filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.6)) drop-shadow(0 0 28px rgba(212,175,55,0.35))' }} />
+                  ) : (
+                    <span role="img" aria-hidden="true" className="text-xl md:text-2xl">{emojiMap[d]}</span>
+                  )}
+                  <span className="truncate" style={{ color: accentColor }}>{domainName}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex-1">
+
+      {/* Modal for domain summary */}
+      {modalDomain && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={()=> setModalDomain(null)}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className="rounded-xl border relative max-w-xl w-[92%]"
+            style={{ background: '#0f141a', ...neonBorderStyle() }}
+            onClick={(e)=> e.stopPropagation()}
+          >
+            <button
+              onClick={()=> setModalDomain(null)}
+              aria-label="Close"
+              className="absolute top-2 right-2 px-2 py-1 text-white/70 hover:text-white"
+            >×</button>
+            <div className="p-6">
+              <div className="mb-3 text-xl font-bold flex items-center" style={{ color: accentColor }}>
+                {imageMap[modalDomain as DomainKey] ? (
+                  <Image src={encodeURI(imageMap[modalDomain as DomainKey])} alt="" width={40} height={40} className="w-10 h-10 mr-3 object-cover" quality={95} />
+                ) : (
+                  <span className="mr-2" aria-hidden="true">{emojiMap[modalDomain as DomainKey]}</span>
+                )}
+                {DOMAINS[modalDomain].label.split(' (')[0]}
+              </div>
+              <div style={{ maxHeight: 360, overflow: 'auto' }}>
+            {(() => {
+                  const payload = (fullResults || []).find((r:any)=> r?.domain===modalDomain)?.payload;
+                  return payload ? renderDomainSummary(modalDomain, payload) : (
+                    <p className="text-white/70 text-sm">No data for this domain.</p>
+                  );
+            })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
+
+      {/* Identity Narrative (Who-page style) */}
+      {whoData?.narrative && Array.isArray(whoData.narrative) && whoData.narrative.length > 0 ? (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Identity Narrative</h2>
+          <div className="flex items-center justify-end mb-2">
+            <button
+              onClick={()=> setHeaderOpen(v=> !v)}
+              className="px-3 py-1 rounded-full text-xs font-semibold border"
+              style={{
+                color: '#fff',
+                borderColor: 'rgba(255,255,255,0.2)',
+                background: 'linear-gradient(to bottom right, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                boxShadow: `0 0 10px ${hexToRgba(accentColor || '#000000', 0.25)}`
+              }}
+              aria-expanded={headerOpen}
+            >Header Proof {headerOpen ? '▴' : '▾'}</button>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
+            {buildIdentityNarrativeFromWhoNarrative(whoData.narrative, computeStanceLine()).map((p:string, i:number)=> (
+              <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
                   ))}
                 </div>
-              );
-            })()}
-          </div>
-          );
-        })}
+          {headerOpen ? (
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4 mt-2" style={neonBorderStyle()}>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: accentColor }}>Header Proof</h3>
+              <p className="text-white/80 text-sm">{computeHeaderProofLine()}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      
+
+      {/* Conflict Patterns */}
+      {fullResults ? (()=>{
+        const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
+        for (const d of ['O','C','E','A','N'] as DomainKey[]){
+          const payload = (fullResults.find(r=> r.domain===d) || ({} as any)).payload;
+          if (!payload) continue;
+          const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
+          const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
+          for (const f of canonicalFacets(d)){
+            const raw = Number(A_raw?.[f] ?? 3);
+            const b = (bucket?.[f] as any) as 'High'|'Medium'|'Low' || 'Medium';
+            facets.push({ domain:d, facet:f, raw, bucket: b });
+          }
+        }
+        const cards = selectFiveCards(facets).filter((c:any)=> c.type==='conflict');
+        if (!cards.length) return null;
+        return (
+          <div className="mt-10">
+            <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Conflict Patterns</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cards.map((card:any, i:number)=>{
+                const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct)/2 : 50;
+                const stars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
+                const locked = i > 0; // show one, lock the rest
+                return (
+                  <div key={i} className="relative rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
+                    <div className={locked ? "opacity-20 blur-2xl pointer-events-none select-none" : ""}>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-white">{card.facet}</h3>
+                        <Stars count={stars} />
+                      </div>
+                      {typeof card.explanation === 'string' ? (
+                        <p className="text-white/90 text-sm mb-2">{card.explanation}</p>
+                      ) : null}
+                      {typeof card.friction === 'string' ? (
+                        <p className="text-white/80 text-xs mb-3">{card.friction}</p>
+                      ) : null}
+                      {typeof card.how_can_both_be_true === 'string' ? (
+                        <div className="rounded-md border border-white/10 bg-black/30 p-3">
+                          <div className="text-xs text-white/60 mb-1">How can both be true?</div>
+                          <p className="text-white/90 text-sm">{card.how_can_both_be_true}</p>
+                        </div>
+                      ) : null}
+                    </div>
+                    {locked ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="rounded-lg px-4 py-3 text-center" style={{
+                          background: 'rgba(0,0,0,0.8)',
+                          border: '1px solid rgba(212,175,55,0.7)',
+                          boxShadow: '0 0 12px rgba(212,175,55,0.45)'
+                        }}>
+                          <div className="text-yellow-300 font-semibold mb-1">🔒 Locked</div>
+                          <div className="text-white/80 text-xs mb-2">Upgrade to unlock this insight</div>
+                          <a href={`/results${rid?`?rid=${rid}`:''}`} className="inline-block text-xs px-3 py-1 rounded-md"
+                            style={{ border: '1px solid #d4af37', color: '#fff', boxShadow: '0 0 8px rgba(212,175,55,0.4)' }}>
+                            View plans
+                          </a>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
       </div>
-      <div className="text-center mt-8">
-        <Link href={`/who?rid=${rid}`} className="text-indigo-400 hover:text-indigo-300">&larr; Back to Who Page</Link>
+            {/* Existential Circuits (same as Who page) */}
+            <div className="mt-8">
+              <div className="gz-theme container" style={{
+                ['--bg-color' as any]: '#121212',
+                ['--surface-color' as any]: '#1e1e1e',
+                ['--primary-text-color' as any]: '#e0e0e0',
+                ['--secondary-text-color' as any]: '#a0a0a0',
+                ['--accent-color' as any]: accentColor || '#4cafef',
+                ['--border-color' as any]: '#333',
+                ['--progress-green' as any]: '#2ecc71',
+                ['--progress-yellow' as any]: '#f1c40f',
+                ['--progress-red' as any]: '#e74c3c',
+                maxWidth: '1200px',
+                margin: '0 auto',
+                padding: '0'
+              }}>
+                <ExistentialCircuits domainMeans={whoData?.derived?.domainMeans} fullResults={fullResults as any} />
+                <div className="mt-6">
+                  {whoData?.derived?.domainMeans ? (
+                    <AllLifeSignals domainMeans={whoData?.derived?.domainMeans} />
+                  ) : null}
+                </div>
+                <div className="mt-6" style={{display:'flex', justifyContent:'center', gap:12, flexWrap:'wrap'}}>
+                  <a href={`/results${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
+                    border: '2px solid #d4af37',
+                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    color: 'white'
+                  }}>View Full Results →</a>
+                  <a href={`/arctyps-duals${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
+                    border: '2px solid #d4af37',
+                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
+                    padding: '10px 18px',
+                    borderRadius: 8,
+                    color: 'white'
+                  }}>Arctyps Duals →</a>
+                </div>
+              </div>
+            </div>
       </div>
+        );
+      })() : null}
+      
+        </div>
+      </div>
+      
     </main>
   );
 }

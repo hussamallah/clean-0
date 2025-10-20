@@ -225,7 +225,7 @@ export default function GZFinalAssessment(){
         const data = await res.json();
         const rid = data?.rid;
         if (typeof rid === 'string' && rid.length){
-          router.push(`/who?rid=${rid}`);
+          router.push(`/your-id?rid=${rid}`);
           return;
         }
       }
@@ -233,7 +233,7 @@ export default function GZFinalAssessment(){
       try {
         const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
         localStorage.setItem('gz_full_results', JSON.stringify(results));
-        router.push(`/who?rid=${rid}`);
+        router.push(`/your-id?rid=${rid}`);
         return;
       } catch {}
       // last resort: route to results
@@ -243,7 +243,7 @@ export default function GZFinalAssessment(){
       try {
         const rid = await sha256Hex(stableStringify(results)).then(s=> s.slice(0,24));
         localStorage.setItem('gz_full_results', JSON.stringify(results));
-        router.push(`/who?rid=${rid}`);
+        router.push(`/your-id?rid=${rid}`);
         return;
       } catch {}
       try { localStorage.setItem('gz_full_results', JSON.stringify(results)); } catch {}
@@ -287,16 +287,24 @@ export default function GZFinalAssessment(){
         <>
           <div className="card" style={{borderStyle:'dashed' as any, marginTop:12}}>{current.binQ}</div>
           <div className="row mt16">
-            <button key={`yes-${idx}`} className="rate btn" 
-              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
-              onClick={()=>{
-              // Yes → Final Score = 5, go next facet
-              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
-              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
-            }}>Yes</button>
+            {/* No → route to Likert clarification */}
             <button key={`no-${idx}`} className="rate btn"
               onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
               onClick={()=> setStep('likert')}>No</button>
+            {/* Yes → moderate agreement = 4 */}
+            <button key={`yes-${idx}`} className="rate btn" 
+              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+              onClick={()=>{
+              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 4 } } as any));
+              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
+            }}>Yes</button>
+            {/* Yup → maximum conviction = 5 */}
+            <button key={`yup-${idx}`} className="rate btn"
+              onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
+              onClick={()=>{
+              setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: 5 } } as any));
+              if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
+            }}>Yup, that's always me</button>
           </div>
         </>
       );
@@ -305,11 +313,11 @@ export default function GZFinalAssessment(){
     if (step === 'likert' && current){
       const d = current.domain;
       const ratings = [
-        { text: 'Very Inaccurate', val: 1 },
-        { text: 'Moderately Inaccurate', val: 2 },
+        { text: 'Strongly Disagree', val: 1 },
+        { text: 'Disagree', val: 2 },
         { text: 'Neutral', val: 3 },
-        { text: 'Moderately Accurate', val: 4 },
-        { text: 'Very Accurate', val: 5 }
+        { text: 'Agree', val: 4 },
+        { text: 'Strongly Agree', val: 5 }
       ] as const;
        return (
          <>
@@ -319,10 +327,10 @@ export default function GZFinalAssessment(){
               <button key={`${r.val}-${idx}`} className="rate btn"
                 onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
                 onClick={()=>{
-                // No → Likert reverse-scored mapping per spec
-                // Likert 1→5, 2→4, 3→3, 4→2, 5→1
-                const map: Record<number, number> = { 1:5, 2:4, 3:3, 4:2, 5:1 };
-                const final = map[r.val as number] ?? 3;
+                // Asymmetric Likert scoring for the "No" path:
+                // 5→1, 4→1.5, 3→2, 2→2.5, 1→3
+                const map: Record<number, number> = { 5:1, 4:1.5, 3:2, 2:2.5, 1:3 };
+                const final = map[r.val as number] ?? 2;
                 setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
                 if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
               }}>{r.text}</button>
@@ -390,8 +398,12 @@ export default function GZFinalAssessment(){
         const leftMeta  = ARCHETYPE_META[L] || { title: L, img:'/equalizer.png', desc: L };
         const rightMeta = ARCHETYPE_META[R] || { title: R, img:'/equalizer.png', desc: R };
         return (
-          <div className="archetype-dual-container">
-            <button className="btn archetype-dual-btn" onClick={()=> archResolveRef.current?.(L)}>
+          <>
+            <h2 className="text-center mb-6 uppercase text-yellow-400 font-bold text-xl" style={{
+              textShadow: '0 0 20px rgba(251, 191, 36, 0.6), 0 0 40px rgba(245, 158, 11, 0.4)'
+            }}>Choose one</h2>
+            <div className="archetype-dual-container">
+              <button className="btn archetype-dual-btn" onClick={()=> archResolveRef.current?.(L)}>
               <div className="card" style={{background:'#111', border:'1px solid #333'}}>
                 <div style={{textAlign:'center', padding:'8px 8px 0 8px'}}><strong>{leftMeta.title}</strong></div>
                 <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'8px'}}>
@@ -417,6 +429,7 @@ export default function GZFinalAssessment(){
               </div>
             </button>
           </div>
+          </>
         );
       }
       return (
