@@ -13,7 +13,7 @@ export const viewport = {
 import "../styles/globals.css";
 import { Suspense } from "react";
 import TopNav from "@/components/TopNav";
-import Analytics from "@vercel/analytics";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
