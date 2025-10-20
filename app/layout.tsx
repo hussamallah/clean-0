@@ -13,7 +13,7 @@ export const viewport = {
 import "../styles/globals.css";
 import { Suspense } from "react";
 import TopNav from "@/components/TopNav";
-import { Analytics } from "@vercel/analytics/next";
+import AnalyticsWrapper from "@/components/Analytics";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TopNav />
         </Suspense>
         {children}
-        <Analytics />
+        <AnalyticsWrapper />
       </body>
     </html>
   );
