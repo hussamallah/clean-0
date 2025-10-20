@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, Suspense } from 'react';
+import PrivacyAndMethodology from './privacy-and-methodology';
 
 function LandingPageContent() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -39,7 +40,7 @@ function LandingPageContent() {
       {/* MENU BUTTON */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="fixed top-4 left-4 z-50 flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-2 border-yellow-500/60 hover:border-yellow-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-yellow-500/50"
+        className="fixed top-4 left-4 z-50 flex items-center justify-center h-12 px-4 rounded-xl bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-2 border-yellow-500/60 hover:border-yellow-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-yellow-500/50"
         style={{
           boxShadow: '0 0 20px rgba(234, 179, 8, 0.4), 0 0 40px rgba(234, 179, 8, 0.2), 0 4px 16px rgba(0,0,0,0.3)'
         }}
@@ -52,6 +53,7 @@ function LandingPageContent() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           )}
         </svg>
+        <span className="ml-2 text-sm font-semibold text-yellow-200">Menu</span>
       </button>
 
       {/* MENU OVERLAY */}
@@ -106,6 +108,18 @@ function LandingPageContent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="text-white/90">How It Works</span>
+                  </div>
+                </a>
+                <a
+                  href="#privacy"
+                  className="block w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span className="text-white/90">Privacy & Methodology</span>
                   </div>
                 </a>
               </nav>
@@ -383,6 +397,8 @@ function LandingPageContent() {
           </Link>
         </div>
       </section>
+
+      <PrivacyAndMethodology />
 
       <footer className="border-t border-white/10 py-8 sm:py-10 text-center text-xs text-white/60 px-4">
         © {new Date().getFullYear()} Ground Zero. Deterministic Identity Engine.
