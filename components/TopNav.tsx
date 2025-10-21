@@ -37,7 +37,7 @@ export default function TopNav(){
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 140,
             background: 'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
             border: '1px solid #333',
             borderRadius: 9999,

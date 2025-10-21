@@ -20,7 +20,7 @@
         {"id": "O.ArtisticInterests", "facet": "Artistic Interests", "binary_question": "In the past month, have you gone out of your way to experience art, such as visiting a museum or listening to a new album?", "likert_question": "I rarely pay attention to artistic details or aesthetics."},
         {"id": "O.Emotionality", "facet": "Emotionality", "binary_question": "Have you recently found yourself deeply moved by a piece of music, a story, or a nature scene?", "likert_question": "I make decisions based on logic, not my feelings."},
         {"id": "O.Adventurousness", "facet": "Adventurousness", "binary_question": "In the past year, have you tried a new type of food or visited a place you've never been to before?", "likert_question": "I prefer familiar routines and proven methods."},
-        {"id": "O.Intellect", "facet": "Intellect", "binary_question": "Have you recently spent time exploring a new topic or idea just because you were curious about it?", "likert_question": "I am not very interested in abstract theories or complex ideas."},
+        {"id": "O.Intellect", "facet": "Intellect", "binary_question": "In the last 30 days did you spend time learning something new just because you wanted to?", "likert_question": "I am not very interested in abstract theories or complex ideas."},
         {"id": "O.Values", "facet": "Values Openness", "binary_question": "Have you found yourself seriously questioning a traditional belief or societal norm recently?", "likert_question": "I believe it's best to respect and follow established rules."}
       ]
     },

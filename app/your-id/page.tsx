@@ -11,6 +11,8 @@ import { selectFiveCards } from "@/lib/bigfive/fiveCardSelector";
 import ExistentialCircuits from "@/components/who/ExistentialCircuits";
 import AllLifeSignals from "@/components/who/AllLifeSignals";
 import bigFiveImpacts from "@/BigFiveImpacts.json";
+import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib/bigfive/wowFacets";
+import wowBank from "@/wow.json";
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number) => {
@@ -291,6 +293,7 @@ function YourIdContent() {
   const [panels, setPanels] = useState<any|null>(null);
   const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
   const [headerOpen, setHeaderOpen] = useState<boolean>(false);
+  const [wowByDomain, setWowByDomain] = useState<null | Record<DomainKey, Array<{name:string; score:number; domain_mean:number; pattern:string; reason:{contrast:number; visibility:number; extreme:boolean}}>>>(null);
 
   const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
   const GOLD = '#d4af37';
@@ -303,6 +306,78 @@ function YourIdContent() {
   };
 
   useEffect(()=>{ import("@/lib/data/who_panels.json").then(m=> setPanels((m as any).default || m)); }, []);
+
+  // Map canonical facet labels to the visibility keys used by wow selector
+  function toVisibilityKey(d: DomainKey, name: string): string {
+    const map: Partial<Record<DomainKey, Record<string,string>>> = {
+      O: { 'Artistic Interests':'Artistic' },
+      E: { 'Activity Level':'Activity', 'Positive Emotions':'Cheerfulness' },
+      A: { 'Straightforwardness':'Morality', 'Compliance':'Cooperation', 'Tender-Mindedness':'Sympathy' },
+      C: { 'Competence':'Self-Efficacy', 'Deliberation':'Cautiousness', 'Order':'Orderliness' },
+      N: { 'Angry Hostility':'Anger', 'Impulsiveness':'Immoderation' }
+    };
+    const table = map[d] || {};
+    return table[name] || name;
+  }
+
+  // Map wow selector facet name -> wow.json bank facet key (lowercase, specific hyphens)
+  function wowNameToBankKey(d: DomainKey, name: string): string {
+    const n = String(name || '').toLowerCase();
+    const m: Partial<Record<DomainKey, Record<string,string>>> = {
+      E: { 'activity':'activity level' },
+      O: {},
+      C: {},
+      A: {},
+      N: {}
+    };
+    const table = m[d] || {};
+    return table[n] || n;
+  }
+
+  function domainProper(d: DomainKey): string {
+    // Use DOMAINS labels like "Openness (O)" -> "Openness"
+    return DOMAINS[d].label.split(' ')[0];
+  }
+
+  function lineForPick(d: DomainKey, pick: { name:string; pattern:string }): string | null {
+    try{
+      const dom = domainProper(d);
+      const facetKey = wowNameToBankKey(d, pick.name);
+      const domObj = (wowBank as any)[dom];
+      const facetObj = domObj?.[facetKey];
+      const text = facetObj?.[pick.pattern] || facetObj?.neutral;
+      return typeof text === 'string' ? text : null;
+    } catch { return null; }
+  }
+
+  function buildIdentityNarrativeFromWow(stanceLine?: string | null): string[] {
+    if (!wowByDomain) return [];
+    const picksOrdered: Array<{ d:DomainKey; p:any; priority:number }> = [];
+    for (const d of ['O','C','E','A','N'] as DomainKey[]) {
+      const arr = (wowByDomain as any)[d] as Array<any> | undefined;
+      if (!arr || !arr.length) continue;
+      // rank by composite approximation
+      const ranked = [...arr].map(p=> ({
+        p,
+        priority: (p.reason?.contrast ?? 0)*100 + (p.reason?.extreme ? 20 : 0) + (p.reason?.visibility ?? 0)
+      })).sort((a,b)=> b.priority - a.priority);
+      // take top one for each domain first
+      if (ranked[0]) picksOrdered.push({ d, p: ranked[0].p, priority: ranked[0].priority });
+      // store others for overflow
+      for (let i=1;i<ranked.length;i++) picksOrdered.push({ d, p: ranked[i].p, priority: ranked[i].priority - i });
+    }
+    // global sort, but keep first-pass domain coverage near the top
+    picksOrdered.sort((a,b)=> b.priority - a.priority);
+
+    const sentences: string[] = [];
+    for (const item of picksOrdered) {
+      const s = lineForPick(item.d, { name: item.p.name, pattern: item.p.pattern });
+      if (s) sentences.push(s);
+      if (sentences.length >= 6) break;
+    }
+    if (stanceLine && sentences.length < 7) sentences.push(stanceLine);
+    return [sentences.join(' ')];
+  }
 
   // Identity narrative builder (mirrors Who page selection/compression)
   function buildIdentityNarrativeFromWhoNarrative(narr: string[] | undefined | null, stanceLine?: string | null): string[] {
@@ -568,6 +643,31 @@ function YourIdContent() {
         setWhoData(data?.who || null);
         console.log('Override Page Debug - Extracted Means and Buckets:', { dm, fb });
         setIsReady(true);
+
+        // Build wow facets for narrative highlights
+        try {
+          const meansRaw: Record<DomainKey, number> = { O:3, C:3, E:3, A:3, N:3 } as any;
+          const byDomain: WowFacetsByDomain = { O:[], C:[], E:[], A:[], N:[] } as any;
+          for (const d of ['O','C','E','A','N'] as DomainKey[]) {
+            const entry = results.find((r:any)=> r.domain===d)?.payload;
+            if (!entry) continue;
+            const dmRaw = Number(entry?.final?.domain_mean_raw);
+            if (Number.isFinite(dmRaw)) meansRaw[d] = dmRaw;
+            const raw = (entry?.phase2?.A_raw || {}) as Record<string, number>;
+            let idx = 0;
+            for (const f of canonicalFacets(d)){
+              const score = Number(raw?.[f] ?? 3);
+              const visKey = toVisibilityKey(d, f);
+              byDomain[d].push({ name: visKey, score, idx: idx++ });
+            }
+          }
+          const runId = String((data?.who?.audit?.runHash) || (data?.who?.audit?.checksum) || rid || 'rid');
+          const wow = await selectWowFacets(byDomain, meansRaw, runId);
+          setWowByDomain(wow as any);
+        } catch (e) {
+          console.warn('Wow facets selection failed', e);
+          setWowByDomain(null);
+        }
       } catch {}
     })();
   }, [rid]);
@@ -591,9 +691,43 @@ function YourIdContent() {
           />
         )}
       </div>
+      {/* Identity Narrative (moved above domain images) */}
+      {whoData?.narrative && Array.isArray(whoData.narrative) && whoData.narrative.length > 0 ? (
+        <div className="mt-6" style={{ marginTop: -100 }}>
+          <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Identity Narrative</h2>
+          <div className="flex items-center justify-end mb-2">
+            <button
+              onClick={()=> setHeaderOpen(v=> !v)}
+              className="px-3 py-1 rounded-full text-xs font-semibold border"
+              style={{
+                color: '#fff',
+                borderColor: 'rgba(255,255,255,0.2)',
+                background: 'linear-gradient(to bottom right, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                boxShadow: `0 0 10px ${hexToRgba(accentColor || '#000000', 0.25)}`
+              }}
+              aria-expanded={headerOpen}
+            >Header Proof {headerOpen ? '▴' : '▾'}</button>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
+            {(wowByDomain && Object.keys(wowByDomain).length)
+              ? buildIdentityNarrativeFromWow(computeStanceLine()).map((p:string, i:number)=> (
+                  <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
+                ))
+              : buildIdentityNarrativeFromWhoNarrative(whoData.narrative, computeStanceLine()).map((p:string, i:number)=> (
+                  <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
+                ))}
+          </div>
+          {headerOpen ? (
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4 mt-2" style={neonBorderStyle()}>
+              <h3 className="text-sm font-semibold mb-2" style={{ color: accentColor }}>Header Proof</h3>
+              <p className="text-white/80 text-sm">{computeHeaderProofLine()}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {/* Domain tabs bar under archetype image (not sticky) */}
-      <div className="flex justify-center px-4 mb-2">
-        <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap">
+      <div className="flex justify-center px-4 mb-2" style={{ marginTop: 50 }}>
+        <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap" style={{ gap: '70px' }}>
           {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
             const domainName = DOMAINS[d].label.split(' (')[0];
             return (
@@ -686,36 +820,7 @@ function YourIdContent() {
 
       
 
-      {/* Identity Narrative (Who-page style) */}
-      {whoData?.narrative && Array.isArray(whoData.narrative) && whoData.narrative.length > 0 ? (
-        <div className="mt-10">
-          <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Identity Narrative</h2>
-          <div className="flex items-center justify-end mb-2">
-            <button
-              onClick={()=> setHeaderOpen(v=> !v)}
-              className="px-3 py-1 rounded-full text-xs font-semibold border"
-              style={{
-                color: '#fff',
-                borderColor: 'rgba(255,255,255,0.2)',
-                background: 'linear-gradient(to bottom right, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-                boxShadow: `0 0 10px ${hexToRgba(accentColor || '#000000', 0.25)}`
-              }}
-              aria-expanded={headerOpen}
-            >Header Proof {headerOpen ? '▴' : '▾'}</button>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
-            {buildIdentityNarrativeFromWhoNarrative(whoData.narrative, computeStanceLine()).map((p:string, i:number)=> (
-              <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
-                  ))}
-                </div>
-          {headerOpen ? (
-            <div className="rounded-lg border border-white/10 bg-white/5 p-4 mt-2" style={neonBorderStyle()}>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: accentColor }}>Header Proof</h3>
-              <p className="text-white/80 text-sm">{computeHeaderProofLine()}</p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      
 
       
 
@@ -805,7 +910,7 @@ function YourIdContent() {
                     <AllLifeSignals domainMeans={whoData?.derived?.domainMeans} />
                   ) : null}
                 </div>
-                <div className="mt-6" style={{display:'flex', justifyContent:'center', gap:12, flexWrap:'wrap'}}>
+                <div className="mt-6" style={{display:'flex', justifyContent:'center', gap:70, flexWrap:'wrap'}}>
                   <a href={`/results${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
                     border: '2px solid #d4af37',
                     boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
