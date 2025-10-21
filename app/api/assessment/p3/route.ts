@@ -41,7 +41,7 @@ export async function POST(req: NextRequest){
   try { await saveRun(rid, s.results as any); } catch {}
   S.del(sid);
 
-  const res = NextResponse.json({ step: "done", rid, redirect: `/who?rid=${rid}` });
+  const res = NextResponse.json({ step: "done", rid, redirect: `/your-id?rid=${rid}` });
   res.cookies.set("gz_last_rid", rid, { httpOnly: false, sameSite: "lax", path: "/" });
   return res;
 }

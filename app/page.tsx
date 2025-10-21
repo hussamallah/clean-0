@@ -22,7 +22,7 @@ function LandingPageContent() {
       
       if (response.ok) {
         // Result found, navigate
-        window.location.href = `/who?rid=${encodeURIComponent(resultCode.trim())}`;
+        window.location.href = `/your-id?rid=${encodeURIComponent(resultCode.trim())}`;
       } else {
         // Show error message from server
         const data = await response.json();

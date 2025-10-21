@@ -60,8 +60,7 @@ export async function saveRun(hash: string, results: RunRecord): Promise<void> {
       console.log(`📤 Attempting to save to Supabase: ${hash}`);
       const { error } = await supa
         .from('gz_runs')
-        .upsert({ hash, results })
-        .eq('hash', hash);
+        .upsert({ hash, results }, { onConflict: 'hash' });
       if (error) {
         console.error('❌ Supabase error:', error);
       } else {

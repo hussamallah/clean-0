@@ -9,7 +9,6 @@ import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS } from "@/lib/bigfive/c
 import { getScoreLevel } from "@/lib/bigfive/format";
 import { selectFiveCards } from "@/lib/bigfive/fiveCardSelector";
 import ExistentialCircuits from "@/components/who/ExistentialCircuits";
-import AllLifeSignals from "@/components/who/AllLifeSignals";
 import bigFiveImpacts from "@/BigFiveImpacts.json";
 import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib/bigfive/wowFacets";
 import wowBank from "@/wow.json";
@@ -847,7 +846,7 @@ function YourIdContent() {
               {cards.map((card:any, i:number)=>{
                 const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct)/2 : 50;
                 const stars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
-                const locked = i > 0; // show one, lock the rest
+                const locked = false; // unlocking all conflict cards
                 return (
                   <div key={i} className="relative rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
                     <div className={locked ? "opacity-20 blur-2xl pointer-events-none select-none" : ""}>
@@ -868,22 +867,7 @@ function YourIdContent() {
                         </div>
                       ) : null}
                     </div>
-                    {locked ? (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="rounded-lg px-4 py-3 text-center" style={{
-                          background: 'rgba(0,0,0,0.8)',
-                          border: '1px solid rgba(212,175,55,0.7)',
-                          boxShadow: '0 0 12px rgba(212,175,55,0.45)'
-                        }}>
-                          <div className="text-yellow-300 font-semibold mb-1">🔒 Locked</div>
-                          <div className="text-white/80 text-xs mb-2">Upgrade to unlock this insight</div>
-                          <a href={`/results${rid?`?rid=${rid}`:''}`} className="inline-block text-xs px-3 py-1 rounded-md"
-                            style={{ border: '1px solid #d4af37', color: '#fff', boxShadow: '0 0 8px rgba(212,175,55,0.4)' }}>
-                            View plans
-                          </a>
-                        </div>
-                      </div>
-                    ) : null}
+                    {null}
                   </div>
                 );
               })}
@@ -905,11 +889,7 @@ function YourIdContent() {
                 padding: '0'
               }}>
                 <ExistentialCircuits domainMeans={whoData?.derived?.domainMeans} fullResults={fullResults as any} />
-                <div className="mt-6">
-                  {whoData?.derived?.domainMeans ? (
-                    <AllLifeSignals domainMeans={whoData?.derived?.domainMeans} />
-                  ) : null}
-                </div>
+                {null}
                 <div className="mt-6" style={{display:'flex', justifyContent:'center', gap:70, flexWrap:'wrap'}}>
                   <a href={`/results${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
                     border: '2px solid #d4af37',
