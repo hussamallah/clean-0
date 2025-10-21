@@ -987,7 +987,7 @@ function YourIdContent() {
       {false ? (()=>{
         const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
         for (const d of ['O','C','E','A','N'] as DomainKey[]){
-          const payload = (fullResults.find(r=> r.domain===d) || ({} as any)).payload;
+          const payload = (fullResults?.find(r=> r.domain===d) || ({} as any)).payload;
           if (!payload) continue;
           const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
           const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
