@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import CTAButton from '@/components/CTAButton';
 import archetypeRules from "@/arctyps rules.json";
 // Field presence bank removed for domain cards UI
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS } from "@/lib/bigfive/constants";
@@ -22,11 +23,19 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// Tiny star renderer
+// Tiny star renderer (inline)
 const Stars = ({ count }:{ count:number }) => (
   <div className="flex gap-1">
     {Array.from({length:5}).map((_,i)=> (
       <span key={i} className={i < count ? 'text-yellow-300' : 'text-white/20'}>★</span>
+    ))}
+  </div>
+);
+// Stacked stars renderer (one star per line)
+const StackedStars = ({ count }:{ count:number }) => (
+  <div className="flex flex-col gap-1">
+    {Array.from({length:5}).map((_,i)=> (
+      <div key={i} className={i < count ? 'text-yellow-300' : 'text-white/20'}>★</div>
     ))}
   </div>
 );
@@ -293,6 +302,7 @@ function YourIdContent() {
   const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
   const [headerOpen, setHeaderOpen] = useState<boolean>(false);
   const [wowByDomain, setWowByDomain] = useState<null | Record<DomainKey, Array<{name:string; score:number; domain_mean:number; pattern:string; reason:{contrast:number; visibility:number; extreme:boolean}}>>>(null);
+  const [shareStatus, setShareStatus] = useState<'idle'|'copied'|'error'>('idle');
 
   const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
   const GOLD = '#d4af37';
@@ -517,6 +527,139 @@ function YourIdContent() {
     } catch { return `This run is verified.`; }
   }
   
+  // Redesigned quick-scan ID card (scaffold)
+  function renderRedesignedIdCard() {
+    // 1) Core tension from top conflict card
+    let coreLabel: string | null = null;
+    let coreStars = 0;
+    let conflictCard: any = null;
+    if (fullResults) {
+      const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
+      for (const d of ['O','C','E','A','N'] as DomainKey[]) {
+        const payload = (fullResults.find(r=> r.domain===d) || ({} as any)).payload;
+        if (!payload) continue;
+        const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
+        const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
+        for (const f of canonicalFacets(d)){
+          const raw = Number(A_raw?.[f] ?? 3);
+          const b = (bucket?.[f] as any) as 'High'|'Medium'|'Low' || 'Medium';
+          facets.push({ domain:d, facet:f, raw, bucket: b });
+        }
+      }
+      const cards = selectFiveCards(facets).filter((c:any)=> c.type==='conflict');
+      if (cards.length) {
+        conflictCard = cards[0];
+        const avgPct = conflictCard.leftPct && conflictCard.rightPct ? (conflictCard.leftPct + conflictCard.rightPct)/2 : 50;
+        coreStars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
+        coreLabel = String(conflictCard.facet || '').replace(/\s*vs\.?\s*/i, ' ←→ ');
+      }
+    }
+
+    // 2) Domain snapshot (grouped)
+    function DomainSnapshot(){
+      if (!domainMeans) return null;
+      const level = (v:number)=> v>=0.67 ? 'HIGH' : (v<0.34 ? 'LOW' : 'MEDIUM');
+      const highs: string[] = []; const meds: string[] = []; const lows: string[] = [];
+      const label = (d:DomainKey)=> DOMAINS[d].label.split(' (')[0];
+      (['O','C','E','A','N'] as DomainKey[]).forEach(d=>{
+        const v = domainMeans[d] ?? 0.5;
+        const lvl = level(v);
+        if (lvl==='HIGH') highs.push(label(d));
+        else if (lvl==='MEDIUM') meds.push(label(d));
+        else lows.push(label(d));
+      });
+      return (
+        <div className="text-sm">
+          <div className="text-white/70 mb-1" style={{letterSpacing:0.5}}>DOMAIN SNAPSHOT</div>
+          {highs.length ? (<div>🟢 <b>HIGH</b>: {highs.join(', ')}</div>) : null}
+          {meds.length ? (<div>🟡 <b>MEDIUM</b>: {meds.join(', ')}</div>) : null}
+          {lows.length ? (<div>🔴 <b>LOW</b>: {lows.join(', ')}</div>) : null}
+        </div>
+      );
+    }
+
+    // 3) Quick profile bullets (pulled from narrative + stance)
+    function QuickProfile(){
+      const narr: string[] = Array.isArray(whoData?.narrative) ? whoData!.narrative : [];
+      const stance = computeStanceLine();
+      const style = narr[0] || 'Adaptive leader who moves people';
+      const strength = narr[1] || 'Planning with precision';
+      const struggle = narr[2] || 'Executing with confidence';
+      const stanceLine = stance ? stance.replace(/^Your\s+stance\s+with\s+people\s+is\s*/i,'').replace(/\.$/,'') : 'Balanced skepticism — you believe but verify';
+      return (
+        <ul className="list-disc pl-4 text-white/90 text-sm space-y-1">
+          <li><b>Your Style</b>: {style}</li>
+          <li><b>Your Strength</b>: {strength}</li>
+          <li><b>Your Struggle</b>: {struggle}</li>
+          <li><b>Your Stance</b>: {stanceLine}</li>
+        </ul>
+      );
+    }
+
+    // 4) Key insight (short pull-quote from narrative)
+    function KeyInsight(){
+      const narr: string[] = Array.isArray(whoData?.narrative) ? whoData!.narrative : [];
+      const baseQuote = narr[3] || 'You present confidently while your inner critic takes notes. Range is your advantage; diffusion is your risk.';
+      const enhancedQuote = baseQuote.replace(/Use\s+tight\s+cycles\s+to\s+regain\s+control/i,
+        (m)=> `${m} (e.g., break overwhelming projects into 25-minute focused sprints)`
+      );
+      return (
+        <blockquote className="text-white/90 text-sm italic border-l pl-3 border-white/20">
+          “{enhancedQuote}”
+        </blockquote>
+      );
+    }
+
+    // 5) CTA row
+    function CTAs(){
+      const q = rid ? `?rid=${rid}` : '';
+      return (
+        <div className="mt-3" style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center'}}>
+          <CTAButton href={`/your-id${q}`}>🆔 ID Card</CTAButton>
+          <CTAButton href={`/conflict-patterns${q}`}>🔍 Explore Conflict Pattern</CTAButton>
+          <CTAButton href={`/arctyps-duals${q}`}>🎭 Archetype Duals</CTAButton>
+          <CTAButton href={`/existential-circuits${q}`}>🧠 Existential Circuits</CTAButton>
+          <CTAButton href={`/summary${q}`}>📋 Summary</CTAButton>
+          <CTAButton href={`/results${q}`}>📊 Full Analysis</CTAButton>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={{ ...neonBorderStyle(), maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
+        <div className="mb-3">
+          <div className="text-sm text-white/70" style={{letterSpacing:.5}}>🎯 YOUR GROUND ZERO PROFILE</div>
+          {archetypeName ? <div className="text-xl font-extrabold" style={{ color: accentColor }}>{archetypeName.toUpperCase()}</div> : null}
+        </div>
+
+        <div className="mb-3">
+          <div className="text-white/80 font-semibold mb-1">⚖️ CORE TENSION</div>
+          <div className="text-white/90 text-lg">{coreLabel || 'Drive ←→ Strain'}</div>
+        </div>
+
+        <hr className="border-white/10 my-2" />
+
+        <div className="mb-3">
+          <div className="text-white/80 font-semibold mb-1">🎭 QUICK PROFILE</div>
+          <div className="inline-block text-left"><QuickProfile /></div>
+        </div>
+
+        <hr className="border-white/10 my-2" />
+
+        <DomainSnapshot />
+
+        <hr className="border-white/10 my-2" />
+
+        <div className="mb-3">
+          <div className="text-white/80 font-semibold mb-1">🎯 KEY INSIGHT</div>
+          <KeyInsight />
+        </div>
+
+        <CTAs />
+      </div>
+    );
+  }
+  
   // Debug logging for domain card data
   console.log('Override Page Debug - Domain Cards:', {
     hasFullResults: !!fullResults,
@@ -585,6 +728,39 @@ function YourIdContent() {
     const wide = hexToRgba(accentColor || '#4cafef', 0.25);
     const border = hexToRgba(accentColor || '#4cafef', 0.5);
     return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
+  }
+  function goldBorderStyle(){
+    const glow = 'rgba(212,175,55,0.6)';
+    const wide = 'rgba(212,175,55,0.25)';
+    const border = 'rgba(212,175,55,0.5)';
+    return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
+  }
+
+  async function loadHtml2Canvas(): Promise<any>{
+    if (typeof window === 'undefined') return null;
+    const w = window as any;
+    if (w.html2canvas) return w.html2canvas;
+    await new Promise<void>((resolve, reject)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.async = true;
+      s.onload = ()=> resolve();
+      s.onerror = ()=> reject(new Error('failed to load html2canvas'));
+      document.head.appendChild(s);
+    });
+    return (window as any).html2canvas;
+  }
+
+  async function capturePageScreenshot(): Promise<File|null>{
+    try{
+      const html2canvas = await loadHtml2Canvas();
+      if (!html2canvas) return null;
+      const el = document.querySelector('main') as HTMLElement || document.body;
+      const canvas = await html2canvas(el, { backgroundColor: '#000000' });
+      const blob: Blob|null = await new Promise(resolve=> canvas.toBlob(resolve, 'image/png'));
+      if (!blob) return null;
+      return new File([blob], 'ground-zero-id.png', { type: 'image/png' });
+    } catch { return null; }
   }
   
   console.log('Override Page Debug - Data State:', {
@@ -677,8 +853,8 @@ function YourIdContent() {
   const cardBgColor = hexToRgba(accentColor || '#000000', 0.1);
 
   return (
-    <main className="min-h-screen bg-black text-white p-4 md:p-8 pb-8">
-      <div className="text-center mb-8">
+    <main className="min-h-screen bg-black text-white p-2 md:p-4 pb-4" style={{ ['zoom' as any]: 1 }}>
+      <div className="text-center mb-4" style={{ marginTop: -30 }}>
         {archetypeName && (
           <Image 
             src={`/${archetypeName.toLowerCase()}.png`} 
@@ -690,65 +866,49 @@ function YourIdContent() {
           />
         )}
       </div>
-      {/* Identity Narrative (moved above domain images) */}
-      {whoData?.narrative && Array.isArray(whoData.narrative) && whoData.narrative.length > 0 ? (
-        <div className="mt-6" style={{ marginTop: -100 }}>
-          <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Identity Narrative</h2>
-          <div className="flex items-center justify-end mb-2">
-            <button
-              onClick={()=> setHeaderOpen(v=> !v)}
-              className="px-3 py-1 rounded-full text-xs font-semibold border"
-              style={{
-                color: '#fff',
-                borderColor: 'rgba(255,255,255,0.2)',
-                background: 'linear-gradient(to bottom right, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-                boxShadow: `0 0 10px ${hexToRgba(accentColor || '#000000', 0.25)}`
-              }}
-              aria-expanded={headerOpen}
-            >Header Proof {headerOpen ? '▴' : '▾'}</button>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
-            {(wowByDomain && Object.keys(wowByDomain).length)
-              ? buildIdentityNarrativeFromWow(computeStanceLine()).map((p:string, i:number)=> (
-                  <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
-                ))
-              : buildIdentityNarrativeFromWhoNarrative(whoData.narrative, computeStanceLine()).map((p:string, i:number)=> (
-                  <p key={`n-${i}`} className="text-white/90 mb-2">{p}</p>
-                ))}
-          </div>
-          {headerOpen ? (
-            <div className="rounded-lg border border-white/10 bg-white/5 p-4 mt-2" style={neonBorderStyle()}>
-              <h3 className="text-sm font-semibold mb-2" style={{ color: accentColor }}>Header Proof</h3>
-              <p className="text-white/80 text-sm">{computeHeaderProofLine()}</p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-      {/* Domain tabs bar under archetype image (not sticky) */}
-      <div className="flex justify-center px-4 mb-2" style={{ marginTop: 50 }}>
-        <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap" style={{ gap: '70px' }}>
-          {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
-            const domainName = DOMAINS[d].label.split(' (')[0];
-            return (
-              <button
-                key={d}
-                onClick={()=> setModalDomain(d)}
-                aria-label={domainName}
-                title={`${domainName} — click to view summary`}
-                className="p-0 bg-transparent border-0 flex items-center justify-center group cursor-pointer"
-                style={{ color: GOLD }}
-              >
-                {imageMap[d] ? (
-                  <Image src={encodeURI(imageMap[d])} alt={domainName} width={160} height={112} className="w-40 h-28 md:w-48 md:h-32 object-contain bg-transparent transition-transform duration-150 group-hover:scale-[1.05]" quality={95} style={{ filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.6)) drop-shadow(0 0 28px rgba(212,175,55,0.35))' }} />
-                ) : (
-                  <span role="img" aria-hidden="true">{emojiMap[d]}</span>
-                )}
-              </button>
-            );
-          })}
+      {/* Redesigned, scannable ID card */}
+      <div className="mt-6" style={{ marginTop: -100 }}>
+        {renderRedesignedIdCard()}
+      </div>
+      {/* Share (kept) */}
+      <div className="mt-6">
+        {/* Big Share button under the section */}
+        <div className="mt-3 flex justify-center">
+          <button
+            onClick={async ()=>{
+              try{
+                const landingUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
+                const file = await capturePageScreenshot();
+                if (file && (navigator as any)?.canShare && (navigator as any).canShare({ files:[file] })){
+                  await (navigator as any).share({ title: 'Ground Zero', url: landingUrl, files: [file] });
+                  setShareStatus('copied');
+                  setTimeout(()=> setShareStatus('idle'), 1500);
+                  return;
+                }
+                if ((navigator as any)?.share){
+                  await (navigator as any).share({ title: 'Ground Zero', url: landingUrl });
+                  setShareStatus('copied');
+                  setTimeout(()=> setShareStatus('idle'), 1500);
+                } else if (navigator?.clipboard && landingUrl){
+                  await navigator.clipboard.writeText(landingUrl);
+                  setShareStatus('copied');
+                  setTimeout(()=> setShareStatus('idle'), 1500);
+                }
+              } catch {
+                setShareStatus('error');
+                setTimeout(()=> setShareStatus('idle'), 1500);
+              }
+            }}
+            className="px-6 py-3 rounded-full font-semibold"
+            style={{
+              color: '#111',
+              background: 'linear-gradient(90deg, #FFD36E, #E4B847)',
+              border: '2px solid #d4af37',
+              boxShadow: '0 0 16px rgba(212,175,55,0.5)'
+            }}
+          >{shareStatus==='copied' ? 'Link Copied' : shareStatus==='error' ? 'Share Failed' : 'Share Your ID'}</button>
         </div>
       </div>
-      <div className="text-center text-white/70 text-sm mb-4">Click an image to view your domain summary</div>
       <div className="flex gap-6">
         <div className="hidden shrink-0 w-44">
           <div className="sticky top-24 z-40 flex flex-col gap-3">
@@ -823,8 +983,8 @@ function YourIdContent() {
 
       
 
-      {/* Conflict Patterns */}
-      {fullResults ? (()=>{
+      {/* Conflict Patterns (removed for ID page) */}
+      {false ? (()=>{
         const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
         for (const d of ['O','C','E','A','N'] as DomainKey[]){
           const payload = (fullResults.find(r=> r.domain===d) || ({} as any)).payload;
@@ -872,8 +1032,8 @@ function YourIdContent() {
                 );
               })}
       </div>
-            {/* Existential Circuits (same as Who page) */}
-            <div className="mt-8">
+            {/* Existential Circuits (removed for ID page) */}
+            <div className="mt-8" id="existential-circuits" style={{ display:'none' }}>
               <div className="gz-theme container" style={{
                 ['--bg-color' as any]: '#121212',
                 ['--surface-color' as any]: '#1e1e1e',
