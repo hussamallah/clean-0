@@ -136,7 +136,7 @@ export function computeCompatibility(a: GZProfile, b: GZProfile) {
     overall: {
       score_pct: 0,
       band: '',
-      rationale: [],
+      rationale: [] as string[],
     },
     domains: {} as any,
     facets: {} as any,
@@ -170,7 +170,7 @@ export function computeCompatibility(a: GZProfile, b: GZProfile) {
   
   // Rationale based on synergy
   const rationale: string[] = [];
-  const domainSynergies = Object.entries(compat.domains).map(([domain, data]) => ({domain, ...data}));
+  const domainSynergies = Object.entries(compat.domains).map(([domain, data]) => ({domain, ...data as any}));
   domainSynergies.sort((x, y) => y.score_pct - x.score_pct);
 
   for (const item of domainSynergies.slice(0, 3)) {
@@ -185,6 +185,33 @@ export function computeCompatibility(a: GZProfile, b: GZProfile) {
   const prescriptions = generatePrescriptions(compat);
 
   return { compat, prescriptions };
+}
+
+export function buildPairNarrative(meansA: any, meansB: any, notes: string[]): string {
+  if (!meansA || !meansB) return '';
+  
+  const narratives = [];
+  
+  // Generate narrative based on domain differences
+  const domains = ['O', 'C', 'E', 'A', 'N'];
+  for (const domain of domains) {
+    const aScore = meansA[domain];
+    const bScore = meansB[domain];
+    
+    if (aScore !== undefined && bScore !== undefined) {
+      const diff = Math.abs(aScore - bScore);
+      if (diff > 1.5) {
+        narratives.push(`${domain} shows significant difference (${aScore.toFixed(1)} vs ${bScore.toFixed(1)})`);
+      }
+    }
+  }
+  
+  // Add notes if available
+  if (notes && notes.length > 0) {
+    narratives.push(...notes.slice(0, 2)); // Limit to first 2 notes
+  }
+  
+  return narratives.join('. ') + (narratives.length > 0 ? '.' : '');
 }
 
 
