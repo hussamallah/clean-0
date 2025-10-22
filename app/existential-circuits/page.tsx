@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ExistentialCircuits from '@/components/who/ExistentialCircuits';
 import AllLifeSignals from '@/components/who/AllLifeSignals';
+import CTAButton from '@/components/CTAButton';
 
 function CircuitsContent(){
   const search = useSearchParams();
@@ -44,6 +45,14 @@ function CircuitsContent(){
         padding: '0'
       }}>
         <h1 className="text-2xl font-bold mb-4" style={{ color: '#d4af37' }}>Existential Circuits</h1>
+        <div className="mt-1" style={{display:'flex', gap:12, flexWrap:'wrap'}}>
+          <CTAButton href={`/summary${rid?`?rid=${rid}`:''}`}>📋 Summary</CTAButton>
+          <CTAButton href={`/conflict-patterns${rid?`?rid=${rid}`:''}`}>🔍 Explore Conflict Pattern</CTAButton>
+          <CTAButton href={`/existential-circuits${rid?`?rid=${rid}`:''}`}>🧠 Existential Circuits</CTAButton>
+          <CTAButton href={`/results${rid?`?rid=${rid}`:''}`}>📊 Full Analysis</CTAButton>
+          <CTAButton href={`/arctyps-duals${rid?`?rid=${rid}`:''}`}>🎭 Archetype Duals</CTAButton>
+          <CTAButton href={`/compatibility${rid?`?rid=${rid}`:''}`}>🤝 Compatibility Report</CTAButton>
+        </div>
         <ExistentialCircuits domainMeans={domainMeans} fullResults={fullResults} />
         <div className="mt-6">
           {domainMeans ? (

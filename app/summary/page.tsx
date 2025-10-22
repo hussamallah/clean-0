@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS, type DomainKey } from '@/lib/bigfive/constants';
+import CTAButton from '@/components/CTAButton';
 
 function SummaryContent(){
   const searchParams = useSearchParams();
@@ -97,7 +98,15 @@ function SummaryContent(){
       <div className="text-center mb-4">
         <h1 className="text-2xl font-bold" style={{ color: accentColor }}>Summary</h1>
       </div>
-      <div className="flex justify-center px-4 mb-2">
+      <div className="mt-1" style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center'}}>
+        <CTAButton href={`/summary${rid?`?rid=${rid}`:''}`}>📋 Summary</CTAButton>
+        <CTAButton href={`/conflict-patterns${rid?`?rid=${rid}`:''}`}>🔍 Explore Conflict Pattern</CTAButton>
+        <CTAButton href={`/existential-circuits${rid?`?rid=${rid}`:''}`}>🧠 Existential Circuits</CTAButton>
+        <CTAButton href={`/results${rid?`?rid=${rid}`:''}`}>📊 Full Analysis</CTAButton>
+        <CTAButton href={`/arctyps-duals${rid?`?rid=${rid}`:''}`}>🎭 Archetype Duals</CTAButton>
+        <CTAButton href={`/compatibility${rid?`?rid=${rid}`:''}`}>🤝 Compatibility Report</CTAButton>
+      </div>
+      <div className="flex items-center justify-center px-4 mb-2" style={{ minHeight: '50vh' }}>
         <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap">
           {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
             const domainName = DOMAINS[d].label.split(' (')[0];

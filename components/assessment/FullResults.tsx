@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { DOMAINS, FACET_DESCRIPTIONS, FACET_INTERPRETATIONS, DOMAIN_DESCRIPTIONS, canonicalFacets } from "@/lib/bigfive/constants";
+import oneSentence from "@/one-sentence-summary.json";
 import { stableStringify, getFacetScoreLevel, getScoreLevel } from "@/lib/bigfive/format";
 
 type DomainKey = keyof typeof DOMAINS;
@@ -80,26 +81,10 @@ export function ResultsPanel({ payload }:{ payload:any }){
   const domain_mean_raw = final.domain_mean_raw as number;
   const domain_mean_pct = final.domain_mean_pct as number;
   const facets = canonicalFacets(d);
-  const [open, setOpen] = useState<Record<string, boolean>>(() => {
-    // Auto-expand top 2 facets by default
-    const top2 = order && order.length > 0 ? order.slice(0, 2) : [];
-    return Object.fromEntries(top2.map(f => [f, true]));
-  });
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const [hover, setHover] = useState<Record<string, boolean>>({});
   
-  // Ensure first 2 cards are expanded when order is available
-  useEffect(() => {
-    if (order && order.length > 0) {
-      const top2 = order.slice(0, 2);
-      setOpen(prev => {
-        const newOpen = { ...prev };
-        top2.forEach(f => {
-          newOpen[f] = true;
-        });
-        return newOpen;
-      });
-    }
-  }, [order]);
+  // No auto-expansion; all facet cards start collapsed for consistency
   function oxford(list: string[]): string {
     if (list.length === 0) return '';
     if (list.length === 1) return list[0];
@@ -206,11 +191,44 @@ export function ResultsPanel({ payload }:{ payload:any }){
                   {empty.map((_,i)=>(<span key={`es-${i}`} style={{color:'#2a2f38', fontSize:16}}>☆</span>))}
                 </div>
               </div>
-              {desc ? (
-                <div style={{marginTop:8,fontSize:12,color:'#b6c2d1',lineHeight:1.4}}>
-                  <strong>What this measures:</strong> {desc}
-                </div>
-              ) : null}
+              {(() => {
+                if (isOpen) return null; // hide one-sentence/measure summary when expanded
+                const domainName = DOMAINS[d].label.split(' (')[0];
+                const lvlCap = (facetScoreLevel.charAt(0).toUpperCase()+facetScoreLevel.slice(1)) as 'High'|'Medium'|'Low';
+                const summaryText = (oneSentence as any)?.[domainName]?.[f]?.[lvlCap] as string | undefined;
+                if (summaryText) {
+                  return (
+                    <div style={{marginTop:8}}>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: 8,
+                        padding: '10px 12px',
+                        color: '#e6f0ff',
+                        fontSize: 13,
+                        lineHeight: 1.5
+                      }}>
+                        <span style={{marginRight:6}}>💡</span>{summaryText}
+                      </div>
+                    </div>
+                  );
+                }
+                return desc ? (
+                  <div style={{marginTop:8}}>
+                    <div style={{
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 8,
+                      padding: '8px 10px',
+                      color: '#c9d6ea',
+                      fontSize: 12,
+                      lineHeight: 1.4
+                    }}>
+                      <strong style={{color:'#e2ebff'}}>What this measures:</strong> {desc}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               {!isOpen ? (
                 <div style={{
                   marginTop: 12,
@@ -223,7 +241,19 @@ export function ResultsPanel({ payload }:{ payload:any }){
                   Press to reveal
                 </div>
               ) : null}
-              {isOpen && interp ? <div style={{marginTop:6,fontSize:12,color:'#d6e5ff',lineHeight:1.4,fontStyle:'italic'}}><strong>Your result:</strong> {interp}</div> : null}
+              {(() => {
+                if (!isOpen) return null;
+                let displayInterp = interp as string | undefined;
+                // Specific copy override: Openness → Artistic Interests → High
+                if (d === 'O' && f === 'Artistic Interests' && facetScoreLevel === 'high') {
+                  displayInterp = 'You have a deep appreciation for beauty in all its forms. You actively seek out artistic experiences and find great meaning in art, music, literature, and natural beauty. These experiences often move you deeply.';
+                }
+                return displayInterp ? (
+                  <div style={{marginTop:6,fontSize:12,color:'#d6e5ff',lineHeight:1.4,fontStyle:'italic'}}>
+                    <strong>Full Results:</strong> {displayInterp}
+                  </div>
+                ) : null;
+              })()}
             </div>
           );
         })}

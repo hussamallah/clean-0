@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FullResults, { ResultsPanel } from "@/components/assessment/FullResults";
+import CTAButton from "@/components/CTAButton";
 import { sha256 } from "@/lib/crypto/sha256";
 import { stableStringify } from "@/lib/bigfive/format";
 import { DOMAINS } from "@/lib/bigfive/constants";
@@ -72,7 +73,7 @@ function ResultsContent(){
         <div className="card">
           <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
             <div>
-              <h2>Results — {DOMAINS[(single as any)?.domain as keyof typeof DOMAINS]?.label || 'Domain'}</h2>
+              <h2>Full Results — {DOMAINS[(single as any)?.domain as keyof typeof DOMAINS]?.label || 'Domain'}</h2>
               
             </div>
           </div>
@@ -107,22 +108,18 @@ function ResultsContent(){
           </div>
         </div>
       ) : (
-        <div className="card">
-          <FullResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
-          <div style={{display:'flex', justifyContent:'center', marginTop:16}}>
-            <button
-              className="btn btn-gold"
-              style={{
-                border: '2px solid #d4af37',
-                boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
-                padding: '12px 22px',
-                borderRadius: 10,
-                color: 'white',
-                fontSize: 16,
-                fontWeight: 600
-              }}
-              onClick={()=> router.push(`/your-id?rid=${rid}`)}
-            >View Your ID →</button>
+        <div>
+          <h1 style={{ textAlign:'center', margin:'0 0 12px', fontSize:24, fontWeight:800, letterSpacing:.5 }}>Full Results</h1>
+          <div className="card">
+            <FullResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
+            <div style={{display:'flex', justifyContent:'center', marginTop:16, gap:12, flexWrap:'wrap'}}>
+              <CTAButton href={`/summary?rid=${rid}`}>📋 Summary</CTAButton>
+              <CTAButton href={`/conflict-patterns?rid=${rid}`}>🔍 Explore Conflict Pattern</CTAButton>
+              <CTAButton href={`/existential-circuits?rid=${rid}`}>🧠 Existential Circuits</CTAButton>
+              <CTAButton href={`/results?rid=${rid}`}>📊 Full Analysis</CTAButton>
+              <CTAButton href={`/arctyps-duals?rid=${rid}`}>🎭 Archetype Duals</CTAButton>
+              <CTAButton href={`/compatibility?rid=${rid}`}>🤝 Compatibility Report</CTAButton>
+            </div>
           </div>
         </div>
       )}

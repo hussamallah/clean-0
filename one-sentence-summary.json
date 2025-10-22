@@ -1,0 +1,162 @@
+{
+  "Openness": {
+    "Imagination": {
+      "High": "You live in vivid mental worlds and use creativity to solve problems.",
+      "Medium": "You balance imagination with practicality, using it when helpful.",
+      "Low": "You prefer facts and reality over fantasy or daydreaming."
+    },
+    "Artistic Interests": {
+      "High": "You seek and feel deeply moved by art, beauty, and aesthetics.",
+      "Medium": "You appreciate beauty but don't actively pursue artistic experiences.",
+      "Low": "You have little interest in art and favor practicality over aesthetics."
+    },
+    "Emotionality": {
+      "High": "You are deeply aware of emotions—your own and others'.",
+      "Medium": "You balance emotional awareness with rational analysis.",
+      "Low": "You focus on logic and facts, not emotional cues."
+    },
+    "Adventurousness": {
+      "High": "You thrive on novelty, change, and new experiences.",
+      "Medium": "You enjoy some new things but also value routine.",
+      "Low": "You avoid change and prefer familiar routines."
+    },
+    "Intellect": {
+      "High": "You love abstract thinking, complex ideas, and intellectual debate.",
+      "Medium": "You enjoy ideas but balance theory with practicality.",
+      "Low": "You focus on concrete matters, not abstract concepts."
+    },
+    "Liberalism": {
+      "High": "You question authority, value freedom, and embrace change.",
+      "Medium": "You balance tradition with openness to new approaches.",
+      "Low": "You prefer established traditions and resist unconventional ideas."
+    }
+  },
+  "Conscientiousness": {
+    "Self-Efficacy": {
+      "High": "You strongly believe in your ability to handle challenges.",
+      "Medium": "You feel capable but sometimes doubt yourself.",
+      "Low": "You often doubt your effectiveness and control over outcomes."
+    },
+    "Orderliness": {
+      "High": "You keep life organized with routines and structure.",
+      "Medium": "You maintain some order but adapt easily to mess or change.",
+      "Low": "You prefer spontaneity and tolerate disorganization."
+    },
+    "Dutifulness": {
+      "High": "You take obligations seriously and always honor commitments.",
+      "Medium": "You value responsibility but allow some flexibility.",
+      "Low": "You resist strict rules and favor personal freedom."
+    },
+    "Achievement-Striving": {
+      "High": "You are highly driven to excel and seek recognition.",
+      "Medium": "You set realistic goals and balance success with other priorities.",
+      "Low": "You are content without striving for high achievement."
+    },
+    "Self-Discipline": {
+      "High": "You maintain focus and resist distractions to reach long-term goals.",
+      "Medium": "You generally persist but sometimes struggle with procrastination.",
+      "Low": "You give in to distraction and often need external structure."
+    },
+    "Cautiousness": {
+      "High": "You deliberate carefully before acting or deciding.",
+      "Medium": "You weigh options but also act when needed.",
+      "Low": "You trust instincts and decide quickly, sometimes impulsively."
+    }
+  },
+  "Extraversion": {
+    "Friendliness": {
+      "High": "You are warm, approachable, and build relationships easily.",
+      "Medium": "You are friendly when engaged but selective with closeness.",
+      "Low": "You are reserved and value privacy over frequent socializing."
+    },
+    "Gregariousness": {
+      "High": "You thrive in groups and find social activity energizing.",
+      "Medium": "You enjoy both social time and solitude.",
+      "Low": "You prefer quiet, small groups, or solitude."
+    },
+    "Assertiveness": {
+      "High": "You speak up, lead, and influence confidently.",
+      "Medium": "You assert yourself when needed but also listen well.",
+      "Low": "You avoid leading and prefer supporting others quietly."
+    },
+    "Activity Level": {
+      "High": "You live a fast-paced, busy lifestyle.",
+      "Medium": "You balance activity with rest.",
+      "Low": "You prefer a slower, more relaxed pace."
+    },
+    "Excitement-Seeking": {
+      "High": "You seek thrills, risk, and high stimulation.",
+      "Medium": "You enjoy some excitement but value stability.",
+      "Low": "You prefer calm, predictable environments."
+    },
+    "Cheerfulness": {
+      "High": "You radiate positivity and lift others' spirits.",
+      "Medium": "You have a balanced mood with normal ups and downs.",
+      "Low": "You are serious-minded and less outwardly upbeat."
+    }
+  },
+  "Agreeableness": {
+    "Trust": {
+      "High": "You readily assume good intentions in others.",
+      "Medium": "You are cautiously trusting, especially with strangers.",
+      "Low": "You are skeptical of people's motives."
+    },
+    "Morality": {
+      "High": "You are consistently honest and value integrity.",
+      "Medium": "You balance honesty with tact in social situations.",
+      "Low": "You see deception as sometimes necessary."
+    },
+    "Altruism": {
+      "High": "You enjoy helping others selflessly.",
+      "Medium": "You help when asked but protect your own boundaries.",
+      "Low": "You prioritize yourself and view others' needs as burdensome."
+    },
+    "Cooperation": {
+      "High": "You avoid conflict and compromise for harmony.",
+      "Medium": "You are cooperative but assert when necessary.",
+      "Low": "You are competitive and often confrontational."
+    },
+    "Modesty": {
+      "High": "You downplay achievements and avoid self-promotion.",
+      "Medium": "You show humility but acknowledge successes when relevant.",
+      "Low": "You promote yourself confidently and may appear boastful."
+    },
+    "Sympathy": {
+      "High": "You are deeply moved by others' suffering and respond empathetically.",
+      "Medium": "You feel compassion but keep healthy boundaries.",
+      "Low": "You remain detached and focus on rational solutions."
+    }
+  },
+  "Neuroticism": {
+    "Anxiety": {
+      "High": "You often feel tense, worried, and restless.",
+      "Medium": "You feel some worry but usually keep it under control.",
+      "Low": "You stay calm and unshaken by stress."
+    },
+    "Anger": {
+      "High": "You are easily irritated and quick to frustration.",
+      "Medium": "You sometimes get angry but manage it.",
+      "Low": "You rarely lose your temper and stay patient."
+    },
+    "Depression": {
+      "High": "You frequently feel down and lose motivation.",
+      "Medium": "You experience occasional low moods but bounce back.",
+      "Low": "You maintain positive energy and resilience."
+    },
+    "Self-Consciousness": {
+      "High": "You often worry about others' judgments.",
+      "Medium": "You care somewhat about perception but manage it.",
+      "Low": "You are confident and unconcerned with others' opinions."
+    },
+    "Immoderation": {
+      "High": "You often give in to cravings and impulses.",
+      "Medium": "You sometimes struggle but maintain some control.",
+      "Low": "You show strong self-control and resist urges."
+    },
+    "Vulnerability": {
+      "High": "You feel overwhelmed under stress and struggle to cope.",
+      "Medium": "You handle stress moderately well with coping strategies.",
+      "Low": "You remain composed and resilient even under pressure."
+    }
+  }
+}

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { canonicalFacets, DOMAINS, FACET_INTERPRETATIONS, type DomainKey } from '@/lib/bigfive/constants';
+import CTAButton from '@/components/CTAButton';
 import { selectFiveCards } from '@/lib/bigfive/fiveCardSelector';
 
 const Stars = ({ count }:{ count:number }) => (
@@ -58,6 +59,14 @@ function ConflictContent(){
     <main className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold" style={{ color: accentColor }}>Conflict Patterns</h1>
+        <div className="mt-3" style={{display:'flex', gap:12, flexWrap:'wrap'}}>
+          <CTAButton href={`/summary${rid?`?rid=${rid}`:''}`}>📋 Summary</CTAButton>
+          <CTAButton href={`/conflict-patterns${rid?`?rid=${rid}`:''}`}>🔍 Explore Conflict Pattern</CTAButton>
+          <CTAButton href={`/existential-circuits${rid?`?rid=${rid}`:''}`}>🧠 Existential Circuits</CTAButton>
+          <CTAButton href={`/results${rid?`?rid=${rid}`:''}`}>📊 Full Analysis</CTAButton>
+          <CTAButton href={`/arctyps-duals${rid?`?rid=${rid}`:''}`}>🎭 Archetype Duals</CTAButton>
+          <CTAButton href={`/compatibility${rid?`?rid=${rid}`:''}`}>🤝 Compatibility Report</CTAButton>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {cards.map((card:any, i:number)=>{
             const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct)/2 : 50;
