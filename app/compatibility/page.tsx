@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import ResultsNav from '@/components/ResultsNav';
 
 const domainSynergyCopy: Record<string, Record<string, string>> = {
     O: {
@@ -128,7 +129,9 @@ function CompatibilityContent() {
                       onChange={e => setRidA(e.target.value)}
                       onBlur={e => setRidA(extractRid(e.target.value))}
                       placeholder="Paste your report URL or just the ID"
-                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      readOnly={!!ridAFromUrl}
+                    />
                 </div>
                 <div className="mb-6">
                     <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Partner's ID or Page URL</label>
@@ -147,6 +150,7 @@ function CompatibilityContent() {
                 </button>
             </form>
         </div>
+        <ResultsNav currentPage="/compatibility" />
       </main>
     )
   }

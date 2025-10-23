@@ -14,6 +14,7 @@ import bigFiveImpacts from "@/BigFiveImpacts.json";
 import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib/bigfive/wowFacets";
 import wowBank from "@/wow.json";
 import oneSentenceSummaries from "@/one-sentence-summary.json";
+import ResultsNav from '@/components/ResultsNav';
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number) => {
@@ -611,21 +612,6 @@ function YourIdContent() {
       );
     }
 
-    // 5) CTA row
-    function CTAs(){
-      const q = rid ? `?rid=${rid}` : '';
-      return (
-        <div className="mt-3" style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center'}}>
-          <CTAButton href={`/summary${q}`}>📋 Summary</CTAButton>
-          <CTAButton href={`/conflict-patterns${q}`}>🔍 Explore Conflict Pattern</CTAButton>
-          <CTAButton href={`/existential-circuits${q}`}>🧠 Existential Circuits</CTAButton>
-          <CTAButton href={`/results${q}`}>📊 Full Analysis</CTAButton>
-          <CTAButton href={`/arctyps-duals${q}`}>🎭 Archetype Duals</CTAButton>
-          <CTAButton href={`/compatibility${q}`}>🤝 Compatibility Report</CTAButton>
-        </div>
-      );
-    }
-
     return (
       <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={{ ...neonBorderStyle(), maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
         <div className="mb-3">
@@ -656,7 +642,7 @@ function YourIdContent() {
           <KeyInsight />
         </div>
 
-        <CTAs />
+        <ResultsNav currentPage="/your-id" />
       </div>
     );
   }

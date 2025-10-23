@@ -116,14 +116,14 @@ export default function GZFinalAssessment(){
         try{
           // 1) Build user buckets from finalScores
           const domains: Record<DomainKey, { mean: number; bucket: 'High'|'Medium'|'Low'; facet: Record<string,'High'|'Medium'|'Low'> }> = { O: {} as any, C: {} as any, E: {} as any, A: {} as any, N: {} as any };
-          const toBucket = (v:number): 'High'|'Medium'|'Low' => (v>=5?'High':(v<=2?'Low':'Medium'));
+          const toBucket = (v:number): 'High'|'Medium'|'Low' => (v>=4?'High':(v<=2?'Low':'Medium'));
           for (const d of domainOrder){
             const facs = canonicalFacets(d);
             const raw = facs.map(f=> Math.max(1, Math.min(5, finalScores[d]?.[toCanonicalFacet(d,f)] ?? 3)));
             const mean = Math.round((raw.reduce((a,c)=>a+c,0)/raw.length)*100)/100;
             const facetBuckets: Record<string,'High'|'Medium'|'Low'> = {} as any;
             facs.forEach((f,i)=>{ facetBuckets[f] = toBucket(raw[i]); });
-            const meanBucket: 'High'|'Medium'|'Low' = (mean>=4.0?'High':(mean<=2.0?'Low':'Medium'));
+            const meanBucket: 'High'|'Medium'|'Low' = (mean>=3.75?'High':(mean<=2.25?'Low':'Medium'));
             domains[d] = { mean, bucket: meanBucket, facet: facetBuckets } as any;
           }
 

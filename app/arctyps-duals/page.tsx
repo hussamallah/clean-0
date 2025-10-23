@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import ResultsNav from '@/components/ResultsNav';
 
 function ArchetypeDualsContent() {
   const search = useSearchParams();
@@ -11,7 +12,6 @@ function ArchetypeDualsContent() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
 
   const [ridA, setRidA] = useState(ridAFromUrl);
   const [ridB, setRidB] = useState(ridBFromUrl);
@@ -78,6 +78,7 @@ function ArchetypeDualsContent() {
       <main className="min-h-screen bg-gray-900 text-white p-8 font-sans">
         <div className="max-w-md mx-auto">
             <h1 className="text-3xl font-bold mb-4 text-center">Archetype Duals</h1>
+            <p className="text-red-500 text-center mb-4 font-semibold">Do not use/buy this feature if you have the same archetype.</p>
             <p className="text-gray-400 text-center mb-6">Enter two IDs or page URLs to see a direct comparison of their archetypes.</p>
             <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg shadow-lg">
                 <div className="mb-4">
@@ -90,7 +91,9 @@ function ArchetypeDualsContent() {
                       onChange={e => setRidA(e.target.value)}
                       onBlur={e => setRidA(extractRid(e.target.value))}
                       placeholder="Paste URL or ID for Person A"
-                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
+                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                      readOnly={!!ridAFromUrl}
+                    />
                 </div>
                 <div className="mb-6">
                     <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Person B's ID or Page URL</label>
@@ -109,6 +112,7 @@ function ArchetypeDualsContent() {
                 </button>
             </form>
         </div>
+        <ResultsNav currentPage="/arctyps-duals" />
       </main>
     )
   }
@@ -191,11 +195,11 @@ function ArchetypeDualsContent() {
                             <h5 className="font-semibold text-yellow-400">The Playbook:</h5>
                             <p className="text-sm text-gray-300 mt-2">
                               <strong className="block">Your Job ({data.a.title}):</strong>
-                              {data.interaction.clash.playbook.a.replace('Your Job (Visionary): ', '')}
+                              {data.interaction.clash.playbook.a}
                             </p>
                             <p className="text-sm text-gray-300 mt-2">
                               <strong className="block">Their Job ({data.b.title}):</strong>
-                              {data.interaction.clash.playbook.b.replace('Their Job (Guardian): ', '')}
+                              {data.interaction.clash.playbook.b}
                             </p>
                           </div>
                         )}
@@ -203,7 +207,6 @@ function ArchetypeDualsContent() {
                 </div>
             </section>
 
-            {/* ... debug section */}
         </div>
     </main>
   );

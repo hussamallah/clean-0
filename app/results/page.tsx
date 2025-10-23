@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FullResults, { ResultsPanel } from "@/components/assessment/FullResults";
+import ResultsNav from "@/components/ResultsNav";
 import CTAButton from "@/components/CTAButton";
 import { sha256 } from "@/lib/crypto/sha256";
 import { stableStringify } from "@/lib/bigfive/format";
@@ -112,14 +113,7 @@ function ResultsContent(){
           <h1 style={{ textAlign:'center', margin:'0 0 12px', fontSize:24, fontWeight:800, letterSpacing:.5 }}>Full Results</h1>
           <div className="card">
             <FullResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
-            <div style={{display:'flex', justifyContent:'center', marginTop:16, gap:12, flexWrap:'wrap'}}>
-              <CTAButton href={`/summary?rid=${rid}`}>📋 Summary</CTAButton>
-              <CTAButton href={`/conflict-patterns?rid=${rid}`}>🔍 Explore Conflict Pattern</CTAButton>
-              <CTAButton href={`/existential-circuits?rid=${rid}`}>🧠 Existential Circuits</CTAButton>
-              <CTAButton href={`/results?rid=${rid}`}>📊 Full Analysis</CTAButton>
-              <CTAButton href={`/arctyps-duals?rid=${rid}`}>🎭 Archetype Duals</CTAButton>
-              <CTAButton href={`/compatibility?rid=${rid}`}>🤝 Compatibility Report</CTAButton>
-            </div>
+            <ResultsNav currentPage="/results" />
           </div>
         </div>
       )}
