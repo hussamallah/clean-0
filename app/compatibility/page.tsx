@@ -42,20 +42,23 @@ const domainLabels: Record<string, string> = {
 
 function CompatibilityContent() {
   const search = useSearchParams();
-  const ridA = search?.get('ridA') || '';
-  const ridB = search?.get('ridB') || '';
+  const ridAFromUrl = search?.get('ridA') || '';
+  const ridBFromUrl = search?.get('ridB') || '';
   
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [ridA, setRidA] = useState(ridAFromUrl);
+  const [ridB, setRidB] = useState(ridBFromUrl);
+
   useEffect(() => {
-    if (ridA && ridB) {
+    if (ridAFromUrl && ridBFromUrl) {
       async function fetchData() {
-        setLoading(true);
+    setLoading(true);
         setError(null);
         try {
-          const res = await fetch(`/api/compatibility?ridA=${encodeURIComponent(ridA)}&ridB=${encodeURIComponent(ridB)}`);
+          const res = await fetch(`/api/compatibility?ridA=${encodeURIComponent(ridAFromUrl)}&ridB=${encodeURIComponent(ridBFromUrl)}`);
           if (!res.ok) {
             const errorData = await res.json().catch(() => ({ message: 'Failed to fetch compatibility data' }));
             throw new Error(errorData.message || 'Failed to fetch compatibility data');
@@ -72,7 +75,33 @@ function CompatibilityContent() {
     } else {
       setLoading(false);
     }
-  }, [ridA, ridB]);
+  }, [ridAFromUrl, ridBFromUrl]);
+
+  const extractRid = (input: string): string => {
+    if (!input) return input;
+    // Tries to find a rid=... parameter in a URL-like string
+    const urlPattern = /[?&]rid=([a-zA-Z0-9_-]{24,})/;
+    const urlMatch = input.match(urlPattern);
+    if (urlMatch && urlMatch[1]) {
+      return urlMatch[1];
+    }
+    // Falls back to finding the first 24+ character alphanumeric string
+    const directPattern = /([a-zA-Z0-9_-]{24,})/;
+    const directMatch = input.match(directPattern);
+    if (directMatch && directMatch[0]) {
+      return directMatch[0];
+    }
+    return input;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const extractedA = extractRid(ridA);
+    const extractedB = extractRid(ridB);
+    if (extractedA && extractedB) {
+      window.location.href = `/compatibility?ridA=${extractedA}&ridB=${extractedB}`;
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen bg-black text-white flex items-center justify-center font-sans">Loading Report...</div>;
@@ -87,15 +116,31 @@ function CompatibilityContent() {
       <main className="min-h-screen bg-gray-900 text-white p-8 font-sans">
         <div className="max-w-md mx-auto">
             <h1 className="text-3xl font-bold mb-4 text-center">Compatibility Report</h1>
-            <p className="text-gray-400 text-center mb-6">Enter the IDs you and your partner received to generate your report.</p>
-            <form className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <p className="text-gray-400 text-center mb-6">Enter the IDs or page URLs for two people to generate their report.</p>
+            <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg shadow-lg">
                 <div className="mb-4">
-                    <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-gray-300">Your ID</label>
-                    <input type="text" id="ridA" name="ridA" defaultValue={ridA} className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-gray-300">Your ID or Page URL</label>
+                    <input 
+                      type="text" 
+                      id="ridA" 
+                      name="ridA"
+                      value={ridA}
+                      onChange={e => setRidA(e.target.value)}
+                      onBlur={e => setRidA(extractRid(e.target.value))}
+                      placeholder="Paste your report URL or just the ID"
+                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="mb-6">
-                    <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Partner's ID</label>
-                    <input type="text" id="ridB" name="ridB" defaultValue={ridB} className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Partner's ID or Page URL</label>
+                    <input 
+                      type="text" 
+                      id="ridB" 
+                      name="ridB" 
+                      value={ridB}
+                      onChange={e => setRidB(e.target.value)}
+                      onBlur={e => setRidB(extractRid(e.target.value))}
+                      placeholder="Paste their report URL or just the ID"
+                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
                     Analyze
@@ -120,7 +165,7 @@ function CompatibilityContent() {
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
                     Compare Hash: <code className="bg-gray-800 p-1 rounded">{data.compare_hash}</code>
-                </div>
+          </div>
             </header>
 
             <section className="text-center mb-10">
@@ -143,9 +188,9 @@ function CompatibilityContent() {
                             <p className="text-gray-400 mt-1">
                                 {domainSynergyCopy[key]?.[value.synergy] || "A notable dynamic in this area."}
                             </p>
-                        </div>
-                    ))}
-                </div>
+                  </div>
+                ))}
+              </div>
             </section>
 
             <hr className="border-gray-700 my-10" />
@@ -198,11 +243,11 @@ function CompatibilityContent() {
                         <ul className="list-disc list-inside text-gray-300 space-y-2">
                             {data.prescriptions.scenarios.work.map((s: string, i: number) => <li key={`w-${i}`}><strong className="text-yellow-400">Work:</strong> {s}</li>)}
                             {data.prescriptions.scenarios.relationship.map((s: string, i: number) => <li key={`r-${i}`}><strong className="text-yellow-400">Relationship:</strong> {s}</li>)}
-                        </ul>
+                </ul>
                     ) : (
                         <p className="text-gray-400">No specific high-risk scenarios were flagged based on your compatibility profile.</p>
                     )}
-                </div>
+            </div>
             </section>
 
         </div>
