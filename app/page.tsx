@@ -87,7 +87,7 @@ function LandingPageContent() {
                   </div>
                 </button>
                 <Link
-                  href="/full"
+                  href="/assessment"
                   className="block w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -201,7 +201,7 @@ function LandingPageContent() {
                 <div className="mt-4 pt-4 border-t border-yellow-500/20">
                   <p className="text-xs text-yellow-100/50">
                     Don't have a result code yet?{' '}
-                    <Link href="/full" className="text-yellow-400 hover:text-yellow-300 font-semibold">
+                    <Link href="/assessment" className="text-yellow-400 hover:text-yellow-300 font-semibold">
                       Take the assessment
                     </Link>
                   </p>
@@ -238,7 +238,7 @@ function LandingPageContent() {
               Ground Zero is not just a test—it's an identity engine. By blending psychology, determinism, and design, it delivers a reproducible way to see who you are, how you operate, and what tensions shape your life. With its dual-results approach, it offers both traditional psychometric clarity and practical identity blueprints.
             </p>
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0">
-              <Link href="/full" className="group inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-base font-semibold text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
+              <Link href="/assessment" className="group inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-base font-semibold text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
                 Start assessment
                 <svg className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M13 5l7 7-7 7"/>
@@ -315,7 +315,7 @@ function LandingPageContent() {
       <section id="archetypes" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 px-2">
           <h2 className="text-xl sm:text-2xl font-semibold">Twelve archetypes, one clear mirror</h2>
-          <a href="/full" className="text-xs sm:text-sm text-indigo-300 hover:text-indigo-200">Take the assessment →</a>
+          <a href="/assessment" className="text-xs sm:text-sm text-indigo-300 hover:text-indigo-200">Take the assessment →</a>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {["Sovereign","Rebel","Visionary","Guardian","Navigator","Seeker","Vessel","Partner","Diplomat","Spotlight","Architect","Provider"].map((name) => (
@@ -392,7 +392,7 @@ function LandingPageContent() {
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 sm:pb-20 lg:px-8">
         <div className="flex justify-center">
-          <Link href="/full" className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-sm sm:text-base text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
+          <Link href="/assessment" className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-500 to-amber-600 px-5 py-3 text-sm sm:text-base text-black shadow-lg shadow-yellow-500/20 transition hover:from-yellow-400 hover:to-amber-500 w-full sm:w-auto">
             Start assessment
           </Link>
         </div>
