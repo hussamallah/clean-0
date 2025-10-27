@@ -12,7 +12,7 @@ export const viewport = {
 
 import "../styles/globals.css";
 import { Suspense } from "react";
-// TopNav removed per request
+import TopNav from "@/components/TopNav";
 import AnalyticsWrapper from "@/components/Analytics";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://cdn.vercel-insights.com/v1/script.debug.js" data-vercel-analytics="true"></script>
       </head>
       <body>
+        <Suspense fallback={null}>
+          <TopNav />
+        </Suspense>
         {children}
       </body>
     </html>

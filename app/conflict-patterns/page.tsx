@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { canonicalFacets, DOMAINS, FACET_INTERPRETATIONS, type DomainKey } from '@/lib/bigfive/constants';
-import ResultsNav from '@/components/ResultsNav';
 import { selectFiveCards } from '@/lib/bigfive/fiveCardSelector';
 
 const Stars = ({ count }:{ count:number }) => (
@@ -59,7 +58,6 @@ function ConflictContent(){
     <main className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold" style={{ color: accentColor }}>Conflict Patterns</h1>
-        <ResultsNav currentPage="/conflict-patterns" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
           {cards.map((card:any, i:number)=>{
             const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct)/2 : 50;
@@ -86,6 +84,11 @@ function ConflictContent(){
             );
           })}
         </div>
+
+        <div className="mt-8 text-center">
+          <p className="text-white/80">These are your top conflict patterns. They represent the core tensions that shape your behavior, especially under pressure.</p>
+        </div>
+
       </div>
     </main>
   );

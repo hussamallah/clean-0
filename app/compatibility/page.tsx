@@ -2,11 +2,10 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import ResultsNav from '@/components/ResultsNav';
 
 const domainSynergyCopy: Record<string, Record<string, string>> = {
     O: {
-        Align: "You share a similar level of curiosity and appreciation for novelty, leading to easy agreement on ideas and activities.",
+        'high-high': "Both partners are highly open to new experiences, leading to a life rich with shared exploration, creativity, and intellectual curiosity. They are likely to enjoy trying new things together and appreciate each other's imagination. Potential friction can arise if neither partner provides a grounding force, leading to a lack of stability.",
         Complement: "You’re both curious, imaginative, and adventurous. One is just slightly more intense, which keeps ideas flowing without chaos.",
         Tension: "One of you thrives on new ideas and experiences, while the other prefers the familiar. This can lead to friction over plans and routines."
     },
@@ -145,12 +144,11 @@ function CompatibilityContent() {
                       placeholder="Paste their report URL or just the ID"
                       className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
-                    Analyze
+                <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                    Compare
                 </button>
             </form>
         </div>
-        <ResultsNav currentPage="/compatibility" />
       </main>
     )
   }

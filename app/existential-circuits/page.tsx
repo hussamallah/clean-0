@@ -4,11 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ExistentialCircuits from '@/components/who/ExistentialCircuits';
 import AllLifeSignals from '@/components/who/AllLifeSignals';
-import ResultsNav from '@/components/ResultsNav';
+import Tooltip from '@/components/Tooltip';
 
 function CircuitsContent(){
   const search = useSearchParams();
-  const rid = search.get('rid');
+  const rid = search?.get('rid') || '';
   const [domainMeans, setDomainMeans] = useState<any>(null);
   const [fullResults, setFullResults] = useState<any>(null);
   const [accentColor] = useState('#d4af37');
@@ -44,19 +44,20 @@ function CircuitsContent(){
         margin: '0 auto',
         padding: '0'
       }}>
-        <h1 className="text-2xl font-bold mb-4" style={{ color: '#d4af37' }}>Existential Circuits</h1>
-        <ResultsNav currentPage="/existential-circuits" />
-        <ExistentialCircuits domainMeans={domainMeans} fullResults={fullResults} />
-        <div className="mt-6">
-          {domainMeans ? (
-            <AllLifeSignals
-              domainMeans={domainMeans}
-              hideKeys={[
-                // Show only T (Threat), P (Pursuit), S (Social Buffer), G (Grit)
-                'B','D','R','V','Y','L','F','U','M','I','K','Q'
-              ]}
-            />
-          ) : null}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0'
+        }}>
+         <div className="text-center">
+           <h1 className="text-2xl font-bold mb-4" style={{ color: '#d4af37' }}>
+             <Tooltip text="These are the core processes you use to interact with the world, such as how you manage energy, seek clarity, or build structure.">
+               Existential Circuits
+             </Tooltip>
+           </h1>
+         </div>
+          <ExistentialCircuits domainMeans={domainMeans} fullResults={fullResults} />
+          <AllLifeSignals domainMeans={domainMeans} />
         </div>
       </div>
     </main>

@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import FullResults, { ResultsPanel } from "@/components/assessment/FullResults";
-import ResultsNav from "@/components/ResultsNav";
+import DetailedResults from "@/components/assessment/DetailedResults";
 import CTAButton from "@/components/CTAButton";
 import { sha256 } from "@/lib/crypto/sha256";
 import { stableStringify } from "@/lib/bigfive/format";
@@ -10,6 +9,8 @@ import { DOMAINS, DomainKey } from "@/lib/bigfive/constants";
 import { AxisModeScreen } from "@/components/assessment/AxisModeScreen";
 import { IdentityModeCard } from "@/components/results/IdentityModeCard";
 import PaidContentPreviewModal from "@/components/PaidContentPreviewModal";
+import Link from 'next/link';
+import Tooltip from '@/components/Tooltip';
 
 function ResultsContent(){
   const router = useRouter();
@@ -116,11 +117,11 @@ function ResultsContent(){
         <div className="card">
           <div className="row-nowrap" style={{justifyContent:'space-between',alignItems:'center'}}>
             <div>
-              <h2>Full Results — {DOMAINS[(single as any)?.domain as keyof typeof DOMAINS]?.label || 'Domain'}</h2>
+              <h2>Detailed Results — {DOMAINS[(single as any)?.domain as keyof typeof DOMAINS]?.label || 'Domain'}</h2>
               
             </div>
           </div>
-          <ResultsPanel payload={single} />
+          <DetailedResults data={single} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
           <div style={{display:'flex', justifyContent:'center', marginTop:16, gap:12, flexWrap:'wrap'}}>
             <button
               className="btn btn-gold"
@@ -152,30 +153,45 @@ function ResultsContent(){
         </div>
       ) : (
         <div>
-          <h1 style={{ textAlign:'center', margin:'0 0 12px', fontSize:24, fontWeight:800, letterSpacing:.5 }}>Full Results</h1>
+          <h1 style={{ textAlign:'center', margin:'0 0 12px', fontSize:24, fontWeight:800, letterSpacing:.5 }}>Detailed Results</h1>
           <div className="card">
-            <div className="my-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
-              <h3 className="text-lg font-bold text-purple-200">Ready for the Deepest Level of Analysis?</h3>
-              <p className="mt-1 text-sm text-purple-200/90 max-w-2xl mx-auto">
-                You've seen your traits. Now, understand the underlying mental circuits that drive your core motivations and fears. This is the foundational system behind your personality.
+            <div className="my-6 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
+              <h4 className="font-bold text-lg text-green-300">
+                <Tooltip text="These are the core processes you use to interact with the world, such as how you manage energy, seek clarity, or build structure.">
+                  Existential Circuits
+                </Tooltip>
+              </h4>
+              <p className="mt-2 text-white/90 text-sm max-w-xl mx-auto">
+                Get a detailed breakdown of your core psychological circuits.
               </p>
               <div className="mt-3">
-                <button
-                  onClick={() => setPreviewModal({
-                    title: 'Existential Circuits',
-                    description: 'Go beyond traits to see the foundational mental systems that drive your core motivations and fears. Below is a preview of your Authority Circuit.',
-                    previewContent: <CircuitsPreview results={data} />,
-                    price: 1.49,
-                    purchaseUrl: `/existential-circuits${rid ? `?rid=${rid}` : ''}`
-                  })}
-                  className="inline-block bg-purple-500 text-white font-bold py-2 px-4 rounded-lg text-sm hover:bg-purple-400"
+                <CTAButton
+                  href="#"
+                  tier="Paid"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPreviewModal({
+                      title: 'Existential Circuits',
+                      description: 'This report reveals your core psychological circuits—the fundamental systems that drive your motivations and fears.',
+                      previewContent: (
+                        <div>
+                          <h4 className="font-bold text-lg text-green-300">Example: Energy Circuit</h4>
+                          <p className="mt-2 text-white/90 text-sm">
+                            Your Energy circuit is running <strong>High</strong>. You are driven by a need for action and momentum, but you risk burnout if you don't build in recovery periods.
+                          </p>
+                        </div>
+                      ),
+                      price: 3.00,
+                      purchaseUrl: `/existential-circuits${rid ? `?rid=${rid}` : ''}`,
+                      unlocks: 'The full report includes all 12 of your existential circuits.'
+                    });
+                  }}
                 >
                   Preview Existential Circuits
-                </button>
+                </CTAButton>
               </div>
             </div>
-            <FullResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
-            <ResultsNav currentPage="/results" />
+            <DetailedResults data={data} suiteHash={null} verifyStatus={'idle'} onVerify={()=>{}} />
           </div>
         </div>
       )}

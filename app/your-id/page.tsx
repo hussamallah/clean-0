@@ -15,9 +15,9 @@ import bigFiveImpacts from "@/BigFiveImpacts.json";
 import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib/bigfive/wowFacets";
 import wowBank from "@/wow.json";
 import oneSentenceSummaries from "@/one-sentence-summary.json";
-import ResultsNav from '@/components/ResultsNav';
 import IdentityMirror from "@/components/who/IdentityMirror";
 import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
+import Tooltip from '@/components/Tooltip';
 
 
 // Helper function to convert hex to rgba
@@ -311,6 +311,20 @@ function YourIdContent() {
   const [wowByDomain, setWowByDomain] = useState<null | Record<DomainKey, Array<{name:string; score:number; domain_mean:number; pattern:string; reason:{contrast:number; visibility:number; extreme:boolean}}>>>(null);
   const [shareStatus, setShareStatus] = useState<'idle'|'copied'|'error'>('idle');
   const [previewModal, setPreviewModal] = useState<any | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setModalDomain(null);
+        setPreviewModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
   const GOLD = '#d4af37';
@@ -563,6 +577,13 @@ function YourIdContent() {
       }
     }
 
+    const conflictCardCount = fullResults ? selectFiveCards(fullResults.filter(r => ['O', 'C', 'E', 'A', 'N'].includes(r.domain)).flatMap(r => canonicalFacets(r.domain).map(f => ({
+      domain: r.domain,
+      facet: f,
+      raw: Number((r.payload?.phase2?.A_raw || {})[f] ?? 3),
+      bucket: (r.payload?.final?.bucket || {})[f] || 'Medium'
+    })))).filter((c:any)=> c.type==='conflict').length : 0;
+
     // 2) Domain snapshot (grouped)
     function DomainSnapshot(){
       if (!domainMeans) return null;
@@ -577,7 +598,7 @@ function YourIdContent() {
         else lows.push(label(d));
       });
       return (
-        <div className="text-sm">
+        <div className="text-xs">
           <div className="text-white/70 mb-1" style={{letterSpacing:0.5}}>DOMAIN SNAPSHOT</div>
           {highs.length ? (<div>🟢 <b>HIGH</b>: {highs.join(', ')}</div>) : null}
           {meds.length ? (<div>🟡 <b>MEDIUM</b>: {meds.join(', ')}</div>) : null}
@@ -597,13 +618,38 @@ function YourIdContent() {
       const struggle = risks[0] || 'Executing with confidence';
       const stanceLine = stance ? stance.replace(/^Your\s+stance\s+with\s+people\s+is\s*/i,'').replace(/\.$/,'') : 'Balanced skepticism — you believe but verify';
       return (
-        <ul className="list-disc pl-4 text-white/90 text-sm space-y-1">
+        <ul className="list-disc pl-4 text-white/90 text-xs space-y-0.5">
           <li><b>Your Style</b>: {style}</li>
           <li><b>Your Strength</b>: {strength}</li>
           <li><b>Your Struggle</b>: {struggle}</li>
           <li>
             <b>Your Stance</b>: {stanceLine}
-            <a href={`/compatibility${rid ? `?ridA=${rid}` : ''}`} className="ml-2 text-blue-400 hover:underline text-xs">(See how this impacts your relationships)</a>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setPreviewModal({
+                  title: 'Compatibility Report',
+                  description: 'Unlock a detailed analysis of your interpersonal dynamics with one other person.',
+                  previewContent: (
+                    <div>
+                      <h4 className="font-bold text-lg text-yellow-300">How You Interact</h4>
+                      <p className="mt-2 text-white/90 text-sm">
+                        This report reveals the precise points of harmony and friction between you and one other person, creating a playbook for better communication.
+                      </p>
+                      <p className="mt-2 text-xs italic text-white/70">
+                        For example, we&apos;ll show you how your High Neuroticism might sync or clash with their personality.
+                      </p>
+                    </div>
+                  ),
+                  price: 3.00,
+                  purchaseUrl: `/compatibility${rid ? `?ridA=${rid}` : ''}`,
+                  unlocks: 'The full report includes a detailed breakdown of your domain synergy, conflict patterns, and a playbook for better communication.'
+                });
+              }}
+              className="ml-2 text-blue-400 hover:underline text-[10px] bg-transparent border-none p-0 cursor-pointer"
+            >
+              (See how this impacts your relationships)
+            </button>
           </li>
         </ul>
       );
@@ -629,75 +675,97 @@ function YourIdContent() {
         (m)=> `${m} (e.g., break overwhelming projects into 25-minute focused sprints)`
       );
       return (
-        <blockquote className="text-white/90 text-sm italic border-l pl-3 border-white/20">
+        <blockquote className="text-white/90 text-xs italic border-l pl-2 border-white/20">
           “{enhancedQuote}”
         </blockquote>
       );
     }
 
     return (
-      <div className="rounded-lg border border-white/10 bg-white/5 p-4" style={{ ...neonBorderStyle(), maxWidth: 1100, margin: '0 auto', textAlign: 'center' }}>
-        <div className="mb-3">
+      <div id="id-card" className="rounded-lg border border-white/10 bg-white/5 p-2 sm:p-3" style={{ ...neonBorderStyle(), maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+        <div className="mb-2">
           <div className="text-sm text-white/70" style={{letterSpacing:.5}}>🎯 YOUR GROUND ZERO PROFILE</div>
-          {archetypeName ? <div className="text-xl font-extrabold" style={{ color: accentColor }}>{archetypeName.toUpperCase()}</div> : null}
+          {archetypeName ? <div className="text-lg font-extrabold" style={{ color: accentColor }}>{archetypeName.toUpperCase()}</div> : null}
         </div>
 
-        <div className="my-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
-          <h3 className="text-lg font-bold text-white mb-2">⚖️ Your Core Conflict Pattern</h3>
-          <p className="text-sm text-yellow-200/90">
-            This tension is key to your growth. See how it shows up in specific, repeatable ways.
-          </p>
-          <div className="mt-2">
-            <button 
-              onClick={() => setPreviewModal({
-                title: 'Conflict Patterns',
-                description: 'This report reveals how you act under pressure. Below is your #1 pattern, based on your results.',
-                previewContent: <ConflictPatternPreview card={conflictCard} />,
-                price: 3.00,
-                purchaseUrl: `/conflict-patterns${rid ? `?rid=${rid}` : ''}`
-              })}
-              className="btn btn-gold" // Using the standard gold button style
-            >
-              Preview Your Conflict Patterns
-            </button>
-          </div>
-        </div>
-
-        <hr className="border-white/10 my-2" />
-
-        {archetypeDescription.length > 0 && (
-          <div className="my-4 p-3 rounded-lg" style={neonBorderStyle()}>
-            <h3 className="text-lg font-bold text-white mb-2" style={{ color: accentColor }}>
-              What is your archetype?
-              <span className="text-xs font-normal text-white/60 ml-2">(lore only, not diagnostic)</span>
-            </h3>
-            <div className="text-white/90 text-sm space-y-2">
-              {archetypeDescription.map((part, index) => (
-                <p key={index}>
-                  <b className="font-semibold text-white/80">{part.title}:</b> {part.text}
-                </p>
-              ))}
+        {!isCapturing && (
+          <div className="my-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
+            <h3 className="text-base font-bold text-white mb-2">⚖️ Your Core Conflict Pattern</h3>
+            <p className="text-xs text-yellow-200/90">
+              This tension is key to your growth. See how it shows up in specific, repeatable ways.
+            </p>
+            <div className="mt-2">
+              <CTAButton
+                href="#"
+                tier="Paid"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPreviewModal({
+                    title: 'Conflict Patterns',
+                    description: 'This report reveals how you act under pressure. Below is your #1 pattern, based on your results.',
+                    previewContent: <ConflictPatternPreview card={conflictCard} />,
+                    price: 3.00,
+                    purchaseUrl: `/conflict-patterns${rid ? `?rid=${rid}` : ''}`,
+                    unlocks: `The full report includes all ${conflictCardCount} of your identified conflict patterns.`
+                  });
+                }}
+              >
+                Preview Your Conflict Patterns
+              </CTAButton>
             </div>
           </div>
         )}
 
-        <div className="mb-3">
+        <hr className="border-white/10 my-1" />
+
+        {archetypeDescription.length > 0 && (
+          <div className="my-2 p-2 sm:p-3 rounded-lg" style={neonBorderStyle()}>
+            <div className="flex items-start gap-2 sm:gap-4">
+              {archetypeName && (
+                <div className="w-12 sm:w-20 flex-shrink-0">
+                  <Image 
+                    src={`/${archetypeName.toLowerCase()}.png`} 
+                    alt={`${archetypeName} emblem`} 
+                    width={80}
+                    height={80}
+                    className="w-full object-contain"
+                    priority
+                  />
+                </div>
+              )}
+              <div className="flex-1 text-left">
+                <h3 className="text-sm sm:text-base font-bold text-white mb-1 sm:mb-2" style={{ color: accentColor }}>
+                  What is your <Tooltip text="An archetype is a psychological pattern, a symbolic representation of a core part of the human experience.">archetype?</Tooltip>
+                  <span className="text-xs font-normal text-white/60 ml-2">(lore only, not diagnostic)</span>
+                </h3>
+                <div className="text-white/90 text-[10px] sm:text-xs space-y-1">
+                  {archetypeDescription.map((part, index) => (
+                    <p key={index}>
+                      <b className="font-semibold text-white/80">{part.title}:</b> {part.text}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-2">
           <div className="text-white/80 font-semibold mb-1">🎭 QUICK PROFILE</div>
           <div className="inline-block text-left"><QuickProfile /></div>
         </div>
 
-        <hr className="border-white/10 my-2" />
+        <hr className="border-white/10 my-1" />
 
         <DomainSnapshot />
 
-        <hr className="border-white/10 my-2" />
+        <hr className="border-white/10 my-1" />
 
-        <div className="mb-3">
-          <div className="text-white/80 font-semibold mb-1">🎯 KEY INSIGHT</div>
+        <div className="mb-2">
+          <div className="text-white/80 font-semibold mb-1 text-sm">🎯 KEY INSIGHT</div>
           <KeyInsight />
         </div>
 
-        <ResultsNav currentPage="/your-id" />
       </div>
     );
   }
@@ -794,15 +862,35 @@ function YourIdContent() {
   }
 
   async function capturePageScreenshot(): Promise<File|null>{
+    setIsCapturing(true);
     try{
       const html2canvas = await loadHtml2Canvas();
-      if (!html2canvas) return null;
-      const el = document.querySelector('main') as HTMLElement || document.body;
-      const canvas = await html2canvas(el, { backgroundColor: '#000000' });
-      const blob: Blob|null = await new Promise(resolve=> canvas.toBlob(resolve, 'image/png'));
+      if (!html2canvas) {
+        setIsCapturing(false);
+        return null;
+      }
+      const el = document.getElementById('capture-root') as HTMLElement;
+      if (!el) {
+        setIsCapturing(false);
+        return null;
+      }
+      
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#000000',
+        scale: window.devicePixelRatio * 2, // Increase scale for better quality
+        useCORS: true,
+      });
+
+      const blob: Blob|null = await new Promise(resolve=> canvas.toBlob(resolve, 'image/png', 0.95)); // Use higher quality PNG
+      
+      setIsCapturing(false);
+
       if (!blob) return null;
       return new File([blob], 'ground-zero-id.png', { type: 'image/png' });
-    } catch { return null; }
+    } catch {
+      setIsCapturing(false);
+      return null;
+    }
   }
   
   console.log('Override Page Debug - Data State:', {
@@ -918,89 +1006,52 @@ function YourIdContent() {
   const cardBgColor = hexToRgba(accentColor || '#000000', 0.1);
 
   return (
-    <main className="min-h-screen bg-black text-white p-2 md:p-4 pb-4" style={{ ['zoom' as any]: 1 }}>
-      <div className="text-center mb-4" style={{ marginTop: -30 }}>
-        {archetypeName && (
-          <Image 
-            src={`/${archetypeName.toLowerCase()}.png`} 
-            alt={`${archetypeName} emblem`} 
-            width={192}
-            height={192}
-            className="h-24 w-24 sm:h-36 sm:w-36 md:h-48 md:w-48 mx-auto object-contain"
-            priority
-          />
-        )}
-      </div>
+    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4">
       {/* Redesigned, scannable ID card */}
-      <div className="mt-6" style={{ marginTop: -100 }}>
+      <div id="capture-root" className="my-4 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
         {renderRedesignedIdCard()}
       </div>
       {/* Share (kept) */}
-      <div className="mt-6">
-        {/* Big Share button under the section */}
-        <div className="mt-3 flex justify-center">
-          <button
-            onClick={async ()=>{
-              try{
-                const landingUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
-                const file = await capturePageScreenshot();
-                if (file && (navigator as any)?.canShare && (navigator as any).canShare({ files:[file] })){
-                  await (navigator as any).share({ title: 'Ground Zero', url: landingUrl, files: [file] });
-                  setShareStatus('copied');
+      {!isCapturing && (
+        <div className="pb-8">
+          {/* Big Share button under the section */}
+          <div className="mt-3 flex justify-center">
+            <button
+              onClick={async ()=>{
+                try{
+                  const landingUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
+                  const file = await capturePageScreenshot();
+                  if (file && (navigator as any)?.canShare && (navigator as any).canShare({ files:[file] })){
+                    await (navigator as any).share({ title: 'Ground Zero', url: landingUrl, files: [file] });
+                    setShareStatus('copied');
+                    setTimeout(()=> setShareStatus('idle'), 1500);
+                    return;
+                  }
+                  if ((navigator as any)?.share){
+                    await (navigator as any).share({ title: 'Ground Zero', url: landingUrl });
+                    setShareStatus('copied');
+                    setTimeout(()=> setShareStatus('idle'), 1500);
+                  } else if (navigator?.clipboard && landingUrl){
+                    await navigator.clipboard.writeText(landingUrl);
+                    setShareStatus('copied');
+                    setTimeout(()=> setShareStatus('idle'), 1500);
+                  }
+                } catch {
+                  setShareStatus('error');
                   setTimeout(()=> setShareStatus('idle'), 1500);
-                  return;
                 }
-                if ((navigator as any)?.share){
-                  await (navigator as any).share({ title: 'Ground Zero', url: landingUrl });
-                  setShareStatus('copied');
-                  setTimeout(()=> setShareStatus('idle'), 1500);
-                } else if (navigator?.clipboard && landingUrl){
-                  await navigator.clipboard.writeText(landingUrl);
-                  setShareStatus('copied');
-                  setTimeout(()=> setShareStatus('idle'), 1500);
-                }
-              } catch {
-                setShareStatus('error');
-                setTimeout(()=> setShareStatus('idle'), 1500);
-              }
-            }}
-            className="px-6 py-3 rounded-full font-semibold"
-            style={{
-              color: '#111',
-              background: 'linear-gradient(90deg, #FFD36E, #E4B847)',
-              border: '2px solid #d4af37',
-              boxShadow: '0 0 16px rgba(212,175,55,0.5)'
-            }}
-          >{shareStatus==='copied' ? 'Link Copied' : shareStatus==='error' ? 'Share Failed' : 'Share Your ID'}</button>
-        </div>
-      </div>
-      <div className="flex gap-6">
-        <div className="hidden shrink-0 w-44">
-          <div className="sticky top-24 z-40 flex flex-col gap-3">
-            {(['O','C','E','A','N'] as DomainKey[]).map((d) => {
-              const domainName = DOMAINS[d].label.split(' (')[0];
-              return (
-                <button
-                  key={d}
-                  onClick={()=> setModalDomain(d)}
-                  aria-label={domainName}
-                  title={`${domainName} — click to view summary`}
-                  className="px-3 py-2 rounded-none border-0 bg-transparent flex flex-col items-center gap-1 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 group cursor-pointer"
-                  style={{}}
-                >
-                  {imageMap[d] ? (
-                    <Image src={encodeURI(imageMap[d])} alt={domainName} width={128} height={96} className="w-32 h-24 md:w-40 md:h-28 object-contain bg-transparent transition-transform duration-150 group-hover:scale-[1.05]" quality={95} style={{ filter: 'drop-shadow(0 0 12px rgba(212,175,55,0.6)) drop-shadow(0 0 28px rgba(212,175,55,0.35))' }} />
-                  ) : (
-                    <span role="img" aria-hidden="true" className="text-xl md:text-2xl">{emojiMap[d]}</span>
-                  )}
-                  <span className="truncate" style={{ color: accentColor }}>{domainName}</span>
-                </button>
-              );
-            })}
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-black bg-gradient-to-r from-yellow-400 to-amber-500 border-2 border-yellow-500 shadow-lg shadow-yellow-500/50 hover:from-yellow-300 hover:to-amber-400 transition-all disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+              </svg>
+              <span>{shareStatus==='copied' ? 'Copied!' : shareStatus==='error' ? 'Error' : 'Share Your ID'}</span>
+            </button>
           </div>
         </div>
-        <div className="flex-1">
-
+      )}
+      
       {/* Modal for domain summary */}
       {modalDomain && (
         <div
@@ -1048,105 +1099,6 @@ function YourIdContent() {
           onClose={() => setPreviewModal(null)}
         />
       )}
-
-      
-
-      
-
-      
-
-      {/* Conflict Patterns (removed for ID page) */}
-      {false ? (()=>{
-        const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
-        for (const d of ['O','C','E','A','N'] as DomainKey[]){
-          const payload = (fullResults?.find(r=> r.domain===d) || ({} as any)).payload;
-          if (!payload) continue;
-          const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
-          const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
-          for (const f of canonicalFacets(d)){
-            const raw = Number(A_raw?.[f] ?? 3);
-            const b = (bucket?.[f] as any) as 'High'|'Medium'|'Low' || 'Medium';
-            facets.push({ domain:d, facet:f, raw, bucket: b });
-          }
-        }
-        const cards = selectFiveCards(facets).filter((c:any)=> c.type==='conflict');
-        if (!cards.length) return null;
-        return (
-          <div className="mt-10">
-            <h2 className="text-xl font-bold mb-3" style={{ color: accentColor }}>Conflict Patterns</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {cards.map((card:any, i:number)=>{
-                const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct)/2 : 50;
-                const stars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
-                const locked = false; // unlocking all conflict cards
-                return (
-                  <div key={i} className="relative rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
-                    <div className={locked ? "opacity-20 blur-2xl pointer-events-none select-none" : ""}>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-white">{card.facet}</h3>
-                        <Stars count={stars} />
-                      </div>
-                      {typeof card.explanation === 'string' ? (
-                        <p className="text-white/90 text-sm mb-2">{card.explanation}</p>
-                      ) : null}
-                      {typeof card.friction === 'string' ? (
-                        <p className="text-white/80 text-xs mb-3">{card.friction}</p>
-                      ) : null}
-                      {typeof card.how_can_both_be_true === 'string' ? (
-                        <div className="rounded-md border border-white/10 bg-black/30 p-3">
-                          <div className="text-xs text-white/60 mb-1">How can both be true?</div>
-                          <p className="text-white/90 text-sm">{card.how_can_both_be_true}</p>
-                        </div>
-                      ) : null}
-                    </div>
-                    {null}
-                  </div>
-                );
-              })}
-      </div>
-            {/* Existential Circuits (removed for ID page) */}
-            <div className="mt-8" id="existential-circuits" style={{ display:'none' }}>
-              <div className="gz-theme container" style={{
-                ['--bg-color' as any]: '#121212',
-                ['--surface-color' as any]: '#1e1e1e',
-                ['--primary-text-color' as any]: '#e0e0e0',
-                ['--secondary-text-color' as any]: '#a0a0a0',
-                ['--accent-color' as any]: accentColor || '#4cafef',
-                ['--border-color' as any]: '#333',
-                ['--progress-green' as any]: '#2ecc71',
-                ['--progress-yellow' as any]: '#f1c40f',
-                ['--progress-red' as any]: '#e74c3c',
-                maxWidth: '1200px',
-                margin: '0 auto',
-                padding: '0'
-              }}>
-                <ExistentialCircuits domainMeans={whoData?.derived?.domainMeans} fullResults={fullResults as any} />
-                {null}
-                <div className="mt-6" style={{display:'flex', justifyContent:'center', gap:70, flexWrap:'wrap'}}>
-                  <a href={`/results${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
-                    border: '2px solid #d4af37',
-                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    color: 'white'
-                  }}>View Full Results →</a>
-                  <a href={`/arctyps-duals${rid?`?rid=${rid}`:''}`} className="btn btn-gold" style={{
-                    border: '2px solid #d4af37',
-                    boxShadow: '0 0 12px rgba(212, 175, 55, 0.5), 0 4px 16px rgba(0,0,0,0.3)',
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    color: 'white'
-                  }}>Arctyps Duals →</a>
-                </div>
-              </div>
-            </div>
-      </div>
-        );
-      })() : null}
-      
-        </div>
-      </div>
-      
     </main>
   );
 }

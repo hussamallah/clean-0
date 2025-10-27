@@ -4,9 +4,9 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS, type DomainKey } from '@/lib/bigfive/constants';
-import ResultsNav from '@/components/ResultsNav';
 import CTAButton from '@/components/CTAButton';
 import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
+import Tooltip from '@/components/Tooltip';
 
 function SummaryContent(){
   const searchParams = useSearchParams();
@@ -16,6 +16,20 @@ function SummaryContent(){
   const [accentColor, setAccentColor] = useState<string>('#d4af37');
   const [previewModal, setPreviewModal] = useState<any | null>(null);
   const [partnerRid, setPartnerRid] = useState('');
+  const [expandAll, setExpandAll] = useState(true);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setModalDomain(null);
+        setPreviewModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const getTopTrait = () => {
     if (fullResults) {
@@ -116,15 +130,17 @@ function SummaryContent(){
       <div className="text-center mb-4">
         <h1 className="text-2xl font-bold" style={{ color: accentColor }}>Summary</h1>
       </div>
-      <ResultsNav currentPage="/summary" />
       <div className="my-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center max-w-3xl mx-auto">
         <h4 className="font-bold text-lg text-blue-300">Run a Compatibility Report</h4>
         <p className="mt-2 text-white/90 text-sm max-w-xl mx-auto">
           See how you interact with a friend or partner. This report requires a second person's results.
         </p>
         <div className="mt-4">
-          <button
-            onClick={() => {
+          <CTAButton
+            href="#"
+            tier="Paid"
+            onClick={(e) => {
+              e.preventDefault();
               const extractRid = (input: string): string => {
                 const match = input.match(/ridA=([^&]*)/);
                 return match ? match[0] : '';
@@ -147,39 +163,35 @@ function SummaryContent(){
                   </div>
                 ),
                 price: 3.00,
-                purchaseUrl: `/compatibility?ridA=${rid}&ridB=${partnerRidFinal}`
+                purchaseUrl: `/compatibility?ridA=${rid}&ridB=${partnerRidFinal}`,
+                unlocks: 'The full report includes a detailed breakdown of your domain synergy, conflict patterns, and a playbook for better communication.'
               });
             }}
-            className="btn btn-gold"
           >
             Preview Compatibility Report
-          </button>
+          </CTAButton>
         </div>
       </div>
-      <div className="flex items-center justify-center px-4 mb-2" style={{ minHeight: '50vh' }}>
-        <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap">
-          {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
-            const domainName = DOMAINS[d].label.split(' (')[0];
-            return (
-              <button
-                key={d}
-                onClick={()=> setModalDomain(d)}
-                aria-label={domainName}
-                title={`${domainName} — click to view summary`}
-                className="p-0 bg-transparent border-0 flex items-center justify-center group cursor-pointer"
-                style={{ color: '#d4af37' }}
-              >
-                {imageMap[d] ? (
-                  <Image src={encodeURI(imageMap[d])} alt={domainName} width={160} height={112} className="w-40 h-28 md:w-48 md:h-32 object-contain bg-transparent transition-transform duration-150 group-hover:scale-[1.05]" quality={95} />
-                ) : (
-                  <span role="img" aria-hidden="true">⭐</span>
-                )}
-              </button>
-            );
-          })}
+      {expandAll && (
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-4">
+          {(fullResults || []).filter(result => ['O', 'C', 'E', 'A', 'N'].includes(result.domain)).map(result => (
+            <div key={result.domain} className="rounded-xl border" style={{ background: '#0f141a', ...neonBorderStyle() }}>
+              <div className="p-6">
+                <div className="mb-3 text-xl font-bold flex items-center" style={{ color: accentColor }}>
+                  {imageMap[result.domain as DomainKey] ? (
+                    <Image src={encodeURI(imageMap[result.domain as DomainKey])} alt="" width={40} height={40} className="w-10 h-10 mr-3 object-cover" quality={95} />
+                  ) : (
+                    <span className="mr-2" aria-hidden="true">⭐</span>
+                  )}
+                  {DOMAINS[result.domain].label.split(' (')[0]}
+                </div>
+                {renderDomainSummary(result.domain, result.payload)}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-      {modalDomain && (
+      )}
+      {modalDomain && !expandAll && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.6)' }}

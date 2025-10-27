@@ -3,6 +3,8 @@ import { compareArchetypes } from '@/lib/bigfive/archetypeDuality';
 import type { GZProfile, DomainProfile, DomainKey } from '@/lib/bigfive/types';
 import { sha256 } from '@/lib/crypto/sha256';
 
+export const dynamic = 'force-dynamic';
+
 async function loadFullProfile(rid: string, origin: string): Promise<GZProfile> {
   const url = `${origin}/api/who/${rid}`;
   const res = await fetch(url, { cache: 'no-store' });

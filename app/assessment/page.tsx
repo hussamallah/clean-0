@@ -2,9 +2,9 @@
 import { Suspense } from "react";
 import Assessment from "@/components/assessment/Assessment";
 
-function AssessmentContent() {
+function AssessmentPageContent() {
   return (
-    <main className="app">
+    <main>
       <Assessment />
     </main>
   );
@@ -13,7 +13,7 @@ function AssessmentContent() {
 export default function AssessmentPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>}>
-      <AssessmentContent />
+      <AssessmentPageContent />
     </Suspense>
   );
 }

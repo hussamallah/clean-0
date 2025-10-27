@@ -84,7 +84,7 @@ export default function ResultsPreview({
       borderRadius: '10px',
       margin: '20px 0'
     }}>
-      <h2 style={{ marginTop: 0 }}>Full Results (Sample)</h2>
+      <h2 style={{ marginTop: 0 }}>Detailed Results (Sample)</h2>
       
       {cards.map((card, i) => {
         const stars = card.raw ? Math.round(card.raw) : (card.bucket === 'High' ? 5 : card.bucket === 'Medium' ? 3 : 2);

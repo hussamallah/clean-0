@@ -1,11 +1,11 @@
 "use client";
 import { Suspense } from "react";
-import GZFinalAssessment from "@/components/assessment/GZFinalAssessment";
+import FullAssessment from "@/components/assessment/FullAssessment";
 
 function FullPageContent(){
   return (
     <main>
-      <GZFinalAssessment />
+      <FullAssessment />
     </main>
   );
 }

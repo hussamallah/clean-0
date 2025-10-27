@@ -6,8 +6,10 @@ import { stableStringify, getFacetScoreLevel, getScoreLevel } from "@/lib/bigfiv
 
 type DomainKey = keyof typeof DOMAINS;
 
-export default function FullResults({ data, suiteHash, verifyStatus, onVerify }:{ data: Array<{domain:DomainKey; payload:any}>, suiteHash: string | null, verifyStatus:'idle'|'ok'|'fail', onVerify: ()=>void }){
-  const [tab, setTab] = useState<DomainKey>('O');
+export default function DetailedResults({ data, suiteHash, verifyStatus, onVerify }:{ data: Array<{domain:DomainKey; payload:any}>, suiteHash: string | null, verifyStatus:'idle'|'ok'|'fail', onVerify: ()=>void }){
+  const [activeDomain, setActiveDomain] = useState<DomainKey | null>(null);
+
+  if (!data) return <div className="text-center p-8">Loading results...</div>;
   const order: DomainKey[] = ['O','C','E','A','N'];
   const byDomain = useMemo(()=>{
     const m = new Map<DomainKey, any>();
@@ -18,53 +20,32 @@ export default function FullResults({ data, suiteHash, verifyStatus, onVerify }:
 
   return (
     <div>
-      <div className="row mt16" style={{justifyContent: 'center', alignItems: 'center', gap: '12px'}}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          color: '#a7c8ff',
-          fontSize: '12px',
-          fontWeight: '500'
-        }}>
-          <span>Press to navigate domain</span>
-          <span style={{fontSize: '16px'}}>→</span>
-        </div>
+      <div className="flex flex-wrap justify-center items-center gap-3 my-4">
         {order.map(d => (
           <button 
             key={d} 
-            className={`btn${tab===d?' selected':''}`} 
-            onClick={()=> setTab(d)}
+            className={`btn ${activeDomain === d ? 'selected' : ''}`}
+            onClick={()=> setActiveDomain(d)}
             style={{
-              background: tab===d ? '#ffffff' : '#f8f9fa',
-              color: tab===d ? '#000000' : '#333333',
+              background: activeDomain === d ? 'white' : '#f8f9fa',
+              color: activeDomain === d ? 'black' : '#333',
               border: '1px solid #e0e0e0',
               borderRadius: '20px',
               padding: '8px 16px',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              transition: 'all 0.2s ease-in-out',
             }}
           >
             {DOMAINS[d].label.split(' (')[0]}
           </button>
         ))}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          color: '#a7c8ff',
-          fontSize: '12px',
-          fontWeight: '500'
-        }}>
-          <span style={{fontSize: '16px'}}>←</span>
-          <span>Press to navigate domain</span>
-        </div>
       </div>
       <div className="card mt16">
-        {byDomain.get(tab) ? (
-          <ResultsPanel payload={byDomain.get(tab)} />
+        {byDomain.get(activeDomain || 'O') ? (
+          <ResultsPanel payload={byDomain.get(activeDomain || 'O')} />
         ) : (
-          <p className="muted">No results captured yet for {DOMAINS[tab].label}.</p>
+          <p className="muted">No results captured yet for {DOMAINS[activeDomain || 'O'].label}.</p>
         )}
       </div>
       
