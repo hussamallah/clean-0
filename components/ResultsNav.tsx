@@ -11,26 +11,30 @@ export default function ResultsNav({ currentPage }: ResultsNavProps) {
   const q = rid ? `?rid=${rid}` : '';
 
   const allPages = [
-    { path: '/your-id', label: '✨ Your ID' },
-    { path: '/summary', label: '📋 Summary' },
-    { path: '/conflict-patterns', label: '🔍 Explore Conflict Pattern' },
-    { path: '/existential-circuits', label: '🧠 Existential Circuits' },
-    { path: '/results', label: '📊 Full Analysis' },
-    { path: '/arctyps-duals', label: '🎭 Archetype Duals' },
-    { path: '/compatibility', label: '🤝 Compatibility Report' },
+    { path: '/your-id', label: '✨ Your ID', tier: 'Free' },
+    { path: '/summary', label: '📋 Summary', tier: 'Free' },
+    { path: '/results', label: '📊 Full Analysis', tier: 'Free' },
+    { path: '/arctyps-duals', label: '🎭 Archetype Duals', tier: 'Free' },
+    // { type: 'divider' },
+    // { path: '/conflict-patterns', label: '🔍 Explore Conflict Pattern', tier: 'Paid' },
+    // { path: '/existential-circuits', label: '🧠 Existential Circuits', tier: 'Paid' },
+    // { path: '/compatibility', label: '🤝 Compatibility Report', tier: 'Paid' },
   ];
 
-  const pagesToShow = allPages.filter(page => page.path !== currentPage);
+  const pagesToShow = allPages.filter((page: any) => page.path !== currentPage);
 
   return (
-    <div className="mt-6" style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center'}}>
-      {pagesToShow.map(page => {
+    <div className="mt-6" style={{display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', alignItems: 'center'}}>
+      {pagesToShow.map((page: any, index) => {
+        // if (page.type === 'divider') {
+        //   return <div key={`divider-${index}`} className="h-6 w-px bg-white/20"></div>;
+        // }
         let href = `${page.path}${q}`;
         if ((page.path === '/compatibility' || page.path === '/arctyps-duals') && rid) {
           href = `${page.path}?ridA=${rid}`;
         }
         return (
-          <CTAButton key={page.path} href={href}>
+          <CTAButton key={page.path} href={href} tier={page.tier}>
             {page.label}
           </CTAButton>
         );

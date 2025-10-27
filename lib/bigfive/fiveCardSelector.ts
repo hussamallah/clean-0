@@ -84,6 +84,7 @@ const CATALOG: CatalogEntry[] = [
       how_can_both_be_true: "Your self-efficacy is a resilient resource, but your mood is a variable state. The key is to separate your identity from your emotional weather. You're not incapable; you're just operating with low energy. Acknowledge the feeling without believing its story. Use your capability to break work into tiny, achievable wins that can pierce through the dread."
     }
   },
+  /*
   {
     id: 'cn_ambition_overwhelm',
     a: { trait: 'Achievement-Striving', pol: 'up', thr: 'H' },
@@ -95,6 +96,7 @@ const CATALOG: CatalogEntry[] = [
       how_can_both_be_true: "You're a high-performer who needs well-defined boundaries to feel safe. Your ambition is the engine, but your vulnerability is the governor. Without clear sub-goals and recovery time, the engine can overheat. You thrive when you can channel your intense drive into manageable sprints."
     }
   },
+  */
   {
     id: 'en_drive_strain',
     a: { trait: 'Assertiveness', pol: 'up', thr: 'H' },
@@ -319,7 +321,7 @@ function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConf
     const bLabel = level(norm(bVal, entry.b.pol));
     cards.push({
       type: 'conflict',
-      facet: `Conflict Pattern: ${copy.title}`,
+      facet: copy.title,
       description: `${copy.explanation} ${copy.friction}`,
       explanation: copy.explanation,
       friction: copy.friction,

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import CTAButton from '@/components/CTAButton';
 import archetypeRules from "@/arctyps rules.json";
+import archetypeAtlas from "@/lib/data/archetype_atlas.json";
 // Field presence bank removed for domain cards UI
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS } from "@/lib/bigfive/constants";
 import { getScoreLevel } from "@/lib/bigfive/format";
@@ -15,6 +16,9 @@ import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib
 import wowBank from "@/wow.json";
 import oneSentenceSummaries from "@/one-sentence-summary.json";
 import ResultsNav from '@/components/ResultsNav';
+import IdentityMirror from "@/components/who/IdentityMirror";
+import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
+
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number) => {
@@ -303,8 +307,10 @@ function YourIdContent() {
   const [panels, setPanels] = useState<any|null>(null);
   const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
   const [headerOpen, setHeaderOpen] = useState<boolean>(false);
+  const [archetypeDescription, setArchetypeDescription] = useState<{title: string; text: string}[]>([]);
   const [wowByDomain, setWowByDomain] = useState<null | Record<DomainKey, Array<{name:string; score:number; domain_mean:number; pattern:string; reason:{contrast:number; visibility:number; extreme:boolean}}>>>(null);
   const [shareStatus, setShareStatus] = useState<'idle'|'copied'|'error'>('idle');
+  const [previewModal, setPreviewModal] = useState<any | null>(null);
 
   const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
   const GOLD = '#d4af37';
@@ -583,20 +589,37 @@ function YourIdContent() {
     // 3) Quick profile bullets (pulled from narrative + stance)
     function QuickProfile(){
       const narr: string[] = Array.isArray(whoData?.narrative) ? whoData!.narrative : [];
+      const strengths = whoData?.listSentences?.strengths || [];
+      const risks = whoData?.listSentences?.risks || [];
       const stance = computeStanceLine();
       const style = narr[0] || 'Adaptive leader who moves people';
-      const strength = narr[1] || 'Planning with precision';
-      const struggle = narr[2] || 'Executing with confidence';
+      const strength = strengths[0] || 'Planning with precision';
+      const struggle = risks[0] || 'Executing with confidence';
       const stanceLine = stance ? stance.replace(/^Your\s+stance\s+with\s+people\s+is\s*/i,'').replace(/\.$/,'') : 'Balanced skepticism — you believe but verify';
       return (
         <ul className="list-disc pl-4 text-white/90 text-sm space-y-1">
           <li><b>Your Style</b>: {style}</li>
           <li><b>Your Strength</b>: {strength}</li>
           <li><b>Your Struggle</b>: {struggle}</li>
-          <li><b>Your Stance</b>: {stanceLine}</li>
+          <li>
+            <b>Your Stance</b>: {stanceLine}
+            <a href={`/compatibility${rid ? `?ridA=${rid}` : ''}`} className="ml-2 text-blue-400 hover:underline text-xs">(See how this impacts your relationships)</a>
+          </li>
         </ul>
       );
     }
+
+    // A small component to render the conflict pattern preview
+    const ConflictPatternPreview = ({ card }: { card: any }) => {
+      if (!card) return <p className="text-white/70">Your conflict pattern data will be shown here.</p>;
+      return (
+        <div>
+          <h4 className="font-bold text-lg text-yellow-300">{card.facet}</h4>
+          {card.explanation && <p className="mt-2 text-white/90 text-sm">{card.explanation}</p>}
+          {card.friction && <p className="mt-2 text-xs italic text-white/70">{card.friction}</p>}
+        </div>
+      );
+    };
 
     // 4) Key insight (short pull-quote from narrative)
     function KeyInsight(){
@@ -619,12 +642,44 @@ function YourIdContent() {
           {archetypeName ? <div className="text-xl font-extrabold" style={{ color: accentColor }}>{archetypeName.toUpperCase()}</div> : null}
         </div>
 
-        <div className="mb-3">
-          <div className="text-white/80 font-semibold mb-1">⚖️ CORE TENSION</div>
-          <div className="text-white/90 text-lg">{coreLabel || 'Drive ←→ Strain'}</div>
+        <div className="my-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
+          <h3 className="text-lg font-bold text-white mb-2">⚖️ Your Core Conflict Pattern</h3>
+          <p className="text-sm text-yellow-200/90">
+            This tension is key to your growth. See how it shows up in specific, repeatable ways.
+          </p>
+          <div className="mt-2">
+            <button 
+              onClick={() => setPreviewModal({
+                title: 'Conflict Patterns',
+                description: 'This report reveals how you act under pressure. Below is your #1 pattern, based on your results.',
+                previewContent: <ConflictPatternPreview card={conflictCard} />,
+                price: 3.00,
+                purchaseUrl: `/conflict-patterns${rid ? `?rid=${rid}` : ''}`
+              })}
+              className="btn btn-gold" // Using the standard gold button style
+            >
+              Preview Your Conflict Patterns
+            </button>
+          </div>
         </div>
 
         <hr className="border-white/10 my-2" />
+
+        {archetypeDescription.length > 0 && (
+          <div className="my-4 p-3 rounded-lg" style={neonBorderStyle()}>
+            <h3 className="text-lg font-bold text-white mb-2" style={{ color: accentColor }}>
+              What is your archetype?
+              <span className="text-xs font-normal text-white/60 ml-2">(lore only, not diagnostic)</span>
+            </h3>
+            <div className="text-white/90 text-sm space-y-2">
+              {archetypeDescription.map((part, index) => (
+                <p key={index}>
+                  <b className="font-semibold text-white/80">{part.title}:</b> {part.text}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mb-3">
           <div className="text-white/80 font-semibold mb-1">🎭 QUICK PROFILE</div>
@@ -796,6 +851,29 @@ function YourIdContent() {
           if (match?.color?.hex) setAccentColor(match.color.hex);
         }
 
+        if (archName) {
+          const atlas = (archetypeAtlas as any);
+          // Format archName to match the keys in the atlas (e.g., "sovereign" -> "Sovereign")
+          const formattedArchName = archName.charAt(0).toUpperCase() + archName.slice(1).toLowerCase();
+          const archetypeData = atlas[formattedArchName];
+          if (archetypeData) {
+            const getFirstSentence = (text: string) => {
+                if (!text) return '';
+                const sentences = text.split(/(?<=[.!?])\s+/);
+                return sentences[0] || '';
+            };
+
+            const descriptionParts = [
+                { title: 'Psychological Profile', text: getFirstSentence(archetypeData.psychologicalProfile) },
+                { title: 'Origin', text: getFirstSentence(archetypeData.origin) },
+                { title: 'Inner Conflict', text: getFirstSentence(archetypeData.innerConflict) },
+                { title: 'Field Presence', text: getFirstSentence(archetypeData.fieldPresence) }
+            ];
+            
+            setArchetypeDescription(descriptionParts.filter(part => part.text));
+          }
+        }
+
         // Extract domain means and facet buckets
         const dm = extractDomainMeansNormalized(data);
         const fb = extractFacetBuckets(data);
@@ -962,6 +1040,13 @@ function YourIdContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {previewModal && (
+        <PaidContentPreviewModal
+          {...previewModal}
+          onClose={() => setPreviewModal(null)}
+        />
       )}
 
       

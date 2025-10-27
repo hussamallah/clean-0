@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS, type DomainKey } from '@/lib/bigfive/constants';
 import ResultsNav from '@/components/ResultsNav';
+import CTAButton from '@/components/CTAButton';
+import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
 
 function SummaryContent(){
   const searchParams = useSearchParams();
@@ -12,6 +14,22 @@ function SummaryContent(){
   const [fullResults, setFullResults] = useState<Array<{domain:DomainKey; payload:any}>|null>(null);
   const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
   const [accentColor, setAccentColor] = useState<string>('#d4af37');
+  const [previewModal, setPreviewModal] = useState<any | null>(null);
+  const [partnerRid, setPartnerRid] = useState('');
+
+  const getTopTrait = () => {
+    if (fullResults) {
+      const means = fullResults.map(r => ({ domain: r.domain, mean: r.payload?.final?.domain_mean_raw || 3.0 }));
+      means.sort((a,b) => Math.abs(3 - a.mean) - Math.abs(3 - b.mean));
+      const mostExtreme = means[means.length - 1];
+      if (mostExtreme) {
+        const isHigh = mostExtreme.mean > 3.0;
+        const domainName = DOMAINS[mostExtreme.domain]?.label.split(' (')[0] || 'trait';
+        return `your ${isHigh ? 'High' : 'Low'} ${domainName}`;
+      }
+    }
+    return 'your unique traits';
+  };
 
   useEffect(()=>{
     if (!rid) return;
@@ -99,6 +117,45 @@ function SummaryContent(){
         <h1 className="text-2xl font-bold" style={{ color: accentColor }}>Summary</h1>
       </div>
       <ResultsNav currentPage="/summary" />
+      <div className="my-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center max-w-3xl mx-auto">
+        <h4 className="font-bold text-lg text-blue-300">Run a Compatibility Report</h4>
+        <p className="mt-2 text-white/90 text-sm max-w-xl mx-auto">
+          See how you interact with a friend or partner. This report requires a second person's results.
+        </p>
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              const extractRid = (input: string): string => {
+                const match = input.match(/ridA=([^&]*)/);
+                return match ? match[0] : '';
+              };
+
+              const partnerRidFinal = extractRid(partnerRid);
+
+              setPreviewModal({
+                title: 'Compatibility Report',
+                description: 'Unlock a detailed analysis of your interpersonal dynamics with one other person.',
+                previewContent: (
+                  <div>
+                    <h4 className="font-bold text-lg text-blue-300">How You Interact</h4>
+                    <p className="mt-2 text-white/90 text-sm">
+                      This report reveals the precise points of harmony and friction between you and one other person, creating a playbook for better communication.
+                    </p>
+                    <p className="text-xs text-white/60 mt-2">
+                      For example, we'll show you how {getTopTrait()} might sync or clash with their personality.
+                    </p>
+                  </div>
+                ),
+                price: 3.00,
+                purchaseUrl: `/compatibility?ridA=${rid}&ridB=${partnerRidFinal}`
+              });
+            }}
+            className="btn btn-gold"
+          >
+            Preview Compatibility Report
+          </button>
+        </div>
+      </div>
       <div className="flex items-center justify-center px-4 mb-2" style={{ minHeight: '50vh' }}>
         <div className="w-full max-w-[1600px] flex items-center justify-center gap-4 flex-wrap">
           {(['O','C','E','A','N'] as DomainKey[]).map((d)=>{
@@ -160,6 +217,12 @@ function SummaryContent(){
             </div>
           </div>
         </div>
+      )}
+      {previewModal && (
+        <PaidContentPreviewModal
+          {...previewModal}
+          onClose={() => setPreviewModal(null)}
+        />
       )}
     </main>
   );
