@@ -78,22 +78,25 @@ function SummaryContent(){
     const highs = facets.filter(f=> bucket[f]==='High').sort((a,b)=> (A_raw[b]-A_raw[a])).slice(0,2);
     const mids  = facets.filter(f=> bucket[f]==='Medium').sort((a,b)=> (Math.abs(3-(A_raw[a]??3)) - Math.abs(3-(A_raw[b]??3)))).slice(0,2);
     const lows  = facets.filter(f=> bucket[f]==='Low').sort((a,b)=> (A_raw[a]-A_raw[b])).slice(0,2);
+    const isN = d === 'N';
+    const strengths = isN ? lows : highs;
+    const development = isN ? highs : lows;
 
     return (
       <div className="text-sm text-white/90 leading-relaxed">
         <div className="mb-1">Your overall level is <b className="capitalize">{lvlKey}</b>. {levelMeaning[lvlKey]}</div>
         <div className="mb-2">Domain average: <b>{domain_mean_raw.toFixed(2)} / 5</b></div>
-        {highs.length ? (
+        {strengths.length > 0 && (
           <div className="mb-2">
             <div className="text-white/70 mb-1">Strong behavior levers</div>
             <ul className="list-disc pl-4">
-              {highs.map(name=> (
-                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(d==='N'?'low':'high')])}</li>
+              {strengths.map(name=> (
+                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(isN ? 'low' : 'high')])}</li>
               ))}
             </ul>
           </div>
-        ) : null}
-        {mids.length ? (
+        )}
+        {mids.length > 0 && (
           <div className="mb-2">
             <div className="text-white/70 mb-1">Workable levers</div>
             <ul className="list-disc pl-4">
@@ -102,17 +105,17 @@ function SummaryContent(){
               ))}
             </ul>
           </div>
-        ) : null}
-        {lows.length ? (
+        )}
+        {development.length > 0 && (
           <div className="mb-1">
             <div className="text-white/70 mb-1">Development levers</div>
             <ul className="list-disc pl-4">
-              {lows.map(name=> (
-                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(d==='N'?'high':'low')])}</li>
+              {development.map(name=> (
+                <li key={name}><b>{name}</b>: {firstSentence((FACET_INTERPRETATIONS as any)[d][name]?.[(isN ? 'high' : 'low')])}</li>
               ))}
             </ul>
           </div>
-        ) : null}
+        )}
       </div>
     );
   }
