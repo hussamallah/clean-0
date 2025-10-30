@@ -766,6 +766,15 @@ function YourIdContent() {
           <KeyInsight />
         </div>
 
+        <hr className="border-white/10 my-1" />
+
+        <Tooltip text="A unique signature for your results, ensuring they are verifiable.">
+          <div className="mt-2 text-center text-xs text-white/50 cursor-pointer">
+            <div className="font-semibold">RUN FINGERPRINT</div>
+            <div>{whoData?.audit?.checksum || whoData?.audit?.runHash || rid}</div>
+          </div>
+        </Tooltip>
+
       </div>
     );
   }
@@ -1011,6 +1020,11 @@ function YourIdContent() {
       <div id="capture-root" className="my-4 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
         {renderRedesignedIdCard()}
       </div>
+      <Tooltip text="You can use this ID on the homepage to view your results again at any time.">
+        <div className="text-xs text-white/40 font-mono mb-4 cursor-pointer">
+          Run ID: {rid}
+        </div>
+      </Tooltip>
       {/* Share (kept) */}
       {!isCapturing && (
         <div className="pb-8">

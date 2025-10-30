@@ -10,19 +10,33 @@ function LandingPageContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleRetrieve = async () => {
+  const handleRetrieve = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!resultCode.trim()) return;
+
+    let code = resultCode.trim();
     
+    // Check if the input is a URL and extract the 'rid' parameter
+    try {
+      const url = new URL(code);
+      const rid = url.searchParams.get('rid');
+      if (rid) {
+        code = rid;
+      }
+    } catch (error) {
+      // Not a valid URL, treat it as a raw code
+    }
+
     setLoading(true);
     setError('');
     
     try {
       // Test if the result exists first
-      const response = await fetch(`/api/who/${encodeURIComponent(resultCode.trim())}`);
+      const response = await fetch(`/api/who/${encodeURIComponent(code)}`);
       
       if (response.ok) {
         // Result found, navigate
-        window.location.href = `/your-id?rid=${encodeURIComponent(resultCode.trim())}`;
+        window.location.href = `/your-id?rid=${encodeURIComponent(code)}`;
       } else {
         // Show error message from server
         const data = await response.json();
@@ -30,7 +44,7 @@ function LandingPageContent() {
         setLoading(false);
       }
     } catch (err) {
-      setError('Unable to retrieve results. Please try again.');
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
     }
   };
@@ -163,21 +177,26 @@ function LandingPageContent() {
                   Enter your result code to view your saved assessment results. You received this code after completing your assessment.
                 </p>
                 <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={resultCode}
-                    onChange={(e) => {
-                      setResultCode(e.target.value);
-                      setError(''); // Clear error when typing
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRetrieve()}
-                    placeholder="Paste your result code here..."
-                    disabled={loading}
-                    className="w-full px-4 py-3 bg-black/60 border-2 border-yellow-500/30 rounded-xl text-yellow-100 placeholder-yellow-300/30 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 font-mono text-sm shadow-inner disabled:opacity-50"
-                    style={{
-                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3), 0 0 10px rgba(234, 179, 8, 0.1)'
-                    }}
-                  />
+                  <form onSubmit={handleRetrieve} className="relative">
+                    <input
+                      type="text"
+                      className="w-full pl-4 pr-28 py-3 bg-white/10 border-2 border-white/20 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none transition-all placeholder-white/50 text-yellow-100"
+                      value={resultCode}
+                      onChange={(e) => {
+                        setResultCode(e.target.value);
+                        setError(''); // Clear error when typing
+                      }}
+                      placeholder="Paste your result code or URL..."
+                      disabled={loading}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!resultCode.trim() || loading}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-yellow-500/20 text-yellow-100 rounded-lg hover:bg-yellow-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Retrieving...' : 'View Results'}
+                    </button>
+                  </form>
                   
                   {error && (
                     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
@@ -185,18 +204,6 @@ function LandingPageContent() {
                     </div>
                   )}
                   
-                  <button
-                    onClick={handleRetrieve}
-                    disabled={!resultCode.trim() || loading}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 disabled:from-gray-700 disabled:to-gray-800 disabled:text-white/40 disabled:cursor-not-allowed rounded-xl font-bold transition-all text-black shadow-lg"
-                    style={{
-                      boxShadow: (resultCode.trim() && !loading)
-                        ? '0 0 20px rgba(234, 179, 8, 0.5), 0 4px 15px rgba(0,0,0,0.3)' 
-                        : 'none'
-                    }}
-                  >
-                    {loading ? 'Retrieving...' : 'View Results'}
-                  </button>
                 </div>
                 <div className="mt-4 pt-4 border-t border-yellow-500/20">
                   <p className="text-xs text-yellow-100/50">
