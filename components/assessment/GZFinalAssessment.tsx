@@ -7,12 +7,39 @@ import { resolveWithArctypsRules } from "@/arctyps routing";
 import archRules from "@/arctyps rules.json";
 import { getFacetScoreLevel, toPercentFromRaw, stableStringify } from "@/lib/bigfive/format";
 import { sha256Hex } from "@/lib/crypto/sha256hex";
+import { compute, type Circuits } from "../../Existential Circuits";
 
 type DomainKey = keyof typeof DOMAINS; // 'O'|'C'|'E'|'A'|'N'
 
 function toCanonicalFacet(domain: DomainKey, facet: string): string {
   if (domain === 'O' && facet === 'Values Openness') return 'Liberalism';
   return facet;
+}
+
+function getCircuitInfo(name: 'Energy' | 'Clarity' | 'Structure' | 'Bond' | 'Drive', value: number): { name: string; value: number; level: string; description: string } {
+  let level = 'Medium';
+  if (value > 0.33) level = 'High';
+  else if (value < -0.33) level = 'Low';
+
+  let description = '';
+  switch (name) {
+    case 'Energy':
+      description = level === 'High' ? 'You are driven by a need for action and momentum, but you risk burnout if you don\'t build in recovery periods.' : level === 'Low' ? 'You conserve energy and prefer steady, sustainable rhythms. Make sure you\'re not missing opportunities for growth.' : 'Your energy flow is balanced.';
+      break;
+    case 'Clarity':
+      description = level === 'High' ? 'You are highly open to new ideas and experiences, which fuels your creativity.' : level === 'Low' ? 'You prefer concrete facts and familiar routines, providing stability.' : 'You balance imagination with practicality.';
+      break;
+    case 'Structure':
+      description = level === 'High' ? 'You are disciplined and organized, which helps you execute long-term plans.' : level === 'Low' ? 'You are flexible and spontaneous, able to adapt to changing circumstances.' : 'You can be organized when needed, but are not rigid.';
+      break;
+    case 'Bond':
+      description = level === 'High' ? 'You are cooperative and empathetic, which helps you build strong relationships.' : level === 'Low' ? 'You are independent and skeptical, which protects you from being taken advantage of.' : 'You are agreeable but maintain healthy boundaries.';
+      break;
+    case 'Drive':
+      description = level === 'High' ? 'You are emotionally stable and resilient, allowing you to pursue goals without being derailed by stress.' : level === 'Low' ? 'You are sensitive to stress, which can be a powerful motivator for change if channeled correctly.' : 'You experience a normal range of emotions, both positive and negative.';
+      break;
+  }
+  return { name: `${name} Circuit`, value, level, description };
 }
 
 export default function GZFinalAssessment(){
@@ -93,7 +120,64 @@ export default function GZFinalAssessment(){
   const archStarted = useRef(false);
   const [archWinner, setArchWinner] = useState<string|null>(null);
   const archTrace = useRef<Array<{ q:string; type:'triad'|'binary'; options:string[]; pick:string }>>([]);
+  const [circuitPreviewData, setCircuitPreviewData] = useState<{ name: string; value: number; level: string; description: string } | null>(null);
+  const [showCircuitPreview, setShowCircuitPreview] = useState(false);
+  const shownPreviews = useRef(new Set<string>());
   // no error/bank blocking; we rely on bank for flow
+
+  useEffect(() => {
+    if (idx < 6 || (step !== 'bin' && step !== 'likert')) {
+      return;
+    }
+
+    let domainToShow: DomainKey | null = null;
+    if (idx >= 30) domainToShow = 'N';
+    else if (idx >= 24) domainToShow = 'A';
+    else if (idx >= 18) domainToShow = 'E';
+    else if (idx >= 12) domainToShow = 'C';
+    else if (idx >= 6) domainToShow = 'O';
+
+    if (!domainToShow) {
+      return;
+    }
+
+    const d = domainToShow;
+    const facets = canonicalFacets(d);
+    const domainScores = facets.map(f => {
+      const canonicalFacetName = toCanonicalFacet(d, f);
+      return finalScores[d]?.[canonicalFacetName];
+    }).filter(s => typeof s === 'number') as number[];
+
+    const mean = domainScores.length > 0
+      ? domainScores.reduce((a, b) => a + b, 0) / domainScores.length
+      : 3;
+
+    let newPreview: { name: string; value: number; level: string; description: string } | null = null;
+
+    switch (d) {
+      case 'O':
+        newPreview = getCircuitInfo('Clarity', Math.max(-1, Math.min(1, (mean - 3) / 2)));
+        break;
+      case 'C':
+        newPreview = getCircuitInfo('Structure', Math.max(-1, Math.min(1, (mean - 3) / 2)));
+        break;
+      case 'E':
+        newPreview = getCircuitInfo('Energy', Math.max(-1, Math.min(1, (mean - 3) / 2)));
+        break;
+      case 'A':
+        newPreview = getCircuitInfo('Bond', Math.max(-1, Math.min(1, (mean - 3) / 2)));
+        break;
+      case 'N':
+        newPreview = getCircuitInfo('Drive', Math.max(-1, Math.min(1, (3 - mean) / 2)));
+        break;
+    }
+
+    if (newPreview && !shownPreviews.current.has(newPreview.name)) {
+      setCircuitPreviewData(newPreview);
+      setShowCircuitPreview(true);
+      shownPreviews.current.add(newPreview.name);
+    }
+  }, [idx, finalScores, step]);
 
   useEffect(() => {
     if (step === 'arch' && !archStarted.current) {
@@ -163,7 +247,12 @@ export default function GZFinalAssessment(){
           // Ensure sufficient pool: if <4, backfill with most divergent from the matched set first
           if (ids.length < 4){
             const all = A.map(x=>x.id as string);
-            const rest = all.filter(x=> !ids.includes(x));
+            let rest = all.filter(x=> !ids.includes(x));
+            // Shuffle 'rest' to give all non-matching archetypes a chance
+            for (let i = rest.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [rest[i], rest[j]] = [rest[j], rest[i]];
+            }
             ids = ids.concat(rest.slice(0, Math.max(0, 4-ids.length)));
           }
           // Keep deterministic order but cap unreasonable size (12 → ok); winners will bracket down
@@ -328,8 +417,8 @@ export default function GZFinalAssessment(){
                 onTouchStart={(e)=> e.currentTarget.classList.add('selected')}
                 onClick={()=>{
                 // Asymmetric Likert scoring for the "No" path:
-                // 5→1, 4→1.5, 3→2, 2→2.5, 1→3
-                const map: Record<number, number> = { 5:1, 4:1.5, 3:2, 2:2.5, 1:3 };
+                // 5→1, 4→2, 3→2.5, 2→3, 1→3.5
+                const map: Record<number, number> = { 5:1, 4:2, 3:2.5, 2:3, 1:3.5 };
                 const final = map[r.val as number] ?? 2;
                 setFinalScores(prev=> ({ ...prev, [d]: { ...(prev[d]||{}), [toCanonicalFacet(d, current.facet)]: final } } as any));
                 if (idx+1 < total){ setIdx(idx+1); setStep('bin'); } else { setStep('arch'); }
@@ -505,6 +594,68 @@ export default function GZFinalAssessment(){
         </div>
         {renderStepContent()}
       </div>
+      {showCircuitPreview && circuitPreviewData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card p-6" style={{
+            maxWidth: '400px',
+            width: '90%',
+            background: 'linear-gradient(145deg, #2a2a2e, #1e1e21)',
+            border: '1px solid rgba(212, 175, 55, 0.4)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div className="text-center mb-4">
+              <p className="text-yellow-400 font-bold text-lg mb-1">Good job, keep going!</p>
+              <p className="text-white/80 text-sm">Here's a sneak peek of what you are:</p>
+            </div>
+            <div className="card" style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+            }}>
+              <h3 className="text-yellow-400 font-bold text-lg mb-2">{circuitPreviewData.name}</h3>
+              <div className="mb-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm text-white/70">Circuit Level</span>
+                  <span className="text-sm font-bold" style={{
+                    color: circuitPreviewData.level === 'High' ? '#2ecc71' : 
+                           circuitPreviewData.level === 'Low' ? '#e74c3c' : '#f1c40f'
+                  }}>
+                    {circuitPreviewData.level}
+                  </span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.round(((circuitPreviewData.value + 1) / 2) * 100)}%`,
+                      backgroundColor: circuitPreviewData.level === 'High' ? '#2ecc71' : 
+                                     circuitPreviewData.level === 'Low' ? '#e74c3c' : '#f1c40f'
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <p className="text-white/80 text-sm">{circuitPreviewData.description}</p>
+            </div>
+            <button
+              className="btn primary w-full mt-4 bg-yellow-600 hover:bg-yellow-700 text-black"
+              onClick={() => setShowCircuitPreview(false)}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

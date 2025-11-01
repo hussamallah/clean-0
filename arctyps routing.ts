@@ -308,7 +308,10 @@ function getArchetypeSpecificTemplates(aId: string, bId: string): BinaryTemplate
     { pair: ['seeker', 'vessel'], question: "Your ideal environment is:", left: "Intellectually stimulating and independent", right: "Peaceful and emotionally supportive" },
     { pair: ['visionary', 'guardian'], question: "Your leadership style is:", left: "Inspire through big ideas", right: "Protect and energize the team" },
     { pair: ['sovereign', 'provider'], question: "When making decisions, you:", left: "Take authority and control", right: "Consider everyone's needs first" },
-    { pair: ['rebel', 'spotlight'], question: "Your energy comes from:", left: "Breaking constraints and patterns", right: "Inspiring and energizing others" }
+    { pair: ['rebel', 'spotlight'], question: "Your energy comes from:", left: "Breaking constraints and patterns", right: "Inspiring and energizing others" },
+    { pair: ['seeker', 'vessel'], question: "You are more comfortable with:", left: "Intellectual uncertainty", right: "Emotional uncertainty" },
+    { pair: ['seeker', 'spotlight'], question: "You are more focused on:", left: "Your inner world of ideas", right: "Your outer world of people" },
+    { pair: ['vessel', 'spotlight'], question: "You prefer a social environment that is:", left: "Calm and harmonious", right: "Exciting and energetic" }
   ];
   
   for (const pair of highContrastPairs) {

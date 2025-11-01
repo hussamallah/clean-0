@@ -6,16 +6,49 @@
       "static/chunks/345.88612954dfc9fe4b.js"
     ]
   },
+  "app\\free-results\\page.tsx -> @/lib/data/who_panels.json": {
+    "id": 5703,
+    "files": [
+      "static/chunks/703.bf8a2f1e132740c2.js"
+    ]
+  },
   "app\\your-id\\page.tsx -> @/lib/data/who_panels.json": {
     "id": 5703,
     "files": [
       "static/chunks/703.bf8a2f1e132740c2.js"
     ]
   },
+  "app\\your-id\\page.tsx -> jspdf": {
+    "id": 1114,
+    "files": [
+      "static/chunks/39fb572b-86966301280c3f78.js",
+      "static/chunks/273acdc0-aa7918019cbb1970.js",
+      "static/chunks/558-d35a846c4cd21196.js"
+    ]
+  },
   "components\\who\\ExistentialCircuits.tsx -> ../../ground_zero_243_profiles.json": {
     "id": 2620,
     "files": [
       "static/chunks/620.5a3e9ba1e345c8f8.js"
+    ]
+  },
+  "node_modules\\.pnpm\\jspdf@3.0.3\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> canvg": {
+    "id": 8079,
+    "files": [
+      "static/chunks/badf541d.84545ef14d1d6030.js",
+      "static/chunks/873.e8bc09509f3395b8.js"
+    ]
+  },
+  "node_modules\\.pnpm\\jspdf@3.0.3\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> dompurify": {
+    "id": 7575,
+    "files": [
+      "static/chunks/575.c9ef0d14388cf508.js"
+    ]
+  },
+  "node_modules\\.pnpm\\jspdf@3.0.3\\node_modules\\jspdf\\dist\\jspdf.es.min.js -> html2canvas": {
+    "id": 8188,
+    "files": [
+      "static/chunks/c132bf7d-be4d4bb9470791d7.js"
     ]
   }
 }

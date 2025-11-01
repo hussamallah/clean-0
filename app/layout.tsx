@@ -1,32 +1,27 @@
-export const metadata = {
-  title: "Ground Zero — Per-Domain Assessment",
-  description: "Deterministic Big Five per-domain assessment",
-};
+import { GeistSans } from "geist/font/sans";
+import { Analytics } from "@vercel/analytics/react"
+import "./../styles/globals.css";
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-};
-
-import "../styles/globals.css";
-import { Suspense } from "react";
 import TopNav from "@/components/TopNav";
-import AnalyticsWrapper from "@/components/Analytics";
+import GlobalMenu from "@/components/GlobalMenu";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const metadata = {
+  title: "Ground Zero",
+  description: "Your deterministic identity blueprint",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-        <script src="https://cdn.vercel-insights.com/v1/script.debug.js" data-vercel-analytics="true"></script>
-      </head>
-      <body>
-        <Suspense fallback={null}>
-          <TopNav />
-        </Suspense>
+    <html lang="en" className={GeistSans.className}>
+      <body className="bg-black">
+        <TopNav />
+        <GlobalMenu />
         {children}
+        <Analytics />
       </body>
     </html>
   );

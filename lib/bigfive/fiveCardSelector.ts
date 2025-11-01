@@ -353,7 +353,24 @@ function buildConflictCards(facets:FacetData[], zMap:Map<string,number>, maxConf
     });
   }
   
-  return cards;
+  // Deduplicate and ensure unique conflict cards
+  const uniqueConflicts = [];
+  const seenConflictIds = new Set();
+  for (const card of cards) {
+    if (card.type === 'conflict') {
+      // id: -1 is a fallback and can be duplicated
+      if (card.conflict!.id === -1 || !seenConflictIds.has(card.conflict!.id)) {
+        uniqueConflicts.push(card);
+        if (card.conflict!.id !== -1) {
+          seenConflictIds.add(card.conflict!.id);
+        }
+      }
+    } else {
+      uniqueConflicts.push(card);
+    }
+  }
+  
+  return uniqueConflicts;
 }
 
 export function selectFiveCards(facets: FacetData[]): SelectedCard[] {
@@ -466,7 +483,34 @@ export function selectFiveCards(facets: FacetData[]): SelectedCard[] {
     cards.push(finalValuesCard);
   }
 
-  const finalCards = cards.slice(0, 8); // Allow up to 8 cards (1 high + 1 low + 4 conflicts + 1 social + 1 values)
-  console.log('Final 5 Cards Summary:', finalCards.map(c => ({ type: c.type, facet: c.facet, bucket: c.bucket })));
+  // De-duplicate cards based on facet name for non-conflict cards, and title for conflict cards
+  const uniqueCards: SelectedCard[] = [];
+  const seenFacets = new Set<string>();
+  const seenConflictTitles = new Set<string>();
+
+  for (const card of cards) {
+    if (card.type === 'conflict') {
+      if (!seenConflictTitles.has(card.facet)) {
+        uniqueCards.push(card);
+        seenConflictTitles.add(card.facet);
+      }
+    } else {
+      if (!seenFacets.has(card.facet)) {
+        uniqueCards.push(card);
+        seenFacets.add(card.facet);
+      }
+    }
+  }
+
+  // Ensure min 3 / max 9 cards are returned
+  let finalCards = uniqueCards;
+  if (finalCards.length > 9) {
+    finalCards = finalCards.slice(0, 9);
+  }
+
+  // If after deduplication we have less than 3, we might need a different strategy,
+  // but for now we'll just return what we have. The component should handle it.
+  
+  console.log(`Final ${finalCards.length} Cards Summary:`, finalCards.map(c => ({ type: c.type, facet: c.facet, bucket: c.bucket })));
   return finalCards;
 }

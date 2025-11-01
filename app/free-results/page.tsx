@@ -1,50 +1,30 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import CTAButton from '@/components/CTAButton';
 import archetypeRules from "@/arctyps rules.json";
 import archetypeAtlas from "@/lib/data/archetype_atlas.json";
-// Field presence bank removed for domain cards UI
 import { DOMAINS, canonicalFacets, FACET_INTERPRETATIONS } from "@/lib/bigfive/constants";
 import { getScoreLevel } from "@/lib/bigfive/format";
 import { selectFiveCards } from "@/lib/bigfive/fiveCardSelector";
-import ExistentialCircuits from "@/components/who/ExistentialCircuits";
-import bigFiveImpacts from "@/BigFiveImpacts.json";
 import { selectWowFacets, type FacetsByDomain as WowFacetsByDomain } from "@/lib/bigfive/wowFacets";
 import wowBank from "@/wow.json";
-import oneSentenceSummaries from "@/one-sentence-summary.json";
-import IdentityMirror from "@/components/who/IdentityMirror";
 import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
 import Tooltip from '@/components/Tooltip';
+import DetailedResults from '@/components/assessment/DetailedResults';
 
+// Hardcoded example result ID
+const EXAMPLE_RID = '1b46e28411524e4f06ceb9f8';
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number) => {
-  if (!hex || hex.length < 7) return `rgba(76, 175, 239, ${alpha})`; // Default color if hex is invalid
+  if (!hex || hex.length < 7) return `rgba(76, 175, 239, ${alpha})`;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
-
-// Tiny star renderer (inline)
-const Stars = ({ count }:{ count:number }) => (
-  <div className="flex gap-1">
-    {Array.from({length:5}).map((_,i)=> (
-      <span key={i} className={i < count ? 'text-yellow-300' : 'text-white/20'}>★</span>
-    ))}
-  </div>
-);
-// Stacked stars renderer (one star per line)
-const StackedStars = ({ count }:{ count:number }) => (
-  <div className="flex flex-col gap-1">
-    {Array.from({length:5}).map((_,i)=> (
-      <div key={i} className={i < count ? 'text-yellow-300' : 'text-white/20'}>★</div>
-    ))}
-  </div>
-);
 
 // Domain tag helper
 type DomainKey = 'O'|'C'|'E'|'A'|'N';
@@ -146,7 +126,7 @@ function extractFacetBuckets(payload:any): Record<DomainKey, Record<string,'High
       const map: Record<string,'High'|'Medium'|'Low'> = {};
       for (const [facet, val] of Object.entries(raw)){
         const num = Number(val);
-        const norm = isFinite(num) ? Math.max(0, Math.min(1, (num - 1) / 4)) : 0.5; // 1..5 -> 0..1
+        const norm = isFinite(num) ? Math.max(0, Math.min(1, (num - 1) / 4)) : 0.5;
         const bucket: 'High'|'Medium'|'Low' = norm >= 0.67 ? 'High' : (norm < 0.34 ? 'Low' : 'Medium');
         map[facet] = bucket;
       }
@@ -167,7 +147,6 @@ function extractDomainMeansNormalized(payload:any): Record<DomainKey, number> {
     const d = r?.domain as DomainKey;
     if (!['O','C','E','A','N'].includes(String(d))) continue;
 
-    // 1) Prefer final facet buckets
     const bucket = r?.payload?.final?.bucket;
     if (bucket && typeof bucket === 'object'){
       const vals = Object.values(bucket).map(bucketToNum);
@@ -177,13 +156,12 @@ function extractDomainMeansNormalized(payload:any): Record<DomainKey, number> {
       }
     }
 
-    // 2) Fallback to phase2 raw facet scores (assume 1..5 scale -> normalize to 0..1)
     const raw = r?.payload?.phase2?.A_raw;
     if (raw && typeof raw === 'object'){
       const vals = Object.values(raw).map((x:any)=>{
         const num = Number(x);
         if (!isFinite(num)) return 0.5;
-        const norm = (num - 1) / 4; // map 1..5 to 0..1
+        const norm = (num - 1) / 4;
         return Math.max(0, Math.min(1, norm));
       });
       if (vals.length){
@@ -195,108 +173,8 @@ function extractDomainMeansNormalized(payload:any): Record<DomainKey, number> {
   return out;
 }
 
-function bucketToValue(b:'High'|'Medium'|'Low'): number { return b==='High'?1: b==='Medium'?0.5: 0; }
-
-function computeCardAvgFacets(card:any, facetBuckets: Record<DomainKey, Record<string,'High'|'Medium'|'Low'>> | null): number {
-  if (!facetBuckets) return 0.5;
-  const maps: any[] = Array.isArray(card?.big_five_map) ? card.big_five_map : [];
-  let totalWeight = 0;
-  let sum = 0;
-  
-  console.log('Override Card Debug - computeCardAvgFacets:', {
-    cardTitle: card?.title || card?.id,
-    facetBuckets: facetBuckets,
-    maps: maps
-  });
-  
-  for (const m of maps){
-    const dk = domainToKey[m?.domain || ''] as DomainKey;
-    const dir = String(m?.direction || 'direct');
-    const facs: string[] = Array.isArray(m?.facets) ? m.facets : [];
-    for (const f of facs){
-      const canon = FACET_SYNONYMS[dk]?.[normFacetLabel(f)] || f; // fall back to original label
-      const b = facetBuckets[dk]?.[canon];
-      if (!b) continue;
-      let v = bucketToValue(b);
-      if (dir === 'inverse') v = 1 - v; // invert
-      const w = dir === 'support' ? 0.5 : 1.0; // support has lower weight
-      sum += v * w;
-      totalWeight += w;
-      
-      console.log('Override Card Facet Calculation:', {
-        cardTitle: card?.title || card?.id,
-        domain: m?.domain,
-        facet: f,
-        canonical: canon,
-        bucket: b,
-        bucketValue: bucketToValue(b),
-        direction: dir,
-        finalValue: v,
-        weight: w,
-        contribution: v * w
-      });
-    }
-  }
-  
-  const result = totalWeight>0 ? (sum / totalWeight) : 0.5;
-  console.log('Override Card Final Average:', {
-    cardTitle: card?.title || card?.id,
-    sum: sum,
-    totalWeight: totalWeight,
-    average: result
-  });
-  
-  return result;
-}
-
-function computeCardAvg(card: any, dmOrFacet: any): number {
-  // Prefer facet-based scoring if buckets available
-  if (dmOrFacet && dmOrFacet.__type === 'facetBuckets'){ return computeCardAvgFacets(card, dmOrFacet.map); }
-  // Fallback: previous domain-mean approach
-  const dm = dmOrFacet as Record<DomainKey, number> | null;
-  if (!dm) return 0.5;
-  const maps: any[] = Array.isArray(card?.big_five_map) ? card.big_five_map : [];
-  let totalWeight = 0; let score = 0;
-  for (const m of maps){
-    const key = domainToKey[m?.domain || ''] as DomainKey;
-    const val = dm[key]; if (typeof val !== 'number') continue;
-    const dir = String(m?.direction || 'direct');
-    const weight = 1.0;
-    const dirScore = dir === 'inverse' ? (1 - val) : val;
-    score += dirScore * weight; totalWeight += weight;
-  }
-  return totalWeight>0 ? score/totalWeight : 0.5;
-}
-
-function scoreCardLevel(card: any, dmOrFacet: any): 'high'|'medium'|'low' {
-  const avg = computeCardAvg(card, dmOrFacet);
-  if (avg >= 0.67) return 'high';
-  if (avg < 0.34) return 'low';
-  return 'medium';
-}
-
-function starsForAvg(avg: number): number {
-  let stars;
-  if (avg >= 0.67) stars = 5;
-  else if (avg < 0.34) stars = avg < 0.17 ? 1 : 2;
-  else stars = avg < 0.5 ? 3 : 4;
-  
-  console.log('Override Card Stars Calculation:', {
-    average: avg,
-    stars: stars,
-    threshold: avg >= 0.67 ? '5 stars (>=0.67)' : avg < 0.34 ? (avg < 0.17 ? '1 star (<0.17)' : '2 stars (0.17-0.34)') : (avg < 0.5 ? '3 stars (0.34-0.5)' : '4 stars (0.5-0.67)')
-  });
-  
-  return stars;
-}
-
-// Removed field presence cards; cards now represent the five domains
-
-// Removed unused SVG star component; using simple Stars renderer
-
-function YourIdContent() {
-  const searchParams = useSearchParams();
-  const rid = searchParams.get('rid');
+function IdentityBlueprintContent() {
+  const rid = EXAMPLE_RID;
   const [accentColor, setAccentColor] = useState('');
   const [archetypeName, setArchetypeName] = useState<string>('');
   const [domainMeans, setDomainMeans] = useState<Record<DomainKey, number> | null>(null);
@@ -306,12 +184,13 @@ function YourIdContent() {
   const [whoData, setWhoData] = useState<any|null>(null);
   const [panels, setPanels] = useState<any|null>(null);
   const [modalDomain, setModalDomain] = useState<DomainKey|null>(null);
-  const [headerOpen, setHeaderOpen] = useState<boolean>(false);
   const [archetypeDescription, setArchetypeDescription] = useState<{title: string; text: string}[]>([]);
   const [wowByDomain, setWowByDomain] = useState<null | Record<DomainKey, Array<{name:string; score:number; domain_mean:number; pattern:string; reason:{contrast:number; visibility:number; extreme:boolean}}>>>(null);
   const [shareStatus, setShareStatus] = useState<'idle'|'copied'|'error'>('idle');
   const [previewModal, setPreviewModal] = useState<any | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'id'|'summary'|'results'>('id');
+  const [verifyStatus, setVerifyStatus] = useState<'idle'|'ok'|'fail'>('idle');
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -326,56 +205,7 @@ function YourIdContent() {
     };
   }, []);
 
-  const handleDownloadJson = () => {
-    if (fullResults) {
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-        JSON.stringify(fullResults, null, 2)
-      )}`;
-      const link = document.createElement("a");
-      link.href = jsonString;
-      link.download = `ground_zero_results_${rid}.json`;
-      link.click();
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('capture-root');
-    if (element && fullResults) {
-      setIsCapturing(true);
-      // Wait for React to re-render and hide the conflict patterns section
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const html2canvas = await loadHtml2Canvas();
-      const { jsPDF } = await import('jspdf');
-
-      if (!html2canvas) {
-        console.error('html2canvas not loaded');
-        setIsCapturing(false);
-        return;
-      }
-
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher scale for better quality
-        backgroundColor: '#000000',
-        useCORS: true,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-
-      pdf.save(`ground_zero_results_${rid}.pdf`);
-      setIsCapturing(false);
-    }
-  };
-
   const emojiMap: Record<DomainKey, string> = { O:'🎨', C:'✅', E:'⚡', A:'🤝', N:'🛡️' };
-  const GOLD = '#d4af37';
   const imageMap: Record<DomainKey, string> = {
     A: '/agree.png',
     C: '/conci.png',
@@ -386,7 +216,6 @@ function YourIdContent() {
 
   useEffect(()=>{ import("@/lib/data/who_panels.json").then(m=> setPanels((m as any).default || m)); }, []);
 
-  // Map canonical facet labels to the visibility keys used by wow selector
   function toVisibilityKey(d: DomainKey, name: string): string {
     const map: Partial<Record<DomainKey, Record<string,string>>> = {
       O: { 'Artistic Interests':'Artistic' },
@@ -399,7 +228,6 @@ function YourIdContent() {
     return table[name] || name;
   }
 
-  // Map wow selector facet name -> wow.json bank facet key (lowercase, specific hyphens)
   function wowNameToBankKey(d: DomainKey, name: string): string {
     const n = String(name || '').toLowerCase();
     const m: Partial<Record<DomainKey, Record<string,string>>> = {
@@ -414,7 +242,6 @@ function YourIdContent() {
   }
 
   function domainProper(d: DomainKey): string {
-    // Use DOMAINS labels like "Openness (O)" -> "Openness"
     return DOMAINS[d].label.split(' ')[0];
   }
 
@@ -427,126 +254,6 @@ function YourIdContent() {
       const text = facetObj?.[pick.pattern] || facetObj?.neutral;
       return typeof text === 'string' ? text : null;
     } catch { return null; }
-  }
-
-  function buildIdentityNarrativeFromWow(stanceLine?: string | null): string[] {
-    if (!wowByDomain) return [];
-    const picksOrdered: Array<{ d:DomainKey; p:any; priority:number }> = [];
-    for (const d of ['O','C','E','A','N'] as DomainKey[]) {
-      const arr = (wowByDomain as any)[d] as Array<any> | undefined;
-      if (!arr || !arr.length) continue;
-      // rank by composite approximation
-      const ranked = [...arr].map(p=> ({
-        p,
-        priority: (p.reason?.contrast ?? 0)*100 + (p.reason?.extreme ? 20 : 0) + (p.reason?.visibility ?? 0)
-      })).sort((a,b)=> b.priority - a.priority);
-      // take top one for each domain first
-      if (ranked[0]) picksOrdered.push({ d, p: ranked[0].p, priority: ranked[0].priority });
-      // store others for overflow
-      for (let i=1;i<ranked.length;i++) picksOrdered.push({ d, p: ranked[i].p, priority: ranked[i].priority - i });
-    }
-    // global sort, but keep first-pass domain coverage near the top
-    picksOrdered.sort((a,b)=> b.priority - a.priority);
-
-    const sentences: string[] = [];
-    for (const item of picksOrdered) {
-      const s = lineForPick(item.d, { name: item.p.name, pattern: item.p.pattern });
-      if (s) sentences.push(s);
-      if (sentences.length >= 6) break;
-    }
-    if (stanceLine && sentences.length < 7) sentences.push(stanceLine);
-    return [sentences.join(' ')];
-  }
-
-  // Identity narrative builder (mirrors Who page selection/compression)
-  function buildIdentityNarrativeFromWhoNarrative(narr: string[] | undefined | null, stanceLine?: string | null): string[] {
-    const MAX_SENTENCES = 7;
-    const MAX_FROM_NARR = 5;
-    const MAX_WORDS = 16;
-    const MIN_WORDS = 6;
-    const SOFTENERS = /\b(very|really|quite|somewhat|often|usually|maybe|perhaps|a bit|kind of|sort of)\b/gi;
-    const FILLERS = /\b(that|just|actually|literally)\b/gi;
-    const BOILERPLATE_DOMAIN = /^\s*Your\s+(Openness|Conscientiousness|Extraversion|Agreeableness|Neuroticism)\s+is\b/i;
-    const TOKENS = [
-      { rx:/\bopenness\b/i, facets:[/imagin/i,/creativ/i,/ideas?/i,/beauty|art|music|literature|nature/i] },
-      { rx:/\bconscientiousness\b/i, facets:[/reliable|reliab/i,/execution|deliver|finish/i,/lanes?|scope|SOP/i] },
-      { rx:/\bextraversion\b/i, facets:[/tempo|momentum|visible|energ/i,/lead|initiat/i] },
-      { rx:/\bagreeableness\b/i, facets:[/goodwill|trust|warm/i,/convert|align|coalition/i] },
-      { rx:/\bneuroticism\b/i, facets:[/signals?|worry|anxiety|overload|frustration/i,/buffers?|resets?|guardrails?/i] }
-    ];
-
-    function splitSentences(text:string): string[] {
-      return (text||'')
-        .replace(/\s+/g,' ')
-        .split(/(?<=[.!?])\s+/)
-        .map(s=>s.trim())
-        .filter(Boolean);
-    }
-    function clampWords(s:string): string {
-      const words = s
-        .replace(SOFTENERS,'')
-        .replace(FILLERS,'')
-        .replace(/\s+/g,' ')
-        .trim()
-        .split(' ');
-      if (words.length <= MAX_WORDS) return words.join(' ');
-      return words.slice(0, MAX_WORDS).join(' ') + '.';
-    }
-    function scoreSentence(s:string): number {
-      let score = 0;
-      for (const t of TOKENS) {
-        if (t.rx.test(s)) score += 1;
-        for (const f of t.facets) if (f.test(s)) score += 3;
-      }
-      if (/\b(tight cycles?|buffers?|resets?|guardrails?|boundar(y|ies))\b/i.test(s)) score += 2;
-      if (/\b(define|commit|ship|move|drop scope|restart|request)\b/i.test(s)) score += 1;
-      if (/\b(composed\s+force|regain\s+control|reliable\s+execution|set\s+tempo|momentum\s+visible)\b/i.test(s)) score += 2;
-      return score;
-    }
-
-    const n0 = Array.isArray(narr) ? narr.slice(0,5).join(' ') : '';
-    const n1 = Array.isArray(narr) ? narr.slice(5,10).join(' ') : '';
-    const n2 = Array.isArray(narr) ? narr.slice(10).join(' ') : '';
-    let candidates = [...splitSentences(n0), ...splitSentences(n1), ...splitSentences(n2)];
-    candidates = candidates.filter(s => {
-      const w = s.trim().split(/\s+/).filter(Boolean).length;
-      if (w < MIN_WORDS) return false;
-      if (BOILERPLATE_DOMAIN.test(s)) return false;
-      if (/^heat\.?$/i.test(s)) return false;
-      return true;
-    });
-
-    const ranked = candidates
-      .map((s,idx)=>({ s, idx, score: scoreSentence(s) }))
-      .sort((a,b)=> b.score - a.score || a.idx - b.idx);
-
-    const picked: string[] = [];
-    const used = new Set<number>();
-    for (const t of TOKENS) {
-      let bestIdx = -1; let bestScore = -Infinity;
-      ranked.forEach((r,i)=>{
-        if (used.has(i)) return;
-        if (t.rx.test(r.s) || t.facets.some(f=> f.test(r.s))) {
-          if (r.score > bestScore) { bestScore = r.score; bestIdx = i; }
-        }
-      });
-      if (bestIdx >= 0) { picked.push(ranked[bestIdx].s); used.add(bestIdx); }
-      if (picked.length >= MAX_FROM_NARR) break;
-    }
-    for (let i=0; i<ranked.length && picked.length<MAX_FROM_NARR; i++){
-      if (used.has(i)) continue;
-      const s = ranked[i].s;
-      if (/heat plus direction equals motion/i.test(s)) continue;
-      picked.push(s);
-      used.add(i);
-    }
-
-    const compressed = picked.map(clampWords);
-    const finalSentences: string[] = [];
-    for (const s of compressed) { if (finalSentences.length < 6) finalSentences.push(s); }
-    if (stanceLine && finalSentences.length < MAX_SENTENCES) finalSentences.push(stanceLine);
-    if (!finalSentences.length) finalSentences.push('You set direction and move work to done.');
-    return [finalSentences.join(' ')];
   }
 
   function computeStanceLine(): string | null {
@@ -573,7 +280,6 @@ function YourIdContent() {
       const p = withTone(panels?.interpersonal?.[interpersonalKey]);
       const label = String(p?.title || 'Adaptive');
       let l0 = String((p?.lines || [])[0] || '').replace(/\s+/g,' ').trim();
-      // Merge smoothly into one sentence as Who page does
       l0 = l0.replace(/^[Yy]ou\s+/, 'you ');
       const stance = label ? label.toLowerCase() : 'adaptive';
       if (!l0) return `Your stance with people is ${stance}.`;
@@ -581,27 +287,8 @@ function YourIdContent() {
     } catch { return null; }
   }
 
-  function computeHeaderProofLine(): string {
-    try{
-      const rid = (whoData?.audit?.runHash) || '';
-      const hash = (whoData?.audit?.checksum) || rid;
-      const weeklyFinishers =  (typeof window !== 'undefined' && hash)
-        ? (function(seed:string){
-            let h = 0 >>> 0; for (let i=0;i<seed.length;i++){ h = ((h*31) + seed.charCodeAt(i)) >>> 0; }
-            const min=1000, max=2000, span = max-min+1; return min + (h % span);
-          })(String(hash))
-        : 0;
-      return weeklyFinishers
-        ? `This run is verified (hash ${hash}). This week, ${weeklyFinishers.toLocaleString()} people finished; you read yours now.`
-        : `This run is verified.`;
-    } catch { return `This run is verified.`; }
-  }
-  
-  // Redesigned quick-scan ID card (scaffold)
   function renderRedesignedIdCard() {
-    // 1) Core tension from top conflict card
     let coreLabel: string | null = null;
-    let coreStars = 0;
     let conflictCard: any = null;
     if (fullResults) {
       const facets: Array<{domain:DomainKey; facet:string; raw:number; bucket:'High'|'Medium'|'Low'}> = [];
@@ -619,8 +306,6 @@ function YourIdContent() {
       const cards = selectFiveCards(facets).filter((c:any)=> c.type==='conflict');
       if (cards.length) {
         conflictCard = cards[0];
-        const avgPct = conflictCard.leftPct && conflictCard.rightPct ? (conflictCard.leftPct + conflictCard.rightPct)/2 : 50;
-        coreStars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
         coreLabel = String(conflictCard.facet || '').replace(/\s*vs\.?\s*/i, ' ←→ ');
       }
     }
@@ -632,7 +317,6 @@ function YourIdContent() {
       bucket: (r.payload?.final?.bucket || {})[f] || 'Medium'
     })))).filter((c:any)=> c.type==='conflict').length : 0;
 
-    // 2) Domain snapshot (grouped)
     function DomainSnapshot(){
       if (!domainMeans) return null;
       const level = (v:number)=> v>=0.67 ? 'HIGH' : (v<0.34 ? 'LOW' : 'MEDIUM');
@@ -655,7 +339,6 @@ function YourIdContent() {
       );
     }
 
-    // 3) Quick profile bullets (pulled from narrative + stance)
     function QuickProfile(){
       const narr: string[] = Array.isArray(whoData?.narrative) ? whoData!.narrative : [];
       const strengths = whoData?.listSentences?.strengths || [];
@@ -670,40 +353,11 @@ function YourIdContent() {
           <li><b>Your Style</b>: {style}</li>
           <li><b>Your Strength</b>: {strength}</li>
           <li><b>Your Struggle</b>: {struggle}</li>
-          <li>
-            <b>Your Stance</b>: {stanceLine}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setPreviewModal({
-                  title: 'Compatibility Report',
-                  description: 'Unlock a detailed analysis of your interpersonal dynamics with one other person.',
-                  previewContent: (
-                    <div>
-                      <h4 className="font-bold text-lg text-yellow-300">How You Interact</h4>
-                      <p className="mt-2 text-white/90 text-sm">
-                        This report reveals the precise points of harmony and friction between you and one other person, creating a playbook for better communication.
-                      </p>
-                      <p className="mt-2 text-xs italic text-white/70">
-                        For example, we&apos;ll show you how your High Neuroticism might sync or clash with their personality.
-                      </p>
-                    </div>
-                  ),
-                  price: 3.00,
-                  purchaseUrl: `/compatibility${rid ? `?ridA=${rid}` : ''}`,
-                  unlocks: 'The full report includes a detailed breakdown of your domain synergy, conflict patterns, and a playbook for better communication.'
-                });
-              }}
-              className="ml-2 text-blue-400 hover:underline text-[10px] bg-transparent border-none p-0 cursor-pointer"
-            >
-              (See how this impacts your relationships)
-            </button>
-          </li>
+          <li><b>Your Stance</b>: {stanceLine}</li>
         </ul>
       );
     }
 
-    // A small component to render the conflict pattern preview
     const ConflictPatternPreview = ({ card }: { card: any }) => {
       if (!card) return <p className="text-white/70">Your conflict pattern data will be shown here.</p>;
       return (
@@ -715,7 +369,6 @@ function YourIdContent() {
       );
     };
 
-    // 4) Key insight (short pull-quote from narrative)
     function KeyInsight(){
       const narr: string[] = Array.isArray(whoData?.narrative) ? whoData!.narrative : [];
       const baseQuote = narr[3] || 'You present confidently while your inner critic takes notes. Range is your advantage; diffusion is your risk.';
@@ -724,43 +377,15 @@ function YourIdContent() {
       );
       return (
         <blockquote className="text-white/90 text-xs italic border-l pl-2 border-white/20">
-          “{enhancedQuote}”
+          "{enhancedQuote}"
         </blockquote>
       );
     }
 
     return (
       <div id="id-card" className="rounded-lg border border-white/10 bg-white/5 p-2 sm:p-3" style={{ ...neonBorderStyle(), maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-        {!isCapturing && (
-          <div className="my-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
-            <h3 className="text-base font-bold text-white mb-2">⚖️ Your Core Conflict Pattern</h3>
-            <p className="text-xs text-yellow-200/90">
-              This tension is key to your growth. See how it shows up in specific, repeatable ways.
-            </p>
-            <div className="mt-2">
-              <CTAButton
-                href="#"
-                tier="Paid"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPreviewModal({
-                    title: 'Conflict Patterns',
-                    description: 'This report reveals how you act under pressure. Below is your #1 pattern, based on your results.',
-                    previewContent: <ConflictPatternPreview card={conflictCard} />,
-                    price: 3.00,
-                    purchaseUrl: `/conflict-patterns${rid ? `?rid=${rid}` : ''}`,
-                    unlocks: `The full report includes all ${conflictCardCount} of your identified conflict patterns.`
-                  });
-                }}
-              >
-                Preview Your Conflict Patterns
-              </CTAButton>
-            </div>
-          </div>
-        )}
-
         <div className="mb-2">
-          <div className="text-sm text-white/70" style={{letterSpacing:.5}}>🎯 YOUR GROUND ZERO PROFILE</div>
+          <div className="text-sm text-white/70" style={{letterSpacing:.5}}>🎯 YOUR GROUND ZERO PROFILE NAVIGATOR ⚖️</div>
           {archetypeName ? <div className="text-lg font-extrabold" style={{ color: accentColor }}>{archetypeName.toUpperCase()}</div> : null}
         </div>
 
@@ -826,14 +451,7 @@ function YourIdContent() {
       </div>
     );
   }
-  
-  // Debug logging for domain card data
-  console.log('Override Page Debug - Domain Cards:', {
-    hasFullResults: !!fullResults,
-    domains: ['O','C','E','A','N'],
-  });
 
-  // Build full domain summary content (mirrors FullResults)
   function renderDomainSummary(d: DomainKey, payload: any){
     const facets = canonicalFacets(d);
     const bucket = (payload?.final?.bucket || {}) as Record<string,'High'|'Medium'|'Low'>;
@@ -842,7 +460,7 @@ function YourIdContent() {
     const lvlKey = String(getScoreLevel(domain_mean_raw)).replace('neutral','medium') as 'high'|'medium'|'low';
     const levelMeaning: Record<'high'|'medium'|'low', string> = {
       high: 'You can access this trait easily and consistently.',
-      medium: 'You can turn this trait on when needed, but it isn’t your default.',
+      medium: 'You can turn this trait on when needed, but it isn\'t your default.',
       low: d==='N' ? 'You keep an even keel and recover quickly under pressure.' : 'This trait stays in the background unless the situation forces it.'
     };
     const highs = facets.filter(f=> bucket[f]==='High').sort((a,b)=> (A_raw[b]-A_raw[a])).slice(0,2);
@@ -889,95 +507,26 @@ function YourIdContent() {
       </div>
     );
   }
-  // Neon border helper using accent color
+
   function neonBorderStyle(){
     const glow = hexToRgba(accentColor || '#4cafef', 0.6);
     const wide = hexToRgba(accentColor || '#4cafef', 0.25);
     const border = hexToRgba(accentColor || '#4cafef', 0.5);
     return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
   }
-  function goldBorderStyle(){
-    const glow = 'rgba(212,175,55,0.6)';
-    const wide = 'rgba(212,175,55,0.25)';
-    const border = 'rgba(212,175,55,0.5)';
-    return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
-  }
-
-  async function loadHtml2Canvas(): Promise<any>{
-    if (typeof window === 'undefined') return null;
-    const w = window as any;
-    if (w.html2canvas) return w.html2canvas;
-    await new Promise<void>((resolve, reject)=>{
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-      s.async = true;
-      s.onload = ()=> resolve();
-      s.onerror = ()=> reject(new Error('failed to load html2canvas'));
-      document.head.appendChild(s);
-    });
-    return (window as any).html2canvas;
-  }
-
-  async function capturePageScreenshot(): Promise<File|null>{
-    setIsCapturing(true);
-    try{
-      const html2canvas = await loadHtml2Canvas();
-      if (!html2canvas) {
-        setIsCapturing(false);
-        return null;
-      }
-      const el = document.getElementById('capture-root') as HTMLElement;
-      if (!el) {
-        setIsCapturing(false);
-        return null;
-      }
-      
-      const canvas = await html2canvas(el, {
-        backgroundColor: '#000000',
-        scale: window.devicePixelRatio * 2, // Increase scale for better quality
-        useCORS: true,
-      });
-
-      const blob: Blob|null = await new Promise(resolve=> canvas.toBlob(resolve, 'image/png', 0.95)); // Use higher quality PNG
-      
-      setIsCapturing(false);
-
-      if (!blob) return null;
-      return new File([blob], 'ground-zero-id.png', { type: 'image/png' });
-    } catch {
-      setIsCapturing(false);
-      return null;
-    }
-  }
-  
-  console.log('Override Page Debug - Data State:', {
-    rid: rid,
-    archetypeName: archetypeName,
-    domainMeans: domainMeans,
-    facetBuckets: facetBuckets,
-    hasFacetBuckets: !!facetBuckets
-  });
 
   useEffect(() => {
-    if (!rid) return;
-
     (async () => {
       try {
         const res = await fetch(`/api/who/${rid}`, { cache: 'no-store' });
         const data = await res.json();
 
-        console.log('Override Page Debug - Raw API payload:', data);
-
-        // Mirror who/page.tsx logic to resolve archetype name
         const whoObj = data?.who ?? {};
         const results = Array.isArray(data?.results) ? data.results : [];
 
         let archName: string | undefined;
-        // 1) direct string
         if (typeof whoObj?.archetype === 'string') archName = String(whoObj.archetype);
-        // 2) object with winner
         if (!archName && typeof whoObj?.archetype === 'object' && whoObj?.archetype?.winner) archName = String(whoObj.archetype.winner);
-        // 3) fallback from results array (domain === 'ARCH')
         if (!archName) {
           const archPayload = results.find((r: any) => r?.domain === 'ARCH')?.payload;
           if (typeof archPayload === 'string') archName = archPayload;
@@ -986,7 +535,6 @@ function YourIdContent() {
 
         if (archName) {
           setArchetypeName(archName);
-          // Match using gz (display) or id (slug)
           const match = (archetypeRules as any).archetypes.find((a: any) => {
             const gz = String(a?.gz || '').toLowerCase();
             const id = String(a?.id || '').toLowerCase();
@@ -998,7 +546,6 @@ function YourIdContent() {
 
         if (archName) {
           const atlas = (archetypeAtlas as any);
-          // Format archName to match the keys in the atlas (e.g., "sovereign" -> "Sovereign")
           const formattedArchName = archName.charAt(0).toUpperCase() + archName.slice(1).toLowerCase();
           const archetypeData = atlas[formattedArchName];
           if (archetypeData) {
@@ -1019,17 +566,14 @@ function YourIdContent() {
           }
         }
 
-        // Extract domain means and facet buckets
         const dm = extractDomainMeansNormalized(data);
         const fb = extractFacetBuckets(data);
         setDomainMeans(dm);
         setFacetBuckets(fb);
         setFullResults(results);
         setWhoData(data?.who || null);
-        console.log('Override Page Debug - Extracted Means and Buckets:', { dm, fb });
         setIsReady(true);
 
-        // Build wow facets for narrative highlights
         try {
           const meansRaw: Record<DomainKey, number> = { O:3, C:3, E:3, A:3, N:3 } as any;
           const byDomain: WowFacetsByDomain = { O:[], C:[], E:[], A:[], N:[] } as any;
@@ -1055,77 +599,135 @@ function YourIdContent() {
         }
       } catch {}
     })();
-  }, [rid]);
+  }, []);
 
-  if (!isReady) return null;
+  if (!isReady) return (
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-lg mb-2">Loading Free Results...</div>
+        <div className="text-sm text-white/60">Fetching example profile data</div>
+      </div>
+    </div>
+  );
 
-  const glowColor = hexToRgba(accentColor || '#000000', 0.7);
-  const cardBgColor = hexToRgba(accentColor || '#000000', 0.1);
+  function renderSummaryContent() {
+    if (!fullResults) return <div className="text-center p-8 text-white/70">Loading summary...</div>;
+    
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">Summary</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {(['O','C','E','A','N'] as DomainKey[]).map(d => {
+            const payload = fullResults.find(r => r.domain === d)?.payload;
+            if (!payload) return null;
+            return (
+              <div
+                key={d}
+                className="rounded-lg border border-white/10 bg-white/5 p-4 cursor-pointer hover:bg-white/10 transition-all"
+                onClick={() => setModalDomain(d)}
+                style={neonBorderStyle()}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  {imageMap[d] ? (
+                    <Image src={imageMap[d]} alt="" width={40} height={40} className="w-10 h-10 object-cover" />
+                  ) : (
+                    <span className="text-2xl">{emojiMap[d]}</span>
+                  )}
+                  <h3 className="text-lg font-bold" style={{ color: accentColor }}>
+                    {DOMAINS[d].label.split(' (')[0]}
+                  </h3>
+                </div>
+                {renderDomainSummary(d, payload)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderFullResultsContent() {
+    if (!fullResults) return <div className="text-center p-8 text-white/70">Loading full results...</div>;
+    
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">Full Results</h2>
+        <DetailedResults
+          data={fullResults}
+          suiteHash={null}
+          verifyStatus={verifyStatus}
+          onVerify={() => setVerifyStatus('idle')}
+        />
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4">
-      {/* Redesigned, scannable ID card */}
-      <div id="capture-root" className="my-4 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
-        {renderRedesignedIdCard()}
+    <main className="min-h-screen bg-black text-white flex flex-col items-start sm:items-center p-2 sm:p-4">
+      {/* Page Header */}
+      <div className="w-full max-w-6xl mx-auto mb-6 text-center">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+          Your Free Results
+        </h1>
+        <p className="text-white/70 text-sm">
+          This is what you get for free when you complete the Ground Zero assessment. See your ID card, domain summaries, and full detailed results below.
+        </p>
       </div>
-      <Tooltip text="You can use this ID on the homepage to view your results again at any time.">
-        <div className="text-xs text-white/40 font-mono mb-4 cursor-pointer">
-          Run ID: {rid}
+
+      {/* Tabs */}
+      <div className="w-full max-w-6xl mx-auto mb-6">
+        <div className="flex justify-center gap-2 border-b border-white/10">
+          <button
+            onClick={() => setActiveTab('id')}
+            className={`px-6 py-3 text-sm font-semibold transition-all ${
+              activeTab === 'id'
+                ? 'border-b-2 border-yellow-400 text-yellow-300'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            ID Card
+          </button>
+          <button
+            onClick={() => setActiveTab('summary')}
+            className={`px-6 py-3 text-sm font-semibold transition-all ${
+              activeTab === 'summary'
+                ? 'border-b-2 border-yellow-400 text-yellow-300'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Summary
+          </button>
+          <button
+            onClick={() => setActiveTab('results')}
+            className={`px-6 py-3 text-sm font-semibold transition-all ${
+              activeTab === 'results'
+                ? 'border-b-2 border-yellow-400 text-yellow-300'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Full Results
+          </button>
         </div>
-      </Tooltip>
-      {/* Share (kept) */}
-      {!isCapturing && (
-        <div className="pb-8">
-          {/* Big Share button under the section */}
-          <div className="mt-3 flex justify-center">
-            <button
-              onClick={async ()=>{
-                try{
-                  const landingUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
-                  const file = await capturePageScreenshot();
-                  if (file && (navigator as any)?.canShare && (navigator as any).canShare({ files:[file] })){
-                    await (navigator as any).share({ title: 'Ground Zero', url: landingUrl, files: [file] });
-                    setShareStatus('copied');
-                    setTimeout(()=> setShareStatus('idle'), 1500);
-                    return;
-                  }
-                  if ((navigator as any)?.share){
-                    await (navigator as any).share({ title: 'Ground Zero', url: landingUrl });
-                    setShareStatus('copied');
-                    setTimeout(()=> setShareStatus('idle'), 1500);
-                  } else if (navigator?.clipboard && landingUrl){
-                    await navigator.clipboard.writeText(landingUrl);
-                    setShareStatus('copied');
-                    setTimeout(()=> setShareStatus('idle'), 1500);
-                  }
-                } catch {
-                  setShareStatus('error');
-                  setTimeout(()=> setShareStatus('idle'), 1500);
-                }
-              }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-black bg-gradient-to-r from-yellow-400 to-amber-500 border-2 border-yellow-500 shadow-lg shadow-yellow-500/50 hover:from-yellow-300 hover:to-amber-400 transition-all disabled:opacity-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-              </svg>
-              <span>{shareStatus==='copied' ? 'Copied!' : shareStatus==='error' ? 'Error' : 'Share Your ID'}</span>
-            </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'id' && (
+        <>
+          <div id="capture-root" className="my-4 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+            {renderRedesignedIdCard()}
           </div>
-          <div className="mt-3 flex justify-center">
-            <button
-              onClick={handleDownloadPdf}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-black bg-gray-300 hover:bg-gray-400 transition-all"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              <span>Download Results (PDF)</span>
-            </button>
-          </div>
-        </div>
+          <Tooltip text="This is an example ID card showing what your Ground Zero profile looks like.">
+            <div className="text-xs text-white/40 font-mono mb-4 cursor-pointer">
+              Example Run ID: {rid}
+            </div>
+          </Tooltip>
+        </>
       )}
       
-      {/* Modal for domain summary */}
+      {activeTab === 'summary' && renderSummaryContent()}
+      
+      {activeTab === 'results' && renderFullResultsContent()}
+      
       {modalDomain && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
@@ -1154,12 +756,12 @@ function YourIdContent() {
                 {DOMAINS[modalDomain].label.split(' (')[0]}
               </div>
               <div style={{ maxHeight: 360, overflow: 'auto' }}>
-            {(() => {
+                {(() => {
                   const payload = (fullResults || []).find((r:any)=> r?.domain===modalDomain)?.payload;
                   return payload ? renderDomainSummary(modalDomain, payload) : (
                     <p className="text-white/70 text-sm">No data for this domain.</p>
                   );
-            })()}
+                })()}
               </div>
             </div>
           </div>
@@ -1176,10 +778,10 @@ function YourIdContent() {
   );
 }
 
-export default function YourIdPage() {
+export default function IdentityBlueprintPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>}>
-      <YourIdContent />
+      <IdentityBlueprintContent />
     </Suspense>
   );
 }

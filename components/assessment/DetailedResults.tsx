@@ -7,7 +7,7 @@ import { stableStringify, getFacetScoreLevel, getScoreLevel } from "@/lib/bigfiv
 type DomainKey = keyof typeof DOMAINS;
 
 export default function DetailedResults({ data, suiteHash, verifyStatus, onVerify }:{ data: Array<{domain:DomainKey; payload:any}>, suiteHash: string | null, verifyStatus:'idle'|'ok'|'fail', onVerify: ()=>void }){
-  const [activeDomain, setActiveDomain] = useState<DomainKey | null>(null);
+  const [hoveredDomain, setHoveredDomain] = useState<DomainKey | null>(null);
 
   if (!data) return <div className="text-center p-8">Loading results...</div>;
   const order: DomainKey[] = ['O','C','E','A','N'];
@@ -17,37 +17,73 @@ export default function DetailedResults({ data, suiteHash, verifyStatus, onVerif
     return m;
   }, [data]);
 
+  const scrollToDomain = (domain: DomainKey) => {
+    const element = document.getElementById(`domain-${domain}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div>
-      <div className="flex flex-wrap justify-center items-center gap-3 my-4">
-        {order.map(d => (
-          <button 
-            key={d} 
-            className={`btn ${activeDomain === d ? 'selected' : ''}`}
-            onClick={()=> setActiveDomain(d)}
-            style={{
-              background: activeDomain === d ? 'white' : '#f8f9fa',
-              color: activeDomain === d ? 'black' : '#333',
-              border: '1px solid #e0e0e0',
-              borderRadius: '20px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.2s ease-in-out',
-            }}
-          >
-            {DOMAINS[d].label.split(' (')[0]}
-          </button>
-        ))}
+      <div className="mb-6">
+        <p className="text-center text-white/70 text-sm mb-4">
+          Click any trait below to jump to its detailed results
+        </p>
+        <div className="flex flex-wrap justify-center items-center gap-3 my-4">
+          {order.map(d => {
+            const isHovered = hoveredDomain === d;
+            return (
+              <button 
+                key={d} 
+                onClick={()=> scrollToDomain(d)}
+                onMouseEnter={()=> setHoveredDomain(d)}
+                onMouseLeave={()=> setHoveredDomain(null)}
+                style={{
+                  background: isHovered ? '#d4af37' : '#1a1a1a',
+                  color: isHovered ? '#000' : '#fff',
+                  border: isHovered ? '2px solid #d4af37' : '2px solid rgba(255,255,255,0.2)',
+                  borderRadius: '20px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease-in-out',
+                  cursor: 'pointer',
+                  boxShadow: isHovered ? '0 0 12px rgba(212, 175, 55, 0.5)' : 'none',
+                  transform: isHovered ? 'translateY(-2px)' : 'none',
+                }}
+              >
+                {DOMAINS[d].label.split(' (')[0]}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div className="card mt16">
-        {byDomain.get(activeDomain || 'O') ? (
-          <ResultsPanel payload={byDomain.get(activeDomain || 'O')} />
-        ) : (
-          <p className="muted">No results captured yet for {DOMAINS[activeDomain || 'O'].label}.</p>
-        )}
-      </div>
+      
+      {order.map(d => {
+        const payload = byDomain.get(d);
+        if (!payload) return null;
+        const domainName = DOMAINS[d].label.split(' (')[0];
+        
+        return (
+          <div key={d} id={`domain-${d}`} style={{ scrollMarginTop: '80px' }}>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              marginTop: '32px',
+              marginBottom: '16px',
+              color: '#fff',
+              textAlign: 'center',
+              letterSpacing: '0.5px'
+            }}>
+              {domainName}
+            </h2>
+            <div className="card mt16">
+              <ResultsPanel payload={payload} />
+            </div>
+          </div>
+        );
+      })}
       
     </div>
   );

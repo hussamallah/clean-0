@@ -11,6 +11,7 @@ import { IdentityModeCard } from "@/components/results/IdentityModeCard";
 import PaidContentPreviewModal from "@/components/PaidContentPreviewModal";
 import Link from 'next/link';
 import Tooltip from '@/components/Tooltip';
+import operationManualContent from "@/operation-manual-empty.json";
 
 function ResultsContent(){
   const router = useRouter();
@@ -155,14 +156,15 @@ function ResultsContent(){
         <div>
           <h1 style={{ textAlign:'center', margin:'0 0 12px', fontSize:24, fontWeight:800, letterSpacing:.5 }}>Detailed Results</h1>
           <div className="card">
+
             <div className="my-6 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
               <h4 className="font-bold text-lg text-green-300">
-                <Tooltip text="These are the core processes you use to interact with the world, such as how you manage energy, seek clarity, or build structure.">
-                  Existential Circuits
+                <Tooltip text="A personalized playbook for your life, with actionable advice for your career, decisions, and routines.">
+                  Operating Manual
                 </Tooltip>
               </h4>
               <p className="mt-2 text-white/90 text-sm max-w-xl mx-auto">
-                Get a detailed breakdown of your core psychological circuits.
+                Get a personalized playbook for your life, with actionable advice for your career, decisions, and routines.
               </p>
               <div className="mt-3">
                 <CTAButton
@@ -170,24 +172,44 @@ function ResultsContent(){
                   tier="Paid"
                   onClick={(e) => {
                     e.preventDefault();
+                    const manualContent = operationManualContent as any;
+                    const renderOrder = manualContent?.render_order || [
+                      'best_roles',
+                      'avoid_roles',
+                      'ideal_teammates',
+                      'decision_rules',
+                      'negotiation_style',
+                      'anti_burnout',
+                      'fix_disorganization',
+                      'communication',
+                      'reduce_friction',
+                      'practice_30d',
+                      'ideal_cofounder',
+                      'work_rhythm',
+                      'personal_boundaries'
+                    ];
+                    const sections = manualContent?.sections || {};
+                    
                     setPreviewModal({
-                      title: 'Existential Circuits',
-                      description: 'This report reveals your core psychological circuits—the fundamental systems that drive your motivations and fears.',
+                      title: 'Operating Manual',
+                      description: 'This is a personalized playbook based on your results, detailing:',
                       previewContent: (
-                        <div>
-                          <h4 className="font-bold text-lg text-green-300">Example: Energy Circuit</h4>
-                          <p className="mt-2 text-white/90 text-sm">
-                            Your Energy circuit is running <strong>High</strong>. You are driven by a need for action and momentum, but you risk burnout if you don't build in recovery periods.
-                          </p>
-                        </div>
+                        <ul className="list-disc list-inside text-left text-white/80 text-sm mt-2 space-y-1">
+                          {renderOrder.slice(0, 11).map((key: string) => {
+                            const section = sections[key];
+                            return (
+                              <li key={key}>{section?.title || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</li>
+                            );
+                          })}
+                        </ul>
                       ),
-                      price: 3.00,
-                      purchaseUrl: `/existential-circuits${rid ? `?rid=${rid}` : ''}`,
-                      unlocks: 'The full report includes all 12 of your existential circuits.'
+                      price: 10.00,
+                      purchaseUrl: `/results/operation-of-life-report${rid ? `?rid=${rid}` : ''}`,
+                      unlocks: 'The full manual with detailed insights on roles, burnout prevention, communication, and more.'
                     });
                   }}
                 >
-                  Preview Existential Circuits
+                  Preview Operating Manual
                 </CTAButton>
               </div>
             </div>

@@ -26,19 +26,19 @@ export default function TopNav() {
   const showNav = [
     "/your-id",
     "/results",
-    "/arctyps-duals",
     "/conflict-patterns",
     "/existential-circuits",
-    "/summary",
-    "/upgrades"
+    "/upgrades",
+    "/results/operation-of-life-report",
+    "/compatibility"
   ].some(prefix => pathname.startsWith(prefix));
   if (!showNav) return null;
 
   const navLinks = [
     { href: "/your-id", label: "ID Card" },
-    { href: "/summary", label: "Summary" },
     { href: "/results", label: "Results" },
-    { href: "/arctyps-duals", label: "Archetype Duals" },
+    { href: "/results/operation-of-life-report", label: "Operating Manual" },
+    { href: "/compatibility", label: "Compatibility Report" },
     { href: "/upgrades", label: "Upgrades" },
   ];
 

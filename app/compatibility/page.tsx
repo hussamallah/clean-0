@@ -2,6 +2,8 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import CTAButton from '@/components/CTAButton';
+import PaidContentPreviewModal from '@/components/PaidContentPreviewModal';
 
 const domainSynergyCopy: Record<string, Record<string, string>> = {
     O: {
@@ -44,13 +46,30 @@ function CompatibilityContent() {
   const search = useSearchParams();
   const ridAFromUrl = search?.get('ridA') || '';
   const ridBFromUrl = search?.get('ridB') || '';
+  const currentUserRid = search?.get('rid') || '';
   
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [previewModal, setPreviewModal] = useState<{
+    title: string;
+    description: string;
+    previewContent: React.ReactNode;
+    price: number;
+    purchaseUrl: string;
+    unlocks?: string;
+  } | null>(null);
 
-  const [ridA, setRidA] = useState(ridAFromUrl);
+  const [ridA, setRidA] = useState(ridAFromUrl || currentUserRid);
   const [ridB, setRidB] = useState(ridBFromUrl);
+
+  useEffect(() => {
+    if (!ridAFromUrl && currentUserRid) {
+      setRidA(currentUserRid);
+    }
+  }, [currentUserRid, ridAFromUrl]);
 
   useEffect(() => {
     if (ridAFromUrl && ridBFromUrl) {
@@ -103,6 +122,24 @@ function CompatibilityContent() {
     }
   };
 
+  const generateInviteLink = () => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${baseUrl}/`;
+  };
+
+  const copyInviteLink = async () => {
+    const link = generateInviteLink();
+    if (link && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(link);
+        setInviteLinkCopied(true);
+        setTimeout(() => setInviteLinkCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-black text-white flex items-center justify-center font-sans">Loading Report...</div>;
   }
@@ -114,43 +151,116 @@ function CompatibilityContent() {
   if (!data) {
     return (
       <main className="min-h-screen bg-gray-900 text-white p-8 font-sans">
-        <div className="max-w-md mx-auto">
+        {previewModal && (
+          <PaidContentPreviewModal
+            title={previewModal.title}
+            description={previewModal.description}
+            previewContent={previewModal.previewContent}
+            price={previewModal.price}
+            purchaseUrl={previewModal.purchaseUrl}
+            unlocks={previewModal.unlocks}
+            onClose={() => setPreviewModal(null)}
+            onUnlockClick={(e) => {
+              e.preventDefault();
+              setShowForm(true);
+              setPreviewModal(null);
+            }}
+          />
+        )}
+        <div className="my-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center max-w-3xl mx-auto">
+          <h4 className="font-bold text-lg text-blue-300">Run a Compatibility Report</h4>
+          <p className="mt-2 text-white/90 text-sm max-w-xl mx-auto">
+            See how you interact with a friend or partner. This report requires a second person's results.
+          </p>
+          <div className="mt-4">
+            <CTAButton
+              href="#"
+              tier="Paid"
+              onClick={(e) => {
+                e.preventDefault();
+                setPreviewModal({
+                  title: 'Compatibility Report',
+                  description: 'Unlock a detailed analysis of your interpersonal dynamics with one other person.',
+                  previewContent: (
+                    <div className="p-6 text-center">
+                      <h4 className="font-bold text-lg text-blue-300">How You Interact</h4>
+                      <p className="mt-2 text-white/90 text-sm">
+                        This report reveals the precise points of harmony and friction between you and one other person, creating a playbook for better communication.
+                      </p>
+                    </div>
+                  ),
+                  price: 3.00,
+                  purchaseUrl: `/compatibility${ridA ? `?ridA=${ridA}` : ''}`,
+                  unlocks: 'The full report includes a detailed breakdown of your domain synergy, conflict patterns, and a playbook for better communication.'
+                });
+              }}
+            >
+              Preview Compatibility Report
+            </CTAButton>
+          </div>
+        </div>
+        {showForm && (
+          <div className="max-w-md mx-auto">
             <h1 className="text-3xl font-bold mb-4 text-center">Compatibility Report</h1>
             <p className="text-gray-400 text-center mb-6">Enter the IDs or page URLs for two people to generate their report.</p>
             <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-lg shadow-lg">
-                <div className="mb-4">
-                    <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-gray-300">Your ID or Page URL</label>
-                    <input 
-                      type="text" 
-                      id="ridA" 
-                      name="ridA"
-                      value={ridA}
-                      onChange={e => setRidA(e.target.value)}
-                      onBlur={e => setRidA(extractRid(e.target.value))}
-                      placeholder="Paste your report URL or just the ID"
-                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      readOnly={!!ridAFromUrl}
+              <div className="mb-4">
+                <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-gray-300">Person A's Result Code or URL (You)</label>
+                <input 
+                  type="text" 
+                  id="ridA" 
+                  name="ridA"
+                  value={ridA}
+                  onChange={e => { setRidA(e.target.value); setError(null); }}
+                  onBlur={e => setRidA(extractRid(e.target.value))}
+                  placeholder="Paste code or URL for Person A"
+                  className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  readOnly={!!ridAFromUrl}
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Person B's Result Code or URL</label>
+                <input 
+                  type="text" 
+                  id="ridB" 
+                  name="ridB" 
+                  value={ridB}
+                  onChange={e => { setRidB(e.target.value); setError(null); }}
+                  onBlur={e => setRidB(extractRid(e.target.value))}
+                  placeholder="Paste code or URL for Person B"
+                  className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+              {ridA && (
+                <div className="mb-4 p-3 bg-gray-700/50 border border-gray-600 rounded">
+                  <p className="text-sm text-gray-300 mb-2">Share this link with Person B:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generateInviteLink()}
+                      className="flex-1 bg-gray-800 border border-gray-600 rounded p-2 text-white text-xs focus:outline-none"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
+                    <button
+                      type="button"
+                      onClick={copyInviteLink}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded text-sm transition-colors duration-300 whitespace-nowrap"
+                    >
+                      {inviteLinkCopied ? 'Copied!' : 'Copy Link'}
+                    </button>
+                  </div>
                 </div>
-                <div className="mb-6">
-                    <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-gray-300">Partner's ID or Page URL</label>
-                    <input 
-                      type="text" 
-                      id="ridB" 
-                      name="ridB" 
-                      value={ridB}
-                      onChange={e => setRidB(e.target.value)}
-                      onBlur={e => setRidB(extractRid(e.target.value))}
-                      placeholder="Paste their report URL or just the ID"
-                      className="bg-gray-700 border border-gray-600 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
-                    Compare
-                </button>
+              )}
+              {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+              <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                Compare
+              </button>
             </form>
-        </div>
+          </div>
+        )}
       </main>
-    )
+    );
   }
 
   const alignmentHighlights = data.compat.facets.align_pairs.slice(0, 4).map((p: any) => p.facet.split(':')[1]).join(', ');

@@ -11,9 +11,10 @@ interface PaidContentPreviewModalProps {
   purchaseUrl: string;
   unlocks?: string;
   onClose: () => void;
+  onUnlockClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export default function PaidContentPreviewModal({ title, description, previewContent, price, purchaseUrl, unlocks, onClose }: PaidContentPreviewModalProps) {
+export default function PaidContentPreviewModal({ title, description, previewContent, price, purchaseUrl, unlocks, onClose, onUnlockClick }: PaidContentPreviewModalProps) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -63,7 +64,7 @@ export default function PaidContentPreviewModal({ title, description, previewCon
           )}
 
           <div className="mt-6 flex flex-col items-center">
-            <CTAButton href={purchaseUrl} tier="Paid">
+            <CTAButton href={purchaseUrl} tier="Paid" onClick={onUnlockClick}>
               {`Unlock for $${price.toFixed(2)}`}
             </CTAButton>
           </div>

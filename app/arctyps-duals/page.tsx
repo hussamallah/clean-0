@@ -43,13 +43,21 @@ function ArchetypeDualsContent() {
   const search = useSearchParams();
   const ridAFromUrl = search?.get('ridA') || '';
   const ridBFromUrl = search?.get('ridB') || '';
+  const currentUserRid = search?.get('rid') || '';
   
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
 
-  const [ridA, setRidA] = useState(ridAFromUrl);
+  const [ridA, setRidA] = useState(ridAFromUrl || currentUserRid);
   const [ridB, setRidB] = useState(ridBFromUrl);
+
+  useEffect(() => {
+    if (!ridAFromUrl && currentUserRid) {
+      setRidA(currentUserRid);
+    }
+  }, [currentUserRid, ridAFromUrl]);
 
   useEffect(() => {
     if (ridAFromUrl && ridBFromUrl) {
@@ -110,6 +118,27 @@ function ArchetypeDualsContent() {
     setLoading(false);
   };
 
+  const generateInviteLink = () => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    if (ridA) {
+      return `${baseUrl}/?ridA=${encodeURIComponent(ridA)}`;
+    }
+    return `${baseUrl}/`;
+  };
+
+  const copyInviteLink = async () => {
+    const link = generateInviteLink();
+    if (link && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(link);
+        setInviteLinkCopied(true);
+        setTimeout(() => setInviteLinkCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-black text-white flex items-center justify-center font-sans">Loading Archetype Comparison...</div>;
   }
@@ -122,7 +151,7 @@ function ArchetypeDualsContent() {
             <p className="text-white/80 mb-6">Enter two result codes to see how their archetypes interact.</p>
             <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 p-6 rounded-lg shadow-lg">
                 <div className="mb-4">
-                    <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-white/80">Person A's Result Code</label>
+                    <label htmlFor="ridA" className="block mb-2 text-sm font-bold text-white/80">Person A's Result Code or URL (You)</label>
                     <input 
                       type="text" 
                       id="ridA" 
@@ -130,13 +159,13 @@ function ArchetypeDualsContent() {
                       value={ridA}
                       onChange={e => { setRidA(e.target.value); setError(null); }}
                       onBlur={e => setRidA(extractRid(e.target.value))}
-                      placeholder="Paste code for Person A"
+                      placeholder="Paste code or URL for Person A"
                       className="bg-black/50 border border-white/20 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                       readOnly={!!ridAFromUrl}
                     />
                 </div>
-                <div className="mb-6">
-                    <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-white/80">Person B's Result Code</label>
+                <div className="mb-4">
+                    <label htmlFor="ridB" className="block mb-2 text-sm font-bold text-white/80">Person B's Result Code or URL</label>
                     <input 
                       type="text" 
                       id="ridB" 
@@ -144,9 +173,30 @@ function ArchetypeDualsContent() {
                       value={ridB}
                       onChange={e => { setRidB(e.target.value); setError(null); }}
                       onBlur={e => setRidB(extractRid(e.target.value))}
-                      placeholder="Paste code for Person B"
+                      placeholder="Paste code or URL for Person B"
                       className="bg-black/50 border border-white/20 rounded w-full p-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
                 </div>
+                {ridA && (
+                  <div className="mb-4 p-3 bg-white/5 border border-white/10 rounded">
+                    <p className="text-sm text-white/70 mb-2">Share this link with Person B:</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={generateInviteLink()}
+                        className="flex-1 bg-black/50 border border-white/20 rounded p-2 text-white text-xs focus:outline-none"
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                      />
+                      <button
+                        type="button"
+                        onClick={copyInviteLink}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-4 py-2 rounded text-sm transition-colors duration-300 whitespace-nowrap"
+                      >
+                        {inviteLinkCopied ? 'Copied!' : 'Copy Link'}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
                 <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded transition-colors duration-300">
                     Compare Archetypes
