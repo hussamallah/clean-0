@@ -4,9 +4,11 @@ import { useEffect, useState, Suspense } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { DomainKey } from "@/lib/bigfive/constants";
+import { DomainKey, canonicalFacets } from "@/lib/bigfive/constants";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { selectFiveCards } from '@/lib/bigfive/fiveCardSelector';
+import ExistentialCircuits from '@/components/who/ExistentialCircuits';
 
 // IMPORTANT: point this to your v4 JSON (the "max" spec you approved)
 
@@ -36,6 +38,92 @@ type SectionBody = { title: string; body: string[] };
 
 interface DynamicReport { title: string; sections: SectionBody[]; }
 
+const Stars = ({ count }: { count: number }) => (
+    <div className="flex gap-1">
+        {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} className={i < count ? 'text-yellow-300' : 'text-white/20'}>★</span>
+        ))}
+    </div>
+);
+
+function ConflictPatternsDisplay({ fullResults }: { fullResults: any[] }) {
+    if (!fullResults || fullResults.length === 0) return null;
+
+    const facets: Array<{ domain: DomainKey; facet: string; raw: number; bucket: 'High' | 'Medium' | 'Low' }> = [];
+    for (const d of ['O', 'C', 'E', 'A', 'N'] as DomainKey[]) {
+        const payload = (fullResults.find(r => r.domain === d) || ({} as any)).payload;
+        if (!payload) continue;
+        const A_raw = (payload?.phase2?.A_raw || {}) as Record<string, number>;
+        const bucket = (payload?.final?.bucket || {}) as Record<string, 'High' | 'Medium' | 'Low'>;
+        for (const f of canonicalFacets(d)) {
+            const raw = Number(A_raw?.[f] ?? 3);
+            const b = (bucket?.[f] as any) as 'High' | 'Medium' | 'Low' || 'Medium';
+            facets.push({ domain: d, facet: f, raw, bucket: b });
+        }
+    }
+    const cards = selectFiveCards(facets).filter((c: any) => c.type === 'conflict');
+    function neonBorderStyle() {
+        const glow = 'rgba(212,175,55,0.6)';
+        const wide = 'rgba(212,175,55,0.25)';
+        const border = 'rgba(212,175,55,0.5)';
+        return { borderColor: border, boxShadow: `0 0 10px ${glow}, 0 0 20px ${glow}, 0 0 40px ${wide}` } as any;
+    }
+
+    return (
+        <div>
+            <div style={{ textAlign: "center", margin: "40px 0 32px 0", color: "#666", fontSize: 18 }}>---</div>
+            <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: "#fff" }}>Conflict Patterns</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {cards.map((card: any, i: number) => {
+                    const avgPct = card.leftPct && card.rightPct ? (card.leftPct + card.rightPct) / 2 : 50;
+                    const stars = avgPct >= 80 ? 5 : avgPct >= 60 ? 4 : avgPct >= 40 ? 3 : avgPct >= 20 ? 2 : 1;
+                    return (
+                        <div key={i} className="rounded-lg border border-white/10 bg-white/5 p-4" style={neonBorderStyle()}>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-semibold text-white">{card.facet}</h3>
+                                <Stars count={stars} />
+                            </div>
+                            {typeof card.explanation === 'string' ? (
+                                <p className="text-white/90 text-sm mb-2">{card.explanation}</p>
+                            ) : null}
+                            {typeof card.friction === 'string' ? (
+                                <p className="text-white/80 text-xs mb-3">{card.friction}</p>
+                            ) : null}
+                            {typeof card.how_can_both_be_true === 'string' ? (
+                                <div className="rounded-md border border-white/10 bg-black/30 p-3">
+                                    <div className="text-xs text-white/60 mb-1">How can both be true?</div>
+                                    <p className="text-white/90 text-sm">{card.how_can_both_be_true}</p>
+                                </div>
+                            ) : null}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function ExistentialCircuitsDisplay({ domainMeans, fullResults }: { domainMeans: any, fullResults: any[] }) {
+    if (!domainMeans || !fullResults || fullResults.length === 0) return null;
+
+    return (
+        <div style={{
+            ['--bg-color' as any]: '#121212',
+            ['--surface-color' as any]: '#1e1e1e',
+            ['--primary-text-color' as any]: '#e0e0e0',
+            ['--secondary-text-color' as any]: '#a0a0a0',
+            ['--accent-color' as any]: '#d4af37',
+            ['--border-color' as any]: '#333',
+            ['--progress-green' as any]: '#2ecc71',
+            ['--progress-yellow' as any]: '#f1c40f',
+            ['--progress-red' as any]: '#e74c3c',
+        }}>
+            <div style={{ textAlign: "center", margin: "40px 0 32px 0", color: "#666", fontSize: 18 }}>---</div>
+            <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16, color: "#fff" }}>Existential Circuits</h3>
+            <ExistentialCircuits domainMeans={domainMeans} fullResults={fullResults} />
+        </div>
+    );
+}
 
 
 /** ---------- Bucketing (6→3) ---------- */
@@ -655,6 +743,8 @@ function OperationReportContent() {
   const rid = search?.get("rid") || "";
 
   const [report, setReport] = useState<DynamicReport | null>(null);
+  const [fullResults, setFullResults] = useState<any[]>([]);
+  const [domainMeans, setDomainMeans] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -688,6 +778,7 @@ function OperationReportContent() {
 
 
         let results: any[] = [];
+        let apiData: any = null;
 
         try {
 
@@ -695,9 +786,9 @@ function OperationReportContent() {
 
           if (res.ok) {
 
-            const data = await res.json();
+            apiData = await res.json();
 
-            results = Array.isArray(data?.results) ? data.results : [];
+            results = Array.isArray(apiData?.results) ? apiData.results : [];
 
           } else {
 
@@ -726,7 +817,10 @@ function OperationReportContent() {
         if (results.length === 0) { setError("No assessment results found."); setLoading(false); return; }
 
 
-
+        setFullResults(results);
+        if (apiData) {
+            setDomainMeans(apiData?.who?.derived?.domainMeans || null);
+        }
         const generated = generateReport(results);
 
         setReport(generated);
@@ -951,6 +1045,10 @@ function OperationReportContent() {
 
           ))}
 
+
+
+          <ConflictPatternsDisplay fullResults={fullResults} />
+          <ExistentialCircuitsDisplay domainMeans={domainMeans} fullResults={fullResults} />
 
 
           <div style={{ textAlign: "center", margin: "40px 0 24px 0", color: "#666", fontSize: 18 }}>---</div>
