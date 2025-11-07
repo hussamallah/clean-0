@@ -1,5 +1,6 @@
 import { GeistSans } from "geist/font/sans";
 import { Analytics } from "@vercel/analytics/react"
+import { Suspense } from "react";
 import "./../styles/globals.css";
 
 import TopNav from "@/components/TopNav";
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={GeistSans.className}>
       <body className="bg-black">
-        <TopNav />
+        <Suspense fallback={null}>
+          <TopNav />
+        </Suspense>
         <GlobalMenu />
         {children}
         <Analytics />
