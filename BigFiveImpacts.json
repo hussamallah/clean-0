@@ -1,0 +1,383 @@
+{
+    "version": "1.0",
+    "updated": "2025-10-18",
+  "BigFiveImpacts": {
+    "Openness": {
+      "JobPerformance": {"rho": 0.11, "direction": "positive"},
+      "JobSatisfaction": {"r": 0.02, "direction": "neutral"},
+      "WorkEngagement": {"rho": 0.38, "direction": "positive"},
+        "CreativityInnovation": {"direction": "positive"},
+        "TrainingProficiency": {"direction": "positive"},
+        "LeadershipEmergence": {"direction": "small_positive"},
+        "OCB": {"direction": "small_positive"},
+        "CWB": {"direction": "neutral"},
+        "TurnoverIntent": {"direction": "mixed"},
+        "Burnout": {"direction": "neutral_to_small_negative"},
+      "Relationships": {"r": 0.00, "direction": "neutral"},
+      "Life": {
+        "WellBeing": {"direction": "positive"},
+        "Earnings": {"direction": "mixed"},
+          "HealthBehaviors": {"direction": "mixed"},
+          "LifeSatisfaction": {"direction": "small_positive"},
+          "Academics": {"r": "small_positive"}
+      }
+    },
+    "Conscientiousness": {
+      "JobPerformance": {"rho": 0.20, "direction": "positive"},
+      "JobSatisfaction": {"r": 0.26, "direction": "positive"},
+      "WorkEngagement": {"rho": 0.41, "direction": "positive"},
+        "CreativityInnovation": {"direction": "neutral_to_small_negative"},
+        "TrainingProficiency": {"direction": "positive"},
+        "LeadershipEmergence": {"direction": "positive"},
+        "OCB": {"direction": "positive"},
+        "CWB": {"direction": "negative"},
+        "TurnoverIntent": {"direction": "negative"},
+        "Burnout": {"direction": "negative"},
+      "Relationships": {"r": 0.12, "direction": "positive"},
+      "Life": {
+        "WellBeing": {"direction": "positive"},
+        "Academics": {"r": 0.22, "direction": "positive"},
+        "Longevity": {"r": 0.11, "direction": "positive"},
+          "Earnings": {"direction": "small_positive"},
+          "HealthBehaviors": {"direction": "positive"},
+          "LifeSatisfaction": {"direction": "positive"}
+      }
+    },
+    "Extraversion": {
+      "JobPerformance": {"rho": 0.14, "direction": "positive"},
+      "JobSatisfaction": {"r": 0.25, "direction": "positive"},
+      "WorkEngagement": {"rho": 0.38, "direction": "positive"},
+        "CreativityInnovation": {"direction": "small_positive"},
+        "TrainingProficiency": {"direction": "small_positive"},
+        "LeadershipEmergence": {"direction": "positive"},
+        "OCB": {"direction": "positive"},
+        "CWB": {"direction": "neutral"},
+        "TurnoverIntent": {"direction": "negative"},
+        "Burnout": {"direction": "mixed"},
+      "Relationships": {"r": 0.12, "direction": "positive"},
+      "Life": {
+        "WellBeing": {"direction": "positive"},
+          "Earnings": {"direction": "small_positive"},
+          "HealthBehaviors": {"direction": "mixed"},
+          "LifeSatisfaction": {"direction": "positive"}
+      }
+    },
+    "Agreeableness": {
+      "JobPerformance": {"rho": 0.11, "direction": "positive"},
+      "JobSatisfaction": {"r": 0.17, "direction": "positive"},
+      "WorkEngagement": {"rho": 0.27, "direction": "positive"},
+        "CreativityInnovation": {"direction": "neutral"},
+        "TrainingProficiency": {"direction": "neutral"},
+        "LeadershipEmergence": {"direction": "small_negative_to_neutral"},
+        "OCB": {"direction": "positive"},
+        "CWB": {"direction": "negative"},
+        "TurnoverIntent": {"direction": "negative"},
+        "Burnout": {"direction": "negative"},
+      "Relationships": {"r": 0.15, "direction": "positive"},
+      "Life": {
+        "WellBeing": {"direction": "positive"},
+          "Earnings": {"direction": "small_negative"},
+          "HealthBehaviors": {"direction": "positive"},
+          "LifeSatisfaction": {"direction": "positive"}
+      }
+    },
+    "Neuroticism": {
+      "JobPerformance": {"rho": -0.15, "direction": "negative"},
+      "JobSatisfaction": {"r": -0.29, "direction": "negative"},
+      "WorkEngagement": {"rho": -0.36, "direction": "negative"},
+        "CreativityInnovation": {"direction": "mixed"},
+        "TrainingProficiency": {"direction": "negative"},
+        "LeadershipEmergence": {"direction": "negative"},
+        "OCB": {"direction": "negative"},
+        "CWB": {"direction": "positive"},
+        "TurnoverIntent": {"direction": "positive"},
+        "Burnout": {"direction": "positive"},
+      "Relationships": {"r": -0.22, "direction": "negative"},
+      "Life": {
+        "WellBeing": {"direction": "negative"},
+          "Earnings": {"direction": "small_negative"},
+          "HealthBehaviors": {"direction": "negative"},
+          "LifeSatisfaction": {"direction": "negative"}
+  },
+  "Notes": {
+    "EffectSizeInterpretation": "Values are small to moderate. Traits predict tendencies, not certainties.",
+    "StatsLegend": {
+      "r": "Pearson correlation coefficient (strength/direction of association, uncorrected or true-score when noted)",
+      "ρ": "Rho: meta-analytic correlation corrected for measurement error (reliability) and sometimes range restriction"
+    }
+  }
+      }
+    },
+    "FacetImpacts": {
+      "Openness": {
+        "Imagination": {
+          "Work": "ideation strength; helps innovation roles",
+          "Relationships": "shared fantasy/ideas; mismatch with very conventional partners",
+          "Life": "artistic/creative pursuits; curiosity"
+        },
+        "ArtisticInterests": {
+          "Work": "fit for design, content, arts",
+          "Relationships": "aesthetic bonding; museum/music interests",
+          "Life": "arts engagement; cultural exploration"
+        },
+        "Emotionality": {
+          "Work": "emotional insight helps empathy roles; can distract in rigid roles",
+          "Relationships": "deep sharing; higher sensitivity",
+          "Life": "richer inner life; mood variability"
+        },
+        "Adventurousness": {
+          "Work": "change readiness; startups/innovation",
+          "Relationships": "novel experiences; travel alignment matters",
+          "Life": "variety seeking; lower routine tolerance"
+        },
+        "Intellect": {
+          "Work": "abstract reasoning; strategy/analysis",
+          "Relationships": "debate and ideas central",
+          "Life": "lifelong learning; complex hobbies"
+        },
+        "Liberalism": {
+          "Work": "questions rules; reform mindset",
+          "Relationships": "tolerance for difference; values discussions",
+          "Life": "openness to change; nontraditional choices"
+        }
+      },
+      "Conscientiousness": {
+        "SelfEfficacy": {
+          "Work": "confidence to execute; goal attainment",
+          "Relationships": "reliable partner behaviors",
+          "Life": "effective planning; problem solving"
+        },
+        "Orderliness": {
+          "Work": "systems, SOPs, QA",
+          "Relationships": "household structure; predictability",
+          "Life": "tidy routines; calendar discipline"
+        },
+        "Dutifulness": {
+          "Work": "ethics, compliance, trust",
+          "Relationships": "keeps promises; loyalty",
+          "Life": "principled choices; responsibility"
+        },
+        "AchievementStriving": {
+          "Work": "ambition; promotion velocity",
+          "Relationships": "goal focus may crowd time",
+          "Life": "milestone orientation; persistence"
+        },
+        "SelfDiscipline": {
+          "Work": "task completion; low procrastination",
+          "Relationships": "consistency; follow-through",
+          "Life": "habits stick; health routines"
+        },
+        "Cautiousness": {
+          "Work": "risk control; fewer errors",
+          "Relationships": "thinks before reacting",
+          "Life": "measured decisions; safety"
+        }
+      },
+      "Extraversion": {
+        "Friendliness": {
+          "Work": "rapport; client-facing strength",
+          "Relationships": "warmth and approachability",
+          "Life": "larger social graph"
+        },
+        "Gregariousness": {
+          "Work": "team energy; networking",
+          "Relationships": "group activities; parties",
+          "Life": "frequent social events"
+        },
+        "Assertiveness": {
+          "Work": "leadership emergence; sales",
+          "Relationships": "clear needs; boundary setting",
+          "Life": "initiative taking"
+        },
+        "ActivityLevel": {
+          "Work": "pace tolerance; multiple projects",
+          "Relationships": "busy schedule; partner pace fit",
+          "Life": "full calendars; low downtime"
+        },
+        "ExcitementSeeking": {
+          "Work": "thrives in dynamic contexts",
+          "Relationships": "adventure dates; novelty",
+          "Life": "risk/reward seeking"
+        },
+        "Cheerfulness": {
+          "Work": "positive affect; morale buffer",
+          "Relationships": "upbeat tone; optimism",
+          "Life": "higher daily positive emotion"
+        }
+      },
+      "Agreeableness": {
+        "Trust": {
+          "Work": "faster collaboration; lower monitoring costs",
+          "Relationships": "assumes goodwill; intimacy",
+          "Life": "community integration"
+        },
+        "Morality": {
+          "Work": "transparent dealings; low politics",
+          "Relationships": "honesty; directness",
+          "Life": "clear ethical stance"
+        },
+        "Altruism": {
+          "Work": "helping; service excellence",
+          "Relationships": "caregiving; generosity",
+          "Life": "volunteering; prosocial acts"
+        },
+        "Cooperation": {
+          "Work": "conflict reduction; consensus",
+          "Relationships": "compromise; harmony",
+          "Life": "low confrontation preference"
+        },
+        "Modesty": {
+          "Work": "credit sharing; team-first",
+          "Relationships": "low grandstanding",
+          "Life": "humility; low status drive"
+        },
+        "Sympathy": {
+          "Work": "empathy in support roles",
+          "Relationships": "emotional attunement",
+          "Life": "compassionate choices"
+        }
+      },
+      "Neuroticism": {
+        "Anxiety": {
+          "Work": "stress reactivity; needs stability",
+          "Relationships": "reassurance seeking",
+          "Life": "worry load; sleep impact"
+        },
+        "Anger": {
+          "Work": "conflict risk; impulse control need",
+          "Relationships": "irritability; fights",
+          "Life": "hostility cost"
+        },
+        "Depression": {
+          "Work": "motivation dips; presenteeism risk",
+          "Relationships": "low affect; withdrawal",
+          "Life": "lower mood baseline"
+        },
+        "SelfConsciousness": {
+          "Work": "evaluation sensitivity",
+          "Relationships": "fear of judgment",
+          "Life": "avoidance of exposure"
+        },
+        "Immoderation": {
+          "Work": "impulsivity; CWB risk",
+          "Relationships": "overindulgence issues",
+          "Life": "addictive tendencies risk"
+        },
+        "Vulnerability": {
+          "Work": "poor crisis tolerance",
+          "Relationships": "overwhelm in conflict",
+          "Life": "needs support systems"
+        }
+      }
+    },
+    "PlainEnglish": {
+      "Openness": {
+        "High": "curious, imaginative, novelty-seeking; engaged by complex, changing work; good fit for creative or R&D tracks.",
+        "Low": "prefers routine, clarity, proven methods; better fit for structured, policy-driven roles."
+      },
+      "Conscientiousness": {
+        "High": "organized, reliable, persistent; strongest tie to performance and goal completion; healthier routines and longer-term gains.",
+        "Low": "looser structure; risk of missed deadlines; needs external scaffolding."
+      },
+      "Extraversion": {
+        "High": "energetic, social, assertive; advantages in sales, leadership, client-facing roles.",
+        "Low": "reserved, reflective; advantages in deep-focus, individual-contributor work."
+      },
+      "Agreeableness": {
+        "High": "cooperative, empathetic; strong for teamwork and service; lowers conflict.",
+        "Low": "competitive, direct; faster escalation; useful where hard bargaining is needed."
+      },
+      "Neuroticism": {
+        "High": "stress-prone; lower job and relationship satisfaction; higher burnout risk; needs stability buffers.",
+        "Low": "emotionally steady; resilient under pressure; higher satisfaction probability."
+      }
+    },
+    "RenderHints": {
+      "StatPreference": {
+        "JobPerformance": "rho",
+        "JobSatisfaction": "r",
+        "WorkEngagement": "rho",
+        "Relationships": "r",
+        "Life": {
+          "GPA": "r",
+          "Longevity": "r",
+          "Earnings": "direction",
+          "HealthBehaviors": "direction",
+          "LifeSatisfaction": "direction"
+        }
+      },
+      "EvidenceTags": {
+        "JobPerformance": "(meta-synthesis, corrected)",
+        "JobSatisfaction": "(true-score r)",
+        "WorkEngagement": "(corrected ρ)",
+        "Relationships": "(own satisfaction r)",
+        "Life": {
+          "SWB": "(latent)",
+          "GPA": "(r)",
+          "Longevity": "(r)",
+          "Earnings": "(direction)"
+        }
+      },
+      "UI": {
+        "High": "solid icon, full bar, bright tone",
+        "Medium": "outlined icon, half bar, neutral tone",
+        "Low": "thin outline, low-fill bar, muted tone",
+        "Contexts": {
+          "Jobs": ["briefcase", "gears", "handshake"],
+          "Relationships": ["heart", "couple", "group"],
+          "Life": ["compass", "tree", "path"]
+        }
+      }
+    },
+    "ScoringHints": {
+      "BucketRules": {
+        "High": "percentile >= 70",
+        "Medium": "30 <= percentile < 70",
+        "Low": "percentile < 30"
+      },
+      "NarrativeSelector": "domain_bucket -> domain_template; facet_bucket overrides when strong",
+      "ReverseKeys": {
+        "Openness": ["Liberalism_rev_if_defined_else_none"],
+        "Conscientiousness": [],
+        "Extraversion": [],
+        "Agreeableness": [],
+        "Neuroticism": []
+      }
+    },
+    "Templates": {
+      "JobLine": "{Domain}:{Space}{DirWord} effect on performance {Effect} | engagement {Eng} | burnout {Burn}.",
+      "RelationshipLine": "{Domain}:{Space}{DirWord} effect on satisfaction {Effect}; conflict {Conflict}.",
+      "LifeLine": "{Domain}:{Space}{DirWord} effect on well-being {SWB}; health behaviors {Health}; earnings {Earn}."
+    },
+    "ExampleLines": {
+      "HighC": "Conscientiousness: strong positive effect on performance ρ≈.20 | engagement ρ≈.41 | burnout negative.",
+      "LowN": "Neuroticism low: positive effect on satisfaction and performance; burnout risk lower."
+  },
+  "DisplayLines": {
+    "Openness": {
+      "High": "Openness (High): small gain in performance (ρ 0.11), strong gain in engagement (ρ 0.38), neutral for relationship satisfaction (r 0.00); life well-being positive, earnings mixed.",
+      "Medium": "Openness (Medium): near-average performance and satisfaction; engagement around population mean; life effects context-dependent.",
+      "Low": "Openness (Low): small drop in engagement vs high (≈ −0.38 relative), performance near-neutral to slightly lower (≈ −0.11 relative); relationship satisfaction neutral; life well-being less boosted; earnings mixed."
+    },
+    "Conscientiousness": {
+      "High": "Conscientiousness (High): strongest work signals—performance (ρ 0.20), satisfaction (r 0.26), engagement (ρ 0.41); relationships r 0.12; life: GPA r 0.22, longevity r 0.11, earnings small positive.",
+      "Medium": "Conscientiousness (Medium): near-average outcomes across work, relationships, and life metrics.",
+      "Low": "Conscientiousness (Low): performance (ρ −0.20), satisfaction (r −0.26), engagement (ρ −0.41); relationships r −0.12; life: GPA r −0.22, longevity r −0.11, earnings small negative."
+    },
+    "Extraversion": {
+      "High": "Extraversion (High): performance (ρ 0.14), satisfaction (r 0.25), engagement (ρ 0.38); relationships r 0.12; life well-being positive, earnings small positive.",
+      "Medium": "Extraversion (Medium): close to average on performance, satisfaction, engagement, and relationships.",
+      "Low": "Extraversion (Low): performance (ρ −0.14), satisfaction (r −0.25), engagement (ρ −0.38); relationships r −0.12; life well-being lower boost; earnings small negative/neutral."
+    },
+    "Agreeableness": {
+      "High": "Agreeableness (High): performance (ρ 0.11), satisfaction (r 0.17), engagement (ρ 0.27); relationships r 0.15; life well-being positive, earnings small negative.",
+      "Medium": "Agreeableness (Medium): near-average collaboration and satisfaction; earnings near-neutral.",
+      "Low": "Agreeableness (Low): performance (ρ −0.11), satisfaction (r −0.17), engagement (ρ −0.27); relationships r −0.15; life well-being lower; earnings small positive."
+    },
+    "Neuroticism": {
+      "High": "Neuroticism (High): performance (ρ −0.15), satisfaction (r −0.29), engagement (ρ −0.36); relationships r −0.22; life well-being negative; earnings small negative.",
+      "Medium": "Neuroticism (Medium): moderate stress reactivity; outcomes nearer to population mean.",
+      "Low": "Neuroticism (Low = emotional stability): inverse of high—performance ≈ +0.15, satisfaction ≈ +0.29, engagement ≈ +0.36; relationships ≈ +0.22; life well-being positive; earnings small positive."
+    }
+  }
+}

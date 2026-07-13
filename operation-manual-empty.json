@@ -1,0 +1,399 @@
+{
+    "version": "gz-op-manual.v4-max",
+    "meta": {
+      "updated_at": "2025-11-01",
+      "locale": "en",
+      "determinism": "no-randomness; rule-then-score-then-tiebreak",
+      "output_format": "markdown"
+    },
+    "schema": {
+      "scale": { "min": 1, "max": 5, "precision": 2 },
+      "bucket6": {
+        "anchors": [
+          { "score": 1.0, "label": "low low" },
+          { "score": 2.0, "label": "high low" },
+          { "score": 2.5, "label": "low medium" },
+          { "score": 3.0, "label": "high medium" },
+          { "score": 4.0, "label": "high score low" },
+          { "score": 5.0, "label": "high score high" }
+        ],
+        "assign": "nearest_anchor_with_upward_tie"
+      },
+      "bucket3": {
+        "map_from_bucket6": {
+          "low": ["low low", "high low"],
+          "medium": ["low medium", "high medium"],
+          "high": ["high score low", "high score high"]
+        }
+      },
+      "domains": ["Openness","Conscientiousness","Extraversion","Agreeableness","Neuroticism"],
+      "facets": {
+        "Openness": ["Imagination","Artistic Interests","Emotionality","Adventurousness","Intellect","Liberalism"],
+        "Conscientiousness": ["Self-Efficacy","Orderliness","Dutifulness","Achievement-Striving","Self-Discipline","Cautiousness"],
+        "Extraversion": ["Friendliness","Gregariousness","Assertiveness","Activity Level","Excitement-Seeking","Cheerfulness"],
+        "Agreeableness": ["Trust","Morality","Altruism","Cooperation","Modesty","Sympathy"],
+        "Neuroticism": ["Anxiety","Anger","Depression","Self-Consciousness","Immoderation","Vulnerability"]
+      }
+    },
+    "normalization": {
+      "clamp": "scores below 1 => 1; above 5 => 5",
+      "round": "round to precision",
+      "missing": {
+        "domain_default": 3.0,
+        "facet_default": 3.0,
+        "policy": "use defaults; mark provenance.missing"
+      }
+    },
+    "engine": {
+      "expr_grammar": "Identifiers: domain means Openness,Conscientiousness,Extraversion,Agreeableness,Neuroticism and facet('Name'). Ops: &&, ||, !. Comparators to bucket thresholds via bucket3/bucket6.",
+      "functions": {
+        "bucket6": "map score to one of 6 anchors",
+        "bucket3": "map score to low|medium|high via schema.bucket3",
+        "is6": "is6(x,label) -> boolean",
+        "is3": "is3(x,label) -> boolean"
+      },
+      "derived_flags": [
+        { "key": "HighO", "expr": "is3(Openness,'high')" },
+        { "key": "MedO", "expr": "is3(Openness,'medium')" },
+        { "key": "LowO", "expr": "is3(Openness,'low')" },
+        { "key": "HighC", "expr": "is3(Conscientiousness,'high')" },
+        { "key": "MedC", "expr": "is3(Conscientiousness,'medium')" },
+        { "key": "LowC", "expr": "is3(Conscientiousness,'low')" },
+        { "key": "HighE", "expr": "is3(Extraversion,'high')" },
+        { "key": "MedE", "expr": "is3(Extraversion,'medium')" },
+        { "key": "LowE", "expr": "is3(Extraversion,'low')" },
+        { "key": "HighA", "expr": "is3(Agreeableness,'high')" },
+        { "key": "MedA", "expr": "is3(Agreeableness,'medium')" },
+        { "key": "LowA", "expr": "is3(Agreeableness,'low')" },
+        { "key": "HighN", "expr": "is3(Neuroticism,'high')" },
+        { "key": "MedN", "expr": "is3(Neuroticism,'medium')" },
+        { "key": "LowN", "expr": "is3(Neuroticism,'low')" },
+  
+        { "key": "Assert_hh", "expr": "is6(facet('Assertiveness'),'high score high')" },
+        { "key": "Assert_hl", "expr": "is6(facet('Assertiveness'),'high score low')" },
+        { "key": "Order_ll", "expr": "is6(facet('Orderliness'),'low low')" },
+        { "key": "Order_hl", "expr": "is6(facet('Orderliness'),'high low')" },
+        { "key": "Order_lm", "expr": "is6(facet('Orderliness'),'low medium')" },
+        { "key": "Caut_hh", "expr": "is6(facet('Cautiousness'),'high score high')" },
+        { "key": "Caut_hl", "expr": "is6(facet('Cautiousness'),'high score low')" },
+        { "key": "Coop_llhl", "expr": "is6(facet('Cooperation'),'low low') || is6(facet('Cooperation'),'high low')" },
+        { "key": "Symp_llhl", "expr": "is6(facet('Sympathy'),'low low') || is6(facet('Sympathy'),'high low')" },
+        { "key": "Trust_llhl", "expr": "is6(facet('Trust'),'low low') || is6(facet('Trust'),'high low')" },
+        { "key": "Intel_h", "expr": "is3(facet('Intellect'),'high')" },
+        { "key": "Art_h", "expr": "is3(facet('Artistic Interests'),'high')" },
+        { "key": "Imagin_h", "expr": "is3(facet('Imagination'),'high')" },
+        { "key": "Anx_llhl", "expr": "is6(facet('Anxiety'),'low low') || is6(facet('Anxiety'),'high low')" },
+        { "key": "Dep_hh", "expr": "is6(facet('Depression'),'high score high')" },
+        { "key": "Immod_h", "expr": "is3(facet('Immoderation'),'high')" },
+        { "key": "Vuln_h", "expr": "is3(facet('Vulnerability'),'high')" },
+        { "key": "Greg_h", "expr": "is3(facet('Gregariousness'),'high')" },
+        { "key": "Excite_h", "expr": "is3(facet('Excitement-Seeking'),'high')" },
+        { "key": "Friend_h", "expr": "is3(facet('Friendliness'),'high')" },
+        { "key": "Achieve_h", "expr": "is3(facet('Achievement-Striving'),'high')" },
+        { "key": "SelfDisc_l", "expr": "is3(facet('Self-Discipline'),'low')" },
+        { "key": "Moral_h", "expr": "is3(facet('Morality'),'high')" },
+        { "key": "Liberal_h", "expr": "is3(facet('Liberalism'),'high')" }
+      ]
+    },
+    "selection": {
+      "per_section": {
+        "best_roles": 2,
+        "avoid_roles": 2,
+        "ideal_teammates": 1,
+        "decision_rules": 3,
+        "negotiation_style": 1,
+        "anti_burnout": 1,
+        "fix_disorganization": 1,
+        "communication": 1,
+        "reduce_friction": 1,
+        "practice_30d": 4,
+        "ideal_cofounder": 1,
+        "work_rhythm": 1,
+        "personal_boundaries": 6
+      },
+      "dedupe": "normalize_case_trim_and_remove_exact_matches",
+      "quality_caps": {
+        "min_bullets": 3,
+        "max_bullets": 6,
+        "fallback_policy": "include section.default if nothing selected"
+      }
+    },
+    "render": {
+      "title_style": "##",
+      "bullet_style": "-",
+      "voice": "direct",
+      "tense": "present",
+      "numbering": "auto for enumerations"
+    },
+    "sections": {
+      "best_roles": {
+        "title": "Best roles for you",
+        "blocks": [
+          {
+            "id": "sales_negotiation_crisis",
+            "when": "HighE && (Assert_hh || Assert_hl) && (LowA || Coop_llhl || Symp_llhl)",
+            "bullets": [
+              "Sales or founder roles where you lead and close deals.",
+              "Project rescues or problem-solving teams.",
+              "Crisis or operations management.",
+              "Negotiations or deadline control."
+            ]
+          },
+          {
+            "id": "compliance_ops_risk",
+            "when": "(LowO) && HighC",
+            "bullets": [
+              "Compliance, quality assurance, and audit.",
+              "Operations with SOP ownership.",
+              "Risk and reliability engineering."
+            ]
+          },
+          {
+            "id": "public_evangelism",
+            "when": "LowN && HighE",
+            "bullets": [
+              "Public speaking, evangelism, live demos.",
+              "Community growth and events."
+            ]
+          },
+          {
+            "id": "deepwork_research",
+            "when": "LowE && (Intel_h || HighO)",
+            "bullets": [
+              "Deep work roles: research, engineering, data science.",
+              "Architecture and systems design.",
+              "Technical writing and knowledge engineering."
+            ]
+          },
+          {
+            "id": "creative_discovery",
+            "when": "HighO && (Art_h || Imagin_h)",
+            "bullets": [
+              "Product discovery and UX research.",
+              "Brand strategy and concept development.",
+              "Creative direction with rapid prototyping."
+            ]
+          },
+          {
+            "id": "partnerships_programs",
+            "when": "HighE && HighA && HighC",
+            "bullets": [
+              "Customer-facing leadership with strong process.",
+              "Partnerships and enterprise accounts.",
+              "Program management across teams."
+            ]
+          },
+          {
+            "id": "strategy_analysis",
+            "when": "LowE && Intel_h",
+            "bullets": [
+              "Strategy analysis and forecasting.",
+              "Competitive intelligence.",
+              "Market research."
+            ]
+          },
+          {
+            "id": "ops_scaling_builder",
+            "when": "HighC && (Achieve_h || Caut_hh || Caut_hl)",
+            "bullets": [
+              "Process design and scale-up.",
+              "Release coordination with checklists and metrics.",
+              "Supplier performance and cost control."
+            ]
+          },
+          {
+            "id": "fallback_roles",
+            "when": "true",
+            "priority": -1,
+            "bullets": [
+              "Roles that match your top domains and reward your natural pace.",
+              "Work that uses your strongest facets at least 60% of the week."
+            ]
+          }
+        ]
+      },
+      "avoid_roles": {
+        "title": "Roles to avoid or delegate",
+        "blocks": [
+          {
+            "id": "peacekeeping",
+            "when": "(LowA || Coop_llhl || Symp_llhl) && HighE && (Assert_hh || Assert_hl)",
+            "bullets": [
+              "HR mediation and peacekeeping.",
+              "Sensitive grievance handling.",
+              "High-empathy customer support tiers."
+            ]
+          },
+          {
+            "id": "process_librarian",
+            "when": "Order_ll || Order_hl || SelfDisc_l",
+            "bullets": [
+              "Process librarian or documentation czar.",
+              "Inventory or records management.",
+              "Release manager without automation."
+            ]
+          },
+          {
+            "id": "abstract_brand",
+            "when": "LowO && !Art_h && !Imagin_h",
+            "bullets": [
+              "Abstract strategy or blue-sky R&D.",
+              "Aesthetic QA and brand storytelling."
+            ]
+          },
+          {
+            "id": "oncall_high_uncertainty",
+            "when": "HighN && !Caut_hh",
+            "bullets": [
+              "Constantly-on-call crisis roles.",
+              "High-uncertainty trading without guardrails."
+            ]
+          },
+          {
+            "id": "fallback_avoid",
+            "when": "true",
+            "priority": -1,
+            "bullets": [
+              "Any role built on your weakest two facets without strong systems to compensate."
+            ]
+          }
+        ]
+      },
+      "ideal_teammates": {
+        "title": "Ideal teammates",
+        "intro": "Recruit for complementary strengths.",
+        "blocks": [
+          { "id": "deescalators", "when": "LowA || Coop_llhl || Symp_llhl", "bullets": [ "Cooperative and skilled at de-escalation.", "Reads room and lowers heat fast." ] },
+          { "id": "organizers", "when": "Order_ll || Order_hl || Order_lm || SelfDisc_l || LowC", "bullets": [ "Highly organized with visible systems.", "Owns cadences, templates, and audit trails." ] },
+          { "id": "risk_normalizers", "when": "HighN || !Anx_llhl", "bullets": [ "Calm operators who normalize risk.", "Translates uncertainty to contingencies." ] },
+          { "id": "aesthetic_judgment", "when": "HighO && (Art_h || Imagin_h)", "bullets": [ "Aesthetic judgment and user empathy.", "Turns insights into user-facing wins." ] },
+          { "id": "writers_default", "when": "true", "priority": -1, "bullets": [ "Clear writers who keep decision logs." ] }
+        ],
+        "screen_prompts": [
+          "Tell me about a time you resolved a team dispute.",
+          "Show me how you keep track of your work.",
+          "Write how both sides saw a conflict and what you did.",
+          "Walk me through a Kanban with WIP limits."
+        ]
+      },
+      "decision_rules": {
+        "title": "Decision rules",
+        "tracks": [
+          { "name": "Fast track", "when": "Order_ll || Order_hl || LowC || !Caut_hh && !Caut_hl", "text": "Small or reversible choices. Decide within 24 hours with a single owner." },
+          { "name": "Deliberate track", "when": "HighC || Caut_hh || Caut_hl || Achieve_h", "text": "Big or irreversible choices. Checklist, pre-mortem, dissent capture. Decide within 72 hours." },
+          { "name": "Experiment track", "when": "HighO && (LowC || !Caut_hh)", "text": "Run a 1–2 week test with success metrics before full commit." },
+          { "name": "Conflict track", "when": "LowA || Coop_llhl || Symp_llhl", "text": "Pause. Write both sides’ constraints. Assign tie-breaker with explicit veto scope." },
+          { "name": "Risk track", "when": "HighN || !Anx_llhl || Vuln_h", "text": "Add risk matrix and contingency. Proceed only if residual risk is acceptable." }
+        ]
+      },
+      "negotiation_style": {
+        "title": "Negotiation style that fits you",
+        "blocks": [
+          { "id": "numbers_first", "when": "(Assert_hh || Assert_hl) && (LowA || Coop_llhl || Symp_llhl)", "before": "Write BATNA, red lines, acceptable concessions.", "during": "Lead with numbers, deadlines, and options.", "after": "Send written summary with owners and dates." },
+          { "id": "mutual_gains", "when": "HighA && !Trust_llhl", "before": "Map mutual gains and shared metrics.", "during": "Trade low-cost, high-value terms.", "after": "Confirm shared success measures." },
+          { "id": "written_briefs", "when": "LowE && Intel_h", "before": "Prepare structured brief and alternatives.", "during": "Use written proposals with clear deltas.", "after": "Asynchronous confirmation with change log." },
+          { "id": "default_neg", "when": "true", "priority": -1, "before": "Know limits and fallback.", "during": "Quantify offers.", "after": "Document owners and dates." }
+        ]
+      },
+      "anti_burnout": {
+        "title": "Avoiding burnout",
+        "patterns": [
+          { "name": "Low anxiety, high depression", "when": "Anx_llhl && Dep_hh", "summary": "Stress shows as low mood, not panic.", "metrics": [ "Sleep regularity ≥ 80% days", "Zone 2 heart rate training ≥ 120 min/week", "3 output Key Performance Indicators ≥ 80% of target" ], "reset_rule": "If two metrics drop two weeks, reset: fixed sleep window, morning sunlight, caffeine cut 14:00, cap social nights to 3/week." },
+          { "name": "High anxiety", "when": "HighN && !Anx_llhl", "summary": "Stress spikes quickly.", "metrics": [ "≥ 20 box-breath cycles/day", "2 × 15 min recovery blocks/day", "Stressor queue ≤ 5 open items" ], "reset_rule": "Reduce input channels, batch messages, add two walking meetings." },
+          { "name": "Impulse strain", "when": "Immod_h && LowC", "summary": "Urge-driven dips.", "metrics": [ "Urge journaling 1/day", "Friction to vice +2 steps", "Clean streak ≥ 10 days" ], "reset_rule": "Swap cues, raise friction, add accountability partner." },
+          { "name": "Social overload", "when": "HighE && (Greg_h || Excite_h)", "summary": "Too many evenings out, low recovery.", "metrics": [ "Evenings out ≤ 3/week", "Morning energy ≥ 7/10", "Alcohol-free days ≥ 4/week" ], "reset_rule": "Schedule quiet nights and morning sunlight streak." },
+          { "name": "Focus erosion", "when": "SelfDisc_l || Order_ll || Order_hl", "summary": "Scattered work drains momentum.", "metrics": [ "≥ 8 × 45 min deep-work/week", "Work In Progress ≤ 3", "Task completion ≥ 70%/week" ], "reset_rule": "Kill-or-finish ritual; block social feeds in work hours." }
+        ],
+        "default": { "summary": "Track sleep, training, and output weekly. Reset if two drop for two weeks." }
+      },
+      "fix_disorganization": {
+        "title": "Fixing disorganization",
+        "blocks": [
+          { "id": "kanban_wip3", "when": "Order_ll || Order_hl", "bullets": [ "Single Kanban. WIP limit = 3.", "Friday sweep: inbox zero, prune board, set next-week three.", "Each card: owner, test, proof." ] },
+          { "id": "timebox_boring", "when": "SelfDisc_l && !(Order_ll || Order_hl)", "bullets": [ "Time-box dull tasks to 25-minute sprints.", "Schedule starts, not finishes.", "Public weekly demo to force closure." ] },
+          { "id": "risk_first", "when": "(Caut_hh || Caut_hl) && (Order_ll || Order_hl)", "bullets": [ "Pre-mortem on big tasks.", "Checklist per repeatable task.", "Batch similar decisions." ] },
+          { "id": "org_fallback", "when": "true", "priority": -1, "bullets": [ "Keep one system. Review weekly. Limit WIP." ] }
+        ]
+      },
+      "communication": {
+        "title": "Communication upgrade",
+        "blocks": [
+          { "id": "direct_guardrails", "when": "(Assert_hh || Assert_hl) && (LowA || Coop_llhl || Symp_llhl || Moral_h)", "intro": "Direct tone can land as harsh.", "template": [ "State the truth clearly.", "Acknowledge constraints in one line.", "Offer one next step or alternative." ] },
+          { "id": "written_clarity", "when": "LowE && Intel_h", "intro": "Prefer written clarity.", "template": [ "Use structured memos.", "Summarize options and trade-offs.", "Ask for async sign-off." ] },
+          { "id": "warm_but_crisp", "when": "HighA && Friend_h", "intro": "Warm style works; protect clarity.", "template": [ "Lead with goal.", "Name the ask and date.", "Confirm owner." ] },
+          { "id": "comm_fallback", "when": "true", "priority": -1, "template": [ "Be specific.", "Use numbers, dates, and deltas.", "Log decisions." ] }
+        ]
+      },
+      "reduce_friction": {
+        "title": "How to reduce team friction",
+        "blocks": [
+          { "id": "throughput_contracts", "when": "HighE && (LowA || Coop_llhl || Symp_llhl)", "bullets": [ "Convert favors to short written agreements.", "Reward throughput, not effort.", "Publish decision logs." ] },
+          { "id": "async_first", "when": "LowE && HighC", "bullets": [ "Set async-first defaults.", "Use written agendas and minutes.", "Define SLAs for responses." ] },
+          { "id": "explore_then_commit", "when": "HighO && LowC", "bullets": [ "Time-box exploration before commitment.", "Add exit criteria for experiments.", "Tie ideas to owners and dates." ] },
+          { "id": "friction_fallback", "when": "true", "priority": -1, "bullets": [ "One owner per task.", "Clear scope and exit terms.", "Cheap, explicit reversals." ] }
+        ]
+      },
+      "practice_30d": {
+        "title": "30-day practice goals",
+        "items": [
+          { "name": "Team cooperation", "when": "LowA || Coop_llhl || Symp_llhl", "text": "Share a one-slide success contract before each meeting." },
+          { "name": "Empathy", "when": "Symp_llhl", "text": "Write both sides’ constraints for top 5 conflicts and get confirmation." },
+          { "name": "Organization", "when": "Order_ll || Order_hl", "text": "Daily 15-minute sweep at the same time." },
+          { "name": "Focus", "when": "SelfDisc_l", "text": "Eight 45-minute deep-work blocks per week with phone outside room." },
+          { "name": "Risk calm", "when": "HighN && !Anx_llhl", "text": "Two 15-minute recovery blocks daily." },
+          { "name": "Exploration", "when": "HighO && LowC", "text": "One weekly experiment with a success metric and kill rule." },
+          { "name": "Visibility", "when": "LowE", "text": "Post a weekly written update with blockers and asks." },
+          { "name": "Default", "when": "true", "priority": -1, "text": "Pick three: one skill, one system, one health habit. Track weekly." }
+        ]
+      },
+      "ideal_cofounder": {
+        "title": "Ideal co-founder",
+        "blocks": [
+          { "id": "people_process_veto", "when": "LowA || Coop_llhl || Symp_llhl || Order_ll || Order_hl", "text": "High Agreeableness and High Conscientiousness partner. They own people ops and process." },
+          { "id": "ux_veto", "when": "!(Art_h || Imagin_h) || LowO", "text": "High Openness partner owns UX and narrative." },
+          { "id": "stability_veto", "when": "HighN", "text": "Low Neuroticism partner stabilizes risk decisions." },
+          { "id": "split", "when": "true", "priority": -1, "text": "Give the partner veto on their strengths; you keep veto on scope, speed, ethics, and budget." }
+        ],
+        "veto_split": { "cofounder_controls": ["Aesthetics","Process","People ops"], "you_control": ["Scope","Speed","Ethics","Budget"] }
+      },
+      "work_rhythm": {
+        "title": "Work rhythm",
+        "blocks": [
+          { "id": "mon_wed_fri_highE", "when": "HighE", "schedule": [ "Monday: plan goals and risks (30 min).", "Wednesday: unblock issues (15 min).", "Friday: show results, finalize decisions (30 min)." ] },
+          { "id": "deepwork_lowE_highC", "when": "LowE && HighC", "schedule": [ "Mon–Thu: two 45-min deep-work blocks daily.", "Tuesday: async status doc update.", "Friday: weekly demo post and backlog prune." ] },
+          { "id": "experimenter_highO_lowC", "when": "HighO && LowC", "schedule": [ "Monday: pick one experiment and one core task.", "Daily: 90-minute build window before messages.", "Friday: kill-or-scale experiment decision." ] },
+          { "id": "risk_buffer_highN", "when": "HighN", "schedule": [ "Daily: 2 × 15-min recovery blocks.", "Midweek: risk review and contingency check (15 min).", "Friday: stressor queue trim ≤ 5." ] },
+          { "id": "rhythm_fallback", "when": "true", "priority": -1, "schedule": [ "Monday planning, midweek unblock, Friday demo." ] }
+        ]
+      },
+      "personal_boundaries": {
+        "title": "Personal boundaries",
+        "rules": [
+          { "when": "true", "text": "One clear owner per task." },
+          { "when": "true", "text": "No verbal-only deals." },
+          { "when": "true", "text": "No meetings without a written goal slide." },
+          { "when": "HighE && (Greg_h || Excite_h)", "text": "Cap evening events to three per week." },
+          { "when": "Order_ll || Order_hl", "text": "No new tasks without killing, finishing, or delegating one." },
+          { "when": "HighN && !Anx_llhl", "text": "No same-day major scope changes without a written risk note." }
+        ]
+      }
+    },
+    "qa": {
+      "quality_rules": [
+        "Each selected section must meet min_bullets; pad with defaults if needed.",
+        "Never output duplicate bullets in the same section.",
+        "Honor selection.per_section caps.",
+        "If multiple blocks match with conflicting guidance, keep the highest-specificity (facet > domain) and highest priority."
+      ],
+      "tiebreaks": [
+        "Prefer blocks with facet-level conditions over domain-level.",
+        "Prefer blocks with higher count of true conditions.",
+        "Prefer blocks with fewer bullets if tie remains."
+      ]
+    },
+    "provenance": {
+      "export": ["inputs.scores","engine.derived_flags","section_matches","selected_blocks","applied_tiebreaks"],
+      "notes": "Include an explanation list for each chosen block: which flags fired."
+    }
+  }
+  

@@ -1,0 +1,253 @@
+{
+    "Openness": {
+      "intellect": {
+        "extreme_high": "You think three moves ahead while everyone else argues the first.",
+        "extreme_low": "Ideas feel like noise; you trust what’s proven instead.",
+        "high_domain_low_facet": "You crave variety but your mind sticks to one reliable path.",
+        "low_domain_high_facet": "Usually steady, but when a concept grabs you you obsess.",
+        "contrast": "You explore broadly, yet this idea keeps pulling you inward.",
+        "neutral": "You notice patterns others miss and quietly test them."
+      },
+      "adventurousness": {
+        "extreme_high": "You chase the unknown the way others collect routines.",
+        "extreme_low": "Risk makes your gut cold; predictability is your refuge.",
+        "high_domain_low_facet": "You love novelty in theory but freeze at the first leap.",
+        "low_domain_high_facet": "Mostly cautious, but once you jump you don’t look back.",
+        "contrast": "You flirt with adventure then return to the safe shore.",
+        "neutral": "You pick novel paths when the payoff is obvious."
+      },
+      "artistic": {
+        "extreme_high": "You turn small moments into scenes other people remember.",
+        "extreme_low": "Beauty rarely moves you; function comes first.",
+        "high_domain_low_facet": "Curious and open, yet you hold back from showing your taste.",
+        "low_domain_high_facet": "Not the loud type, but your aesthetic calls attention anyway.",
+        "contrast": "You feel creative sparks that you rarely let finish.",
+        "neutral": "You have a subtle aesthetic that shows up at the right time."
+      },
+      "openness": {
+        "extreme_high": "New frameworks excite you; sticking with the old feels like imprisonment.",
+        "extreme_low": "You prefer rules that work over ideas that might.",
+        "high_domain_low_facet": "You say you want change but keep choosing the familiar.",
+        "low_domain_high_facet": "You appear conventional, yet your tastes betray a rebel.",
+        "contrast": "You balance curiosity with a quiet need for structure.",
+        "neutral": "You sample new ideas selectively, not indiscriminately."
+      },
+      "emotionality": {
+        "extreme_high": "You feel undercurrents others call ‘mood’ and react before they do.",
+        "extreme_low": "Emotions are background for you, not the director.",
+        "high_domain_low_facet": "Open-minded but emotionally reserved; you watch more than you say.",
+        "low_domain_high_facet": "You seem unflappable until an old hurt surfaces suddenly.",
+        "contrast": "You’re intellectually curious but keep your heart carefully shielded.",
+        "neutral": "You sense emotional layers and file them away for later."
+      },
+      "liberalism": {
+        "extreme_high": "You reject the obvious labels and rewrite the rulebook quietly.",
+        "extreme_low": "Tradition anchors you; change needs a strong reason.",
+        "high_domain_low_facet": "You like new ideas yet hesitate to break shared norms.",
+        "low_domain_high_facet": "Conservative outwardly, but you back unexpected causes fiercely.",
+        "contrast": "You want progress but only on your terms.",
+        "neutral": "You test new beliefs against practical outcomes before adopting them."
+      }
+    },
+    "Conscientiousness": {
+      "orderliness": {
+        "extreme_high": "Your space and schedule are precise because your mind needs edges.",
+        "extreme_low": "Chaos accumulates until urgency forces cleanup.",
+        "high_domain_low_facet": "Disciplined in goals, messy in the small stuff that actually slows you down.",
+        "low_domain_high_facet": "Mostly loose, but when order matters you become surgical.",
+        "contrast": "You plan big moves but leave little details to chance.",
+        "neutral": "You keep things just tidy enough to get things done."
+      },
+      "self-discipline": {
+        "extreme_high": "You follow through where most people stall.",
+        "extreme_low": "Good intentions pile up into undone to-dos.",
+        "high_domain_low_facet": "You want control but your habits betray you at the finish line.",
+        "low_domain_high_facet": "Usually lax, yet when you lock in you deliver beyond expectation.",
+        "contrast": "You set standards but sometimes fail to enforce them on yourself.",
+        "neutral": "You hit targets when they matter and skim when they don’t."
+      },
+      "achievement": {
+        "extreme_high": "Mediocre trophies make you anxious; you aim for undeniable wins.",
+        "extreme_low": "Status doesn’t move you; competence quietly does.",
+        "high_domain_low_facet": "You value competence but avoid chasing accolades that feel hollow.",
+        "low_domain_high_facet": "Not competitive by default, yet you excel when a goal catches you.",
+        "contrast": "You balance ambition with a low-key tolerance for failure.",
+        "neutral": "You work toward meaningful goals, not just appearances."
+      },
+      "self-efficacy": {
+        "extreme_high": "You assume you can fix it and usually do.",
+        "extreme_low": "You doubt your tools even when they are in your hands.",
+        "high_domain_low_facet": "Responsible and dependable, but you sometimes question your own impact.",
+        "low_domain_high_facet": "Quiet about capability, then you quietly solve what others called impossible.",
+        "contrast": "You plan like a boss but second-guess the execution.",
+        "neutral": "You learn fast and trust the process once you see results."
+      },
+      "cautiousness": {
+        "extreme_high": "You map threats before anyone else notices them.",
+        "extreme_low": "You jump first and fix problems later.",
+        "high_domain_low_facet": "You prefer structure yet take surprising gambles when pressed.",
+        "low_domain_high_facet": "Generally bold, but you pause sharply at real risk.",
+        "contrast": "You hedge in places others act reckless and act bravely where others hedge.",
+        "neutral": "You measure danger and act when the expected value is clear."
+      },
+      "dutifulness": {
+        "extreme_high": "You keep promises the rest of the world forgets.",
+        "extreme_low": "Commitments fade unless they serve you explicitly.",
+        "high_domain_low_facet": "You value standards but sometimes skip the small loyal acts.",
+        "low_domain_high_facet": "Not visibly loyal, yet you show up when it truly counts.",
+        "contrast": "You honor principles selectively, where they matter most to you.",
+        "neutral": "You’re dependable in contexts you choose to invest in."
+      }
+    },
+    "Extraversion": {
+      "assertiveness": {
+        "extreme_high": "You don’t wait for permission; you move people.",
+        "extreme_low": "You let others steer and then wonder why direction lacked.",
+        "high_domain_low_facet": "Social and lively, yet you back down at the decisive moment.",
+        "low_domain_high_facet": "Quiet by default, but when you speak everyone listens.",
+        "contrast": "You project energy but hold back where the stakes feel personal.",
+        "neutral": "You lead quietly and loudly depending on what the room needs."
+      },
+      "activity level": {
+        "extreme_high": "Your days are dense; you treat time like a resource to harvest.",
+        "extreme_low": "You prefer slow rhythms and deep focus over constant motion.",
+        "high_domain_low_facet": "Energetic overall, but you reserve bursts for the things that matter.",
+        "low_domain_high_facet": "Mostly calm, but when momentum hits you become unstoppable.",
+        "contrast": "You move fast in some lanes and slow in others by design.",
+        "neutral": "You manage your energy and pick your sprints."
+      },
+      "gregariousness": {
+        "extreme_high": "People find you magnetizing without knowing why.",
+        "extreme_low": "Crowds drain you and you protect your quiet fiercely.",
+        "high_domain_low_facet": "Outgoing but selective; vast networks are not your thing.",
+        "low_domain_high_facet": "Not the social center, yet you make strong connections quickly.",
+        "contrast": "You love people on your terms and avoid the small talk.",
+        "neutral": "You enjoy company that adds value and avoid filler."
+      },
+      "excitement-seeking": {
+        "extreme_high": "Boredom is your enemy; you design scenarios that wake you up.",
+        "extreme_low": "You prefer steady pleasures over risky thrills.",
+        "high_domain_low_facet": "Social and lively, but you avoid reckless novelty.",
+        "low_domain_high_facet": "Mostly steady, but you seek a jolt when routine suffocates you.",
+        "contrast": "You crave meaningful novelty rather than random adrenaline.",
+        "neutral": "You take risks when curiosity outweighs cost."
+      },
+      "cheerfulness": {
+        "extreme_high": "You smile first and people match your tempo.",
+        "extreme_low": "Joy is rare and often private for you.",
+        "high_domain_low_facet": "Energetic outwardly but you keep your worries private.",
+        "low_domain_high_facet": "Not loud, yet your presence lifts people unexpectedly.",
+        "contrast": "You can lighten a room while holding your own serious strains.",
+        "neutral": "You bring warmth when it’s needed and focus when it’s not."
+      },
+      "friendliness": {
+        "extreme_high": "You trust quickly and people reciprocate naturally.",
+        "extreme_low": "You’re cautious with warmth until trust is earned.",
+        "high_domain_low_facet": "Social overall, but you guard some relationships tightly.",
+        "low_domain_high_facet": "Not openly social, yet you form fast, deep bonds.",
+        "contrast": "You give warmth selectively and it lands precisely where you want it to.",
+        "neutral": "You’re approachable to those who matter to you."
+      }
+    },
+    "Agreeableness": {
+      "altruism": {
+        "extreme_high": "You give before being asked and feel it’s the least you can do.",
+        "extreme_low": "You expect reciprocity and you’re careful with favors.",
+        "high_domain_low_facet": "Kind by default but you ration deep sacrifice for real causes.",
+        "low_domain_high_facet": "Practical outwardly, yet you unexpectedly help when it counts.",
+        "contrast": "You balance self-interest with genuine care in strategic places.",
+        "neutral": "You help where your help makes a measurable difference."
+      },
+      "trust": {
+        "extreme_high": "You assume goodwill and others rarely disappoint you.",
+        "extreme_low": "You read motives before you hand over confidence.",
+        "high_domain_low_facet": "Warm and cooperative, but you remain skeptical of strangers.",
+        "low_domain_high_facet": "Guarded by default, yet you grant trust to the few you choose.",
+        "contrast": "You believe in people but verify before you commit deeply.",
+        "neutral": "You calibrate trust to track record, not charm."
+      },
+      "cooperation": {
+        "extreme_high": "You default to 'how can I help' and teams run better because of you.",
+        "extreme_low": "You prefer clear lanes and private ownership over group fuzziness.",
+        "high_domain_low_facet": "Friendly but selective about teamwork; you pick your collaborations.",
+        "low_domain_high_facet": "Not outwardly team-first, yet you become the backbone when needed.",
+        "contrast": "You cooperate when alignment is clear and withdraw when it isn’t.",
+        "neutral": "You collaborate when the outcome is worth the coordination."
+      },
+      "morality": {
+        "extreme_high": "Your inner code runs strict; compromises bother you.",
+        "extreme_low": "You negotiate ethics against outcomes and move on.",
+        "high_domain_low_facet": "Compassionate overall, yet you bend rules when practical needs demand it.",
+        "low_domain_high_facet": "Not overtly principled, yet you hold nonnegotiables fiercely.",
+        "contrast": "You balance moral clarity with pragmatic exceptions.",
+        "neutral": "You act by a personal standard that feels inevitable to you."
+      },
+      "modesty": {
+        "extreme_high": "You deflect praise until the work proves undeniable.",
+        "extreme_low": "You claim credit quickly and unapologetically.",
+        "high_domain_low_facet": "Generous and humble, but you step into the spotlight when it matters.",
+        "low_domain_high_facet": "Not outwardly modest, yet you prefer quiet recognition.",
+        "contrast": "You oscillate between deflection and earned visibility.",
+        "neutral": "You let results speak and accept credit when it serves the mission."
+      },
+      "sympathy": {
+        "extreme_high": "You feel other people’s pain in real time and act on it.",
+        "extreme_low": "You keep distance; empathy is a tool, not a burden.",
+        "high_domain_low_facet": "Warm and fair, but you protect your emotional bandwidth.",
+        "low_domain_high_facet": "Appears detached, yet you respond sharply when a real need appears.",
+        "contrast": "You match empathy to capacity so you can keep giving long term.",
+        "neutral": "You care in ways that are sustainable and useful."
+      }
+    },
+    "Neuroticism": {
+      "anxiety": {
+        "extreme_high": "You foresee problems others miss and prepare for them obsessively.",
+        "extreme_low": "Worry rarely slows you; you act before fear arrives.",
+        "high_domain_low_facet": "Sensitive and aware, but you hide the worry under competence.",
+        "low_domain_high_facet": "Usually steady, yet certain triggers make you spiral unexpectedly.",
+        "contrast": "You plan for threats while the room stays calm.",
+        "neutral": "You stay vigilant and use it as a signal, not a jail."
+      },
+      "depression": {
+        "extreme_high": "Quiet heaviness sits under your days and people rarely see it.",
+        "extreme_low": "You shrug off low moods and keep moving.",
+        "high_domain_low_facet": "Emotionally reactive yet you mask the low days from most people.",
+        "low_domain_high_facet": "Generally resilient, but you can drop deeply and silently.",
+        "contrast": "You carry seriousness where others expect lightness.",
+        "neutral": "You have low days and you know how to make them shorter."
+      },
+      "self-consciousness": {
+        "extreme_high": "You run rehearsals in your head long after the conversation ends.",
+        "extreme_low": "You move without self-edit and rarely look back.",
+        "high_domain_low_facet": "Sensitive to judgment inside, but you present a calm exterior.",
+        "low_domain_high_facet": "Not outwardly anxious, yet certain scenes replay in your mind.",
+        "contrast": "You present confidently while your inner critic takes notes.",
+        "neutral": "You notice how you land and adjust quietly."
+      },
+      "vulnerability": {
+        "extreme_high": "You feel exposure like physical pain and protect your soft spots fiercely.",
+        "extreme_low": "You tolerate exposure with a practical shrug.",
+        "high_domain_low_facet": "Emotionally reactive but you share only with a strict inner circle.",
+        "low_domain_high_facet": "Mostly guarded, yet you reveal unexpectedly to the right person.",
+        "contrast": "You expect risk but only accept it on your terms.",
+        "neutral": "You open selectively and keep your core safe."
+      },
+      "anger": {
+        "extreme_high": "Small slights register as big infractions and you act on them.",
+        "extreme_low": "You swallow frustrations and move on deliberately.",
+        "high_domain_low_facet": "Emotionally intense but you rarely let anger become your story.",
+        "low_domain_high_facet": "Calm most of the time, but when provoked you are unmistakable.",
+        "contrast": "You simmer quietly until a single line is crossed.",
+        "neutral": "You express frustration clearly when necessary and then let it go."
+      },
+      "immoderation": {
+        "extreme_high": "When you lose control you go all the way; restraint is not your fallback.",
+        "extreme_low": "You ration pleasures intentionally and rarely binge.",
+        "high_domain_low_facet": "Prone to worry, yet you keep impulses contained most of the time.",
+        "low_domain_high_facet": "Generally steady, but occasional excesses catch even you by surprise.",
+        "contrast": "You oscillate between strict self-control and rare abandon.",
+        "neutral": "You indulge with awareness and accept the consequences."
+      }
+    }
+  }
+  
